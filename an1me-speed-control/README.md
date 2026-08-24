@@ -52,7 +52,7 @@ and restores them on the next episode.
 1. Download the repository (`Code` → `Download ZIP`) and unzip it.
 2. Open <img src=".github/assets/cmd-chrome-extensions.svg" alt="chrome://extensions" align="middle"> (or <img src=".github/assets/cmd-edge-extensions.svg" alt="edge://extensions" align="middle">).
 3. Enable **Developer mode**.
-4. Click **Load unpacked** and select the **repository folder**.
+4. Click **Load unpacked** and select the **`an1me-speed-control` folder**.
 5. Open an episode on an1me.to and hold <img src=".github/assets/kbd-f7.svg" alt="F7" align="middle">.
 
 <img src=".github/assets/divider.svg" width="100%" alt="">
@@ -131,7 +131,7 @@ before closing the tab may not persist. Adjust it and give it a moment.
 
 The player container may have moved.
 
-[![Open an issue](.github/assets/btn-openissue.svg)](https://github.com/thomasthanos/an1me-speed-control/issues)
+[![Open an issue](.github/assets/btn-openissue.svg)](https://github.com/thomasthanos/an1me-extensions/issues)
 </details>
 
 <img src=".github/assets/divider.svg" width="100%" alt="">
@@ -140,6 +140,6 @@ The player container may have moved.
 
 Source-available, all rights reserved.
 
-[![Read the licence](.github/assets/btn-licence-read.svg)](LICENSE)
+[![Read the licence](.github/assets/btn-licence-read.svg)](../LICENSE)
 
 **Not affiliated with, endorsed by, or connected to an1me.to.**
