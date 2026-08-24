@@ -1,24 +1,24 @@
 <div align="center">
 
-<img src="../.github/assets/banner-tracker.svg" alt="An1me.to Tracker">
+<img src=".github/assets/banner-tracker.svg" alt="An1me.to Tracker">
 
-[![Version 7.2.4](../.github/assets/badge-v-tracker.svg)](manifest.json)
-[![Manifest V3](../.github/assets/badge-manifest.svg)](manifest.json)
-[![Cloud sync optional](../.github/assets/badge-cloud-sync.svg)](../PRIVACY.md#-an1meto-tracker)
+[![Version 7.2.4](.github/assets/badge-v-tracker.svg)](manifest.json)
+[![Manifest V3](.github/assets/badge-manifest.svg)](manifest.json)
+[![Cloud sync optional](.github/assets/badge-cloud-sync.svg)](PRIVACY.md)
 <br>
-[![Install](../.github/assets/btn-install.svg)](#-install)
-[![Features](../.github/assets/btn-features.svg)](#-features)
-[![Permissions](../.github/assets/btn-permissions.svg)](#-permissions-explained)
-[![Privacy](../.github/assets/btn-privacy.svg)](../PRIVACY.md#-an1meto-tracker)
-[![Troubleshooting](../.github/assets/btn-troubleshooting.svg)](#-troubleshooting)
+[![Install](.github/assets/btn-install.svg)](#-install)
+[![Features](.github/assets/btn-features.svg)](#-features)
+[![Permissions](.github/assets/btn-permissions.svg)](#-permissions-explained)
+[![Privacy](.github/assets/btn-privacy.svg)](PRIVACY.md)
+[![Troubleshooting](.github/assets/btn-troubleshooting.svg)](#-troubleshooting)
 
-<img src="../.github/assets/spec-tracker.svg" alt="At a glance">
+<img src=".github/assets/spec-tracker.svg" alt="At a glance">
 
 </div>
 
-<img src="../.github/assets/divider.svg" width="100%" alt="">
+<img src=".github/assets/divider.svg" width="100%" alt="">
 
-## <img src="../.github/assets/icon-play.svg" width="22" align="middle"> What it does
+## <img src=".github/assets/icon-play.svg" width="22" align="middle"> What it does
 
 You watch anime on **an1me.to**. The tracker sits quietly in the background and remembers
 everything for you: which episode you are on, how far into it you got, what you have finished, and
@@ -28,9 +28,9 @@ stats and a bit of gamification to keep you honest.
 If you sign in, it all syncs to the cloud so your phone-side browser and your desktop agree with
 each other. If you don't sign in, it still works — everything just stays local.
 
-<img src="../.github/assets/divider.svg" width="100%" alt="">
+<img src=".github/assets/divider.svg" width="100%" alt="">
 
-## <img src="../.github/assets/icon-sparkle.svg" width="22" align="middle"> Features
+## <img src=".github/assets/icon-sparkle.svg" width="22" align="middle"> Features
 
 ### Tracking that happens by itself
 
@@ -38,7 +38,7 @@ each other. If you don't sign in, it still works — everything just stays local
 - **Resume where you left off** — reopens an episode at the second you stopped.
 - **Continue Watching row** injected on the an1me.to homepage.
 - **Episode highlighting** — watched episodes are visually marked on the series page.
-- **Skip outro** button, with timings pulled from <a href="https://aniskip.com/"><img src="../.github/assets/tag-aniskip.svg" alt="AniSkip" align="middle"></a>.
+- **Skip outro** button, with timings pulled from <a href="https://aniskip.com/"><img src=".github/assets/tag-aniskip.svg" alt="AniSkip" align="middle"></a>.
 - **Movies and multi-part series** handled separately from ordinary episodes.
 
 ### Your library
@@ -47,7 +47,7 @@ each other. If you don't sign in, it still works — everything just stays local
 - **Add anything manually**, including series you watched before installing.
 - Cover art, episode counts and metadata resolved automatically, with a **metadata repair** job that
   quietly fixes entries that came in incomplete.
-- **Filler marking** via <a href="https://www.animefillerlist.com/"><img src="../.github/assets/tag-animefillerlist.svg" alt="AnimeFillerList" align="middle"></a> — skip the padding
+- **Filler marking** via <a href="https://www.animefillerlist.com/"><img src=".github/assets/tag-animefillerlist.svg" alt="AnimeFillerList" align="middle"></a> — skip the padding
   or count it, your call.
 - **Export / import** your whole library as a file, any time.
 
@@ -69,21 +69,21 @@ each other. If you don't sign in, it still works — everything just stays local
 - **Smart notifications** when a series you follow gets a new episode. The checker adapts its
   frequency to how often a show actually updates instead of hammering the site hourly.
 
-<img src="../.github/assets/divider.svg" width="100%" alt="">
+<img src=".github/assets/divider.svg" width="100%" alt="">
 
-## <img src="../.github/assets/icon-install.svg" width="22" align="middle"> Install
+## <img src=".github/assets/icon-install.svg" width="22" align="middle"> Install
 
 1. Download the repository (`Code` → `Download ZIP`) and unzip it.
-2. Open <img src="../.github/assets/cmd-chrome-extensions.svg" alt="chrome://extensions" align="middle"> (or <img src="../.github/assets/cmd-edge-extensions.svg" alt="edge://extensions" align="middle">).
+2. Open <img src=".github/assets/cmd-chrome-extensions.svg" alt="chrome://extensions" align="middle"> (or <img src=".github/assets/cmd-edge-extensions.svg" alt="edge://extensions" align="middle">).
 3. Enable **Developer mode**.
-4. Click **Load unpacked** and select this **`An1me_tracker` folder**.
+4. Click **Load unpacked** and select the **repository folder**.
 5. Pin it, open an1me.to, and start watching.
 
 Optional, but recommended: click the extension → **Sign in** to turn on cloud sync.
 
-<img src="../.github/assets/divider.svg" width="100%" alt="">
+<img src=".github/assets/divider.svg" width="100%" alt="">
 
-## <img src="../.github/assets/icon-key.svg" width="22" align="middle"> Permissions explained
+## <img src=".github/assets/icon-key.svg" width="22" align="middle"> Permissions explained
 
 | Permission | Why it is needed |
 |---|---|
@@ -111,9 +111,9 @@ Optional, but recommended: click the extension → **Sign in** to turn on cloud 
 
 </details>
 
-<img src="../.github/assets/divider.svg" width="100%" alt="">
+<img src=".github/assets/divider.svg" width="100%" alt="">
 
-## <img src="../.github/assets/icon-shield.svg" width="22" align="middle"> Privacy, briefly
+## <img src=".github/assets/icon-shield.svg" width="22" align="middle"> Privacy, briefly
 
 Without an account: **everything stays on your machine.**
 
@@ -121,20 +121,20 @@ With an account: your library is written to **your own private Firestore documen
 by you. Metadata lookups (AniList, Jikan, AniSkip, AnimeFillerList) send a series title or ID —
 never your identity. There is no analytics, no ad SDK and no data sale, anywhere.
 
-[![Full privacy detail](../.github/assets/btn-privacy-detail.svg)](../PRIVACY.md#-an1meto-tracker)
+[![Full privacy detail](.github/assets/btn-privacy-detail.svg)](PRIVACY.md)
 
-<img src="../.github/assets/divider.svg" width="100%" alt="">
+<img src=".github/assets/divider.svg" width="100%" alt="">
 
-## <img src="../.github/assets/icon-code.svg" width="22" align="middle"> How the code is organised
+## <img src=".github/assets/icon-code.svg" width="22" align="middle"> How the code is organised
 
-![An1me.to Tracker source layout](../.github/assets/tree-tracker.svg)
+![An1me.to Tracker source layout](.github/assets/tree-tracker.svg)
 
 69 JavaScript modules, plain ES — no build step, no bundler, nothing minified. What you read is
 what runs.
 
-<img src="../.github/assets/divider.svg" width="100%" alt="">
+<img src=".github/assets/divider.svg" width="100%" alt="">
 
-## <img src="../.github/assets/icon-help.svg" width="22" align="middle"> Troubleshooting
+## <img src=".github/assets/icon-help.svg" width="22" align="middle"> Troubleshooting
 
 <details>
 <summary><b>Progress isn't being recorded</b></summary>
@@ -179,18 +179,18 @@ silently).
 
 <br>
 
-Include the extension version, your browser version, and anything in the console (<img src="../.github/assets/kbd-f12.svg" alt="F12" align="middle">).
+Include the extension version, your browser version, and anything in the console (<img src=".github/assets/kbd-f12.svg" alt="F12" align="middle">).
 
-[![Open an issue](../.github/assets/btn-openissue.svg)](https://github.com/thomasthanos/google_extention_privacy/issues/new/choose)
+[![Open an issue](.github/assets/btn-openissue.svg)](https://github.com/thomasthanos/an1me-tracker/issues/new/choose)
 </details>
 
-<img src="../.github/assets/divider.svg" width="100%" alt="">
+<img src=".github/assets/divider.svg" width="100%" alt="">
 
-## <img src="../.github/assets/icon-license.svg" width="22" align="middle"> Licence
+## <img src=".github/assets/icon-license.svg" width="22" align="middle"> Licence
 
 Source-available, all rights reserved. In short: use it, read it, audit it, contribute to it; do
 not redistribute, republish or sell it.
 
-[![Read the licence](../.github/assets/btn-licence-read.svg)](../LICENSE)
+[![Read the licence](.github/assets/btn-licence-read.svg)](LICENSE)
 
 Not affiliated with an1me.to, AniList, MyAnimeList, Kitsu, Crunchyroll or Google.
