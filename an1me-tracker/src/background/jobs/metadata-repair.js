@@ -13,6 +13,9 @@ const METADATA_REPAIR_INTER_ITEM_DELAY_MS = 250;
 const METADATA_REPAIR_PLAYBACK_DELAY_MS = 3000;
 const METADATA_REPAIR_MAX_LOGS = 60;
 const METADATA_REPAIR_MODAL_FETCH_THRESHOLD = 8;
+// Share of the examined entries that must still need fetching for the run to count as
+// "from scratch" rather than a top-up.
+const METADATA_REPAIR_MODAL_FETCH_RATIO = 0.6;
 const METADATA_REPAIR_ORIGINS = new Set(["manual", "sign-in", "targeted", "background"]);
 const isMobileUA = typeof navigator !== "undefined" && /Mobi|Android|iPhone|iPad|iPod|Orion/i.test(navigator.userAgent || "");
 const METADATA_REPAIR_MAX_ATTEMPTS = isMobileUA ? 1 : 2;
@@ -42,10 +45,18 @@ function getMetadataRepairRemainingFetches(state) {
   return Math.max(0, total - completed);
 }
 
-function resolveMetadataRepairUiMode(origin, fetchCount) {
+// A fetch that rebuilds the library from scratch deserves the full fetch panel; a handful of
+// expired entries inside an otherwise-cached library is just an update and belongs in the
+// bottom-right status line. Both conditions must hold for the panel: enough items to be worth
+// a modal, and the bulk of what was examined actually needing a fetch.
+function resolveMetadataRepairUiMode(origin, fetchCount, consideredTotal = 0) {
   if (origin === "manual") return "modal";
-  if (origin === "sign-in") return Number(fetchCount) > 0 ? "modal" : "status";
-  return "status";
+
+  const fetches = Math.max(0, Number(fetchCount) || 0);
+  if (fetches < METADATA_REPAIR_MODAL_FETCH_THRESHOLD) return "status";
+
+  const considered = Math.max(fetches, Number(consideredTotal) || 0);
+  return fetches >= considered * METADATA_REPAIR_MODAL_FETCH_RATIO ? "modal" : "status";
 }
 
 function createMetadataRepairRunId() {
@@ -701,10 +712,10 @@ async function startLibraryRepair(options = {}) {
       const origin = shouldPromoteToManual ? "manual" : shouldPromoteToSignIn ? "sign-in" : existingOrigin;
       const nextUiMode =
         shouldPromoteToManual || shouldPromoteToSignIn
-          ? resolveMetadataRepairUiMode(origin, getMetadataRepairFetchTotal(existing))
+          ? resolveMetadataRepairUiMode(origin, getMetadataRepairFetchTotal(existing), existing.total)
           : hasExplicitUiMode
             ? existing.uiMode
-            : resolveMetadataRepairUiMode(origin, getMetadataRepairFetchTotal(existing));
+            : resolveMetadataRepairUiMode(origin, getMetadataRepairFetchTotal(existing), existing.total);
       const uiMode = existing.uiMode === "modal" ? "modal" : nextUiMode;
       existing = {
         ...existing,
@@ -754,7 +765,7 @@ async function startLibraryRepair(options = {}) {
   let state = {
     runId: createMetadataRepairRunId(),
     origin: requestedOrigin,
-    uiMode: carriedModal ? "modal" : resolveMetadataRepairUiMode(requestedOrigin, fetchTotal),
+    uiMode: carriedModal ? "modal" : resolveMetadataRepairUiMode(requestedOrigin, fetchTotal, plan.total),
     fetchTotal,
     status: "running",
     startedAt: now,
@@ -906,7 +917,9 @@ async function ensureLibraryFresh(prioritySlugs = []) {
   const state = {
     runId: createMetadataRepairRunId(),
     origin: "background",
-    uiMode: "status",
+    // A first-run/from-scratch sweep shows the full panel; a few expired entries stay in the
+    // bottom-right status line.
+    uiMode: resolveMetadataRepairUiMode("background", fetchTotal, plan.total),
     fetchTotal,
     status: "running",
     startedAt: now,

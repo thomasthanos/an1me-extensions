@@ -5,7 +5,7 @@
   const AT = window.AnimeTracker;
 
   const { AnimeStatus, getStatus: getAnimeStatus } = AT.StatusService;
-  const { deleteAnime, toggleAnimeCompleted } = AT.AnimeActions;
+  const { deleteAnime } = AT.AnimeActions;
   const { editAnimeTitle } = AT.AddAnimeDialog;
 
   let elements, _ipPatch, getActiveFilter, markInternalSave, normalizeCompactStatus, suppressHoverUntilMouseMove, updateStats;
@@ -135,12 +135,29 @@
     return groups.reduce((count, group) => count + group[1].length, 0);
   }
 
+  // One status badge for the whole section. The cards inside stop repeating it (see the
+  // `-list-cards` rules in popup.css), so the state is stated once, outside the list.
+  const SECTION_STATUS_BADGES = {
+    completed: { badgeClass: "meta-badge-complete", icon: "check", text: "Completed" },
+    dropped: { badgeClass: "meta-badge-dropped", icon: "drop", text: "Dropped" },
+    airing: { badgeClass: "meta-badge-airing", icon: "", text: "Airing" },
+    onhold: { badgeClass: "meta-badge-onhold", icon: "pause", text: "On hold" },
+  };
+
+  function renderSectionStatusBadge(classPrefix) {
+    const badge = SECTION_STATUS_BADGES[classPrefix];
+    if (!badge) return "";
+    const icon = badge.icon ? AT.UIHelpers?.createIcon?.(badge.icon) || "" : "";
+    return `<span class="meta-badge section-status-badge ${badge.badgeClass}">${icon}${badge.text}</span>`;
+  }
+
   function renderCompactSectionHtml({ classPrefix, toggleId, label, subLabel, cardsHtml, isOpen }) {
     return `
             <div class="${classPrefix}-list-section">
                 <div class="${classPrefix}-list-label" id="${toggleId}" role="button" tabindex="0" aria-expanded="${isOpen ? "true" : "false"}">
                     <div class="${classPrefix}-list-label-left">
                         <span class="${classPrefix}-list-label-title">${label}</span>
+                        ${renderSectionStatusBadge(classPrefix)}
                         <span class="${classPrefix}-list-label-sub">${subLabel}</span>
                     </div>
                     <svg class="${classPrefix}-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform: ${isOpen ? "rotate(0deg)" : "rotate(-90deg)"}">
@@ -566,14 +583,6 @@
           const isExpanded = hidden.classList.toggle("expanded");
           moreEps.textContent = isExpanded ? moreEps.dataset.lessText : moreEps.dataset.moreText;
         }
-        return;
-      }
-
-      const completeBtn = target.closest(".season-complete-btn, .movie-complete-btn");
-      if (completeBtn && list.contains(completeBtn) && completeBtn.dataset.slug) {
-        // Must run before the row-expansion handler below, hence the stopPropagation.
-        e.stopPropagation();
-        toggleAnimeCompleted(completeBtn.dataset.slug);
         return;
       }
 

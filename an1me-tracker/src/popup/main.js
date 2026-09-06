@@ -892,7 +892,7 @@
     }
     const activeRepairState = AT.PopupState.lastMetadataRepairState;
     if (activeRepairState?.status === "running") {
-      void applyMetadataRepairState(activeRepairState, { autoOpenRunning: !!user });
+      void applyMetadataRepairState(activeRepairState, { autoOpenRunning: true });
     } else {
       void restoreDefaultSyncStatus({ immediate: true });
     }
@@ -2483,8 +2483,9 @@
       });
 
       if (changes.metadataRepairState) {
-        const isLoggedIn = !!AT?.FirebaseSync?.getUser?.();
-        void applyMetadataRepairState(changes.metadataRepairState.newValue || null, { autoOpenRunning: isLoggedIn });
+        // uiMode already decides panel vs status line, so the panel must not depend on auth:
+        // a from-scratch local fetch deserves the same full UI as a post-sign-in import.
+        void applyMetadataRepairState(changes.metadataRepairState.newValue || null, { autoOpenRunning: true });
       }
 
       if (isExternalUpdate && (changes.animeData || changes.videoProgress || changes.deletedAnime || changes.groupCoverImages)) {

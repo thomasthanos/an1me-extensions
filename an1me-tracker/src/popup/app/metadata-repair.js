@@ -9,6 +9,7 @@
   const METADATA_REPAIR_STALE_MS = 3 * 60 * 1000;
   const METADATA_REPAIR_RESUME_NUDGE_COOLDOWN_MS = 30 * 1000;
   const METADATA_REPAIR_MODAL_FETCH_THRESHOLD = 8;
+  const METADATA_REPAIR_MODAL_FETCH_RATIO = 0.6;
 
   let elements, detectHasGoogleAuth, markInternalSave, scheduleDeferredListRefresh, sendRuntimeMessage, updateStats;
   let metadataRepairPromise = null;
@@ -24,13 +25,19 @@
     return { total, processed, remaining: Math.max(0, total - processed) };
   }
 
+  // Mirrors resolveMetadataRepairUiMode() in the worker; only used for states persisted
+  // before the worker started stamping uiMode explicitly.
   function getMetadataRepairUiMode(state) {
     if (state?.uiMode === "modal" || state?.uiMode === "status") return state.uiMode;
 
     const origin = state?.origin || (state?.options?.auto === true ? "background" : "manual");
     if (origin === "manual") return "modal";
-    if (origin === "sign-in") return getMetadataRepairProgress(state).total > 0 ? "modal" : "status";
-    return "status";
+
+    const progress = getMetadataRepairProgress(state);
+    const fetches = Math.max(0, Number(state?.fetchTotal) || progress.total || 0);
+    if (fetches < METADATA_REPAIR_MODAL_FETCH_THRESHOLD) return "status";
+    const considered = Math.max(fetches, Number(state?.total) || progress.total || 0);
+    return fetches >= considered * METADATA_REPAIR_MODAL_FETCH_RATIO ? "modal" : "status";
   }
 
   function setMetadataRepairStatus(label, synced = false, options = {}) {

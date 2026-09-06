@@ -1204,23 +1204,36 @@ window.AnimeTracker.AnimeCardRenderer = AnimeCardRenderer;
         const movieOpenIconHtml = isMovie
           ? `<button type="button" class="season-expand-icon grp-row-chevron movie-open-link" data-slug="${UIHelpers.escapeHtml(slug)}" title="Open anime page" aria-label="Open anime page">${UIHelpers.createIcon("chevron")}</button>`
           : "";
+
+        // Each season/part is its own library entry, so the expanded row carries the same action
+        // bar as a standalone card. States are resolved per entry, not from the group header.
+        const memberListState =
+          globalThis.AnimeTrackerEntryState?.getResolvedListState?.(anime) || anime?.listState || "active";
+        const isManuallyCompleted = memberListState === "completed";
+        const isDropped = memberStatusView.status === "dropped";
+        const isOnHold = memberStatusView.status === "on_hold";
+        const isFavorite = anime?.favorite === true;
+        const memberActionsHtml = `
+                            <div class="anime-card-actions">
+                                <button class="anime-favorite-toggle${isFavorite ? " is-favorite" : ""}" data-slug="${UIHelpers.escapeHtml(slug)}" data-favorite="${isFavorite}" title="${isFavorite ? "Remove from favorites" : "Mark as favorite"}" aria-pressed="${isFavorite}">${UIHelpers.createIcon(isFavorite ? "star-filled" : "star")}<span>${isFavorite ? "Favorited" : "Favorite"}</span></button>
+                                <button class="anime-onhold-toggle" data-slug="${UIHelpers.escapeHtml(slug)}" data-onhold="${isOnHold}" title="${isOnHold ? "Resume watching" : "Put on hold"}">${UIHelpers.createIcon("pause")}<span>${isOnHold ? "Resume" : "Hold"}</span></button>
+                                <button class="anime-complete-toggle" data-slug="${UIHelpers.escapeHtml(slug)}" data-completed="${isManuallyCompleted}" title="${isManuallyCompleted ? "Unmark as completed" : "Mark as completed"}">${UIHelpers.createIcon("check")}<span>${isManuallyCompleted ? "Undo" : "Complete"}</span></button>
+                                <button class="anime-drop-toggle" data-slug="${UIHelpers.escapeHtml(slug)}" data-dropped="${isDropped}" title="${isDropped ? "Unmark as dropped" : "Drop"}">${UIHelpers.createIcon("drop")}<span>${isDropped ? "Undrop" : "Drop"}</span></button>
+                            </div>`;
+
         const contentHtml = hasExpandableContent
           ? `<div class="season-item-content">
                             <div class="season-progress-container">
                                 ${progressInfoHTML}
                             </div>
                             ${episodesHTML}
+                            ${memberActionsHtml}
                         </div>`
           : "";
 
         const movieTypeBadgeHtml = '<span class="meta-badge season-movie-type-badge grp-type-badge">Movie</span>';
 
-        // Seasons/parts inside a group are separate library entries, so each row gets its own
-        // list-state toggle — the same action the standalone card exposes as .anime-complete-toggle.
-        const isRowManuallyCompleted =
-          (globalThis.AnimeTrackerEntryState?.getResolvedListState?.(anime) || anime?.listState || "active") === "completed";
         const rowActionsHtml = `<div class="season-item-actions grp-row-actions">
-                           <button class="season-complete-btn${isRowManuallyCompleted ? " is-complete" : ""}" data-slug="${UIHelpers.escapeHtml(slug)}" data-completed="${isRowManuallyCompleted}" title="${isRowManuallyCompleted ? "Unmark as completed" : "Mark as completed"}" aria-pressed="${isRowManuallyCompleted}">${UIHelpers.createIcon("check")}</button>
                            <button class="season-edit-btn" data-slug="${UIHelpers.escapeHtml(slug)}" title="Edit title">${UIHelpers.createIcon("edit")}</button>
                            <button class="season-delete-btn" data-slug="${UIHelpers.escapeHtml(slug)}" title="Delete">${UIHelpers.createIcon("delete")}</button>
                        </div>`;
@@ -1306,8 +1319,8 @@ window.AnimeTracker.AnimeCardRenderer = AnimeCardRenderer;
           : movieItemCount > 0 || supplementItemCount > 0
             ? `${itemCount} ${itemCount === 1 ? "title" : "titles"}`
         : itemCount === filteredSeasons.length
-          ? `${itemCount} seasons`
-          : `${itemCount} parts`;
+          ? `${itemCount} ${itemCount === 1 ? "season" : "seasons"}`
+          : `${itemCount} ${itemCount === 1 ? "part" : "parts"}`;
 
       const groupProgressBadge =
         isChronologyGroup && inMoviesCategory
@@ -1382,15 +1395,9 @@ window.AnimeTracker.AnimeCardRenderer = AnimeCardRenderer;
       const statusBadgeHtml = hideStatusBadge
         ? ""
         : `<span class="meta-badge grp-state-badge ${statusView.badgeClass}">${statusIcon}${statusView.text}</span>`;
-      // Each movie in a merged group is its own library entry, so it gets its own list-state toggle.
-      const movieEntry = window.AnimeTracker.PopupState?.animeData?.[slug] || null;
-      const isRowManuallyCompleted =
-        !!movieEntry &&
-        (globalThis.AnimeTrackerEntryState?.getResolvedListState?.(movieEntry) || movieEntry.listState || "active") === "completed";
       const rightHtml = `${statusBadgeHtml}
                                 <span class="movie-duration grp-metric" title="${UIHelpers.escapeHtml(metricText)}">${metricText}</span>
                                 <div class="movie-item-actions grp-row-actions">
-                                    <button class="movie-complete-btn${isRowManuallyCompleted ? " is-complete" : ""}" data-slug="${UIHelpers.escapeHtml(slug)}" data-completed="${isRowManuallyCompleted}" title="${isRowManuallyCompleted ? "Unmark as completed" : "Mark as completed"}" aria-pressed="${isRowManuallyCompleted}">${UIHelpers.createIcon("check")}</button>
                                     <button class="movie-edit-btn" data-slug="${UIHelpers.escapeHtml(slug)}" title="Edit title">${UIHelpers.createIcon("edit")}</button>
                                     <button class="movie-delete-btn" data-slug="${UIHelpers.escapeHtml(slug)}" title="Delete">${UIHelpers.createIcon("delete")}</button>
                                 </div>
