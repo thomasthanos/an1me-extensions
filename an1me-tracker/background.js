@@ -734,6 +734,22 @@ async function ensureDailyCleanupAlarmScheduled() {
     console.warn("[Cleanup] scheduling check failed:", e?.message || e);
   }
 }
+const LIBRARY_AUTO_REFRESH_ALARM = "libraryAutoRefresh";
+const LIBRARY_AUTO_REFRESH_MINUTES = 180;
+
+async function ensureLibraryAutoRefreshAlarm() {
+  try {
+    const existing = await chrome.alarms.get(LIBRARY_AUTO_REFRESH_ALARM);
+    if (existing && Number(existing.periodInMinutes) === LIBRARY_AUTO_REFRESH_MINUTES) return;
+    await chrome.alarms.create(LIBRARY_AUTO_REFRESH_ALARM, {
+      delayInMinutes: 3,
+      periodInMinutes: LIBRARY_AUTO_REFRESH_MINUTES,
+    });
+    dlog(`[BG] Library auto-refresh alarm armed (every ${LIBRARY_AUTO_REFRESH_MINUTES} min)`);
+  } catch (e) {
+    console.warn("[BG] Could not arm library auto-refresh alarm:", e?.message || e);
+  }
+}
 
 // MV3 teardown errors are expected, but callers must abort instead of continuing with an empty snapshot.
 function isBenignSwLifecycleError(message) {
@@ -1029,15 +1045,45 @@ const PROGRESS_SYNC_RETRY_ALARM = "progressSyncRetry";
 // survives SW teardown and flushes pending changes; it skips the cloud write when nothing changed.
 const FULL_SYNC_PERIODIC_ALARM = "fullSyncPeriodic";
 const FULL_SYNC_PERIODIC_MINUTES = 4;
-function ensureFullSyncPeriodicAlarm() {
-  try { chrome.alarms.create(FULL_SYNC_PERIODIC_ALARM, { periodInMinutes: FULL_SYNC_PERIODIC_MINUTES }); } catch {}
+async function ensureFullSyncPeriodicAlarm() {
+  try {
+    const existing = await chrome.alarms.get(FULL_SYNC_PERIODIC_ALARM);
+    if (existing && Number(existing.periodInMinutes) === FULL_SYNC_PERIODIC_MINUTES) return;
+    chrome.alarms.create(FULL_SYNC_PERIODIC_ALARM, { periodInMinutes: FULL_SYNC_PERIODIC_MINUTES });
+  } catch {}
 }
 
 const SYNC_RETRY_BACKOFF_MIN = [1, 5, 15];
+const SYNC_RETRY_ATTEMPTS_KEY = "syncState.retryAttempts";
 let _fullSyncRetryAttempts = 0;
 let _progressSyncRetryAttempts = 0;
 let _fullSyncRetryAuthAttempted = false;
 let _progressSyncRetryAuthAttempted = false;
+let _syncRetryHydration = null;
+const _syncRetryGenerations = { full: 0, progress: 0 };
+const syncRetryKindKey = (kind) => (kind === "full" ? "full" : "progress");
+
+function hydrateSyncRetryAttempts() {
+  if (_syncRetryHydration) return _syncRetryHydration;
+  _syncRetryHydration = bgStorageGet([SYNC_RETRY_ATTEMPTS_KEY])
+    .then((stored) => {
+      const saved = stored?.[SYNC_RETRY_ATTEMPTS_KEY];
+      if (!saved || typeof saved !== "object") return;
+      _fullSyncRetryAttempts = Math.max(_fullSyncRetryAttempts, Math.min(Number(saved.full) || 0, SYNC_RETRY_BACKOFF_MIN.length));
+      _progressSyncRetryAttempts = Math.max(
+        _progressSyncRetryAttempts,
+        Math.min(Number(saved.progress) || 0, SYNC_RETRY_BACKOFF_MIN.length),
+      );
+    })
+    .catch(() => {});
+  return _syncRetryHydration;
+}
+
+function persistSyncRetryAttempts() {
+  bgStorageSetRaw({
+    [SYNC_RETRY_ATTEMPTS_KEY]: { full: _fullSyncRetryAttempts, progress: _progressSyncRetryAttempts },
+  }).catch((e) => swallow("persistSyncRetryAttempts", e));
+}
 
 function _retryStateFor(kind) {
   if (kind === "full") {
@@ -1074,11 +1120,16 @@ function _retryStateFor(kind) {
   };
 }
 
-function armSyncRetry(kind, reason) {
+async function armSyncRetry(kind, reason) {
+  const kindKey = syncRetryKindKey(kind);
+  const generation = _syncRetryGenerations[kindKey];
+  await hydrateSyncRetryAttempts();
+  if (generation !== _syncRetryGenerations[kindKey]) return;
   const s = _retryStateFor(kind);
   const idx = Math.min(s.getAttempts(), SYNC_RETRY_BACKOFF_MIN.length - 1);
   const delayMin = SYNC_RETRY_BACKOFF_MIN[idx];
   s.incAttempts();
+  persistSyncRetryAttempts();
   try {
     chrome.alarms.create(s.alarmName, { delayInMinutes: delayMin });
     console.log(`[BG] ${kind} sync retry scheduled in ${delayMin} min (attempt ${s.getAttempts()}, reason: ${reason})`);
@@ -1088,8 +1139,10 @@ function armSyncRetry(kind, reason) {
 }
 
 function clearSyncRetry(kind) {
+  _syncRetryGenerations[syncRetryKindKey(kind)]++;
   const s = _retryStateFor(kind);
   s.resetAttempts();
+  persistSyncRetryAttempts();
   try {
     chrome.alarms.clear(s.alarmName).catch(() => {});
   } catch {}
@@ -1203,6 +1256,7 @@ async function finishFailedSync({ kind, user, reason, error }) {
 
 let _lastCloudPollAt = 0;
 let _cloudPollInFlight = null;
+let _cloudPollInFlightForced = false;
 
 const _LAST_POLL_KEY = "_bgLastCloudPollAt";
 const _LAST_PROGRESS_SYNC_KEY = "_bgLastProgressSyncAt";
@@ -1649,14 +1703,16 @@ const CLOUD_POLL_SKIPPED = "cloud_poll_skipped";
 
 async function pollCloudData(reason = "consumer-connected", { force = false, requireAuth = false } = {}) {
   if (_cloudPollInFlight) {
-    if (!force) return _cloudPollInFlight;
+    if (!force || _cloudPollInFlightForced) return _cloudPollInFlight;
+    const awaited = _cloudPollInFlight;
     try {
-      await _cloudPollInFlight;
+      await awaited;
     } catch {}
-    if (_cloudPollInFlight) return _cloudPollInFlight;
+    if (_cloudPollInFlight && _cloudPollInFlight !== awaited && _cloudPollInFlightForced) return _cloudPollInFlight;
   }
 
-  _cloudPollInFlight = (async () => {
+  let run;
+  run = (async () => {
     try {
       await hydrateBgPollState();
       if (!force && Date.now() - _lastCloudPollAt < CLOUD_CONSUMER_POLL_MIN_GAP_MS) return CLOUD_POLL_SKIPPED;
@@ -1698,11 +1754,16 @@ async function pollCloudData(reason = "consumer-connected", { force = false, req
       console.warn(`[BG-RT] Poll sync failed (${reason}): ${e.message}`);
       throw e;
     } finally {
-      _cloudPollInFlight = null;
+      if (_cloudPollInFlight === run) {
+        _cloudPollInFlight = null;
+        _cloudPollInFlightForced = false;
+      }
     }
   })();
 
-  return _cloudPollInFlight;
+  _cloudPollInFlight = run;
+  _cloudPollInFlightForced = force;
+  return run;
 }
 
 const cloudCache = { doc: null, time: 0, uid: null };
@@ -3705,6 +3766,17 @@ const messageHandlers = {
     return true;
   },
 
+  AN1ME_TAB_READY(_message, _sender, sendResponse) {
+    sendResponse({ received: true });
+    try {
+      onAn1meTabAvailable();
+    } catch {}
+    maybeStartPendingMetadataRepair().catch((e) => console.log("[BG] pending repair on tab-ready failed:", e?.message || e));
+    resumeMetadataRepairIfNeeded().catch((e) => console.log("[BG] repair resume on tab-ready failed:", e?.message || e));
+    ensureLibraryFresh([]).catch((e) => console.log("[BG] ensureLibraryFresh on tab-ready failed:", e?.message || e));
+    return true;
+  },
+
   TRACK_BEFORE_UNLOAD(message, _sender, sendResponse) {
     persistBeforeUnloadTrack(message.animeInfo, message.duration)
       .then(() => sendResponse({ success: true }))
@@ -3793,6 +3865,7 @@ chrome.runtime.onStartup.addListener(() => {
   reconcileSmartNotificationAlarm().catch((error) => {
     console.warn("[BG] Smart notification startup reconciliation failed:", error?.message || error);
   });
+  ensureLibraryAutoRefreshAlarm();
 
   // Ensure cloud sync survives browser restart
   (async () => {
@@ -3832,6 +3905,11 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 
   if (alarm.name === SMART_NOTIF_ALARM) {
     checkNewEpisodes().catch((e) => console.log("[BG] Smart notif check error:", e));
+    return;
+  }
+
+  if (alarm.name === LIBRARY_AUTO_REFRESH_ALARM) {
+    ensureLibraryFresh([]).catch((e) => console.log("[BG] Library auto-refresh failed:", e?.message || e));
     return;
   }
 
@@ -3913,10 +3991,13 @@ resumeMetadataRepairIfNeeded().catch((error) => {
   console.error("[BG] Failed to resume metadata repair on boot:", error);
 });
 hydrateBgPollState();
+hydrateSyncRetryAttempts();
 
 migratePerKeyCachesOnce();
 
 ensureDailyCleanupAlarmScheduled();
+
+ensureLibraryAutoRefreshAlarm();
 
 (async () => {
   try {

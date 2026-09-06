@@ -2,3 +2,6 @@ an1me-tracker/backend/serviceAccountKey.json
 **/.env
 **/.env.*
 !**/.env.example
+
+an1me-tracker/dist/
+/an1me-tracker/dist

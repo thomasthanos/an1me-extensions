@@ -275,7 +275,9 @@ async function fetchEpisodeTypesFromAnimeFillerList(animeSlug) {
 
     if (all.length === 0) {
       console.warn(`[Anime Tracker] ⚠ No episodes parsed for ${animeSlug} — site structure may have changed`);
-      return null;
+      const parseError = new Error("animefillerlist_parse_empty");
+      parseError.aflParseEmpty = true;
+      throw parseError;
     }
 
     (typeof dlog === "function" ? dlog : () => {})(`[Anime Tracker] ✓ Fetched episode types for ${animeSlug}:`, episodeTypes);

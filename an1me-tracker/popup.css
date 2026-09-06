@@ -4241,7 +4241,8 @@ body.is-suppressing-hover #animeList .airing-list-cards .anime-movie-group:hover
   justify-content: center;
 }
 
-.grp-item .grp-row-actions{ width: 34px; justify-content: center; }
+/* 3 buttons × 16px + 2 gaps × 2px (complete / edit / delete) */
+.grp-item .grp-row-actions{ width: 52px; justify-content: center; }
 
 .grp-item .grp-row-chevron{ width: 16px; height: 16px; }
 
@@ -4293,12 +4294,12 @@ body.is-suppressing-hover #animeList .airing-list-cards .anime-movie-group:hover
 
 .season-item:not(.season-item-movie) .season-item-actions{ display: none; }
 
-.season-item:not(.season-item-movie).expanded .season-item-header{ grid-template-columns: minmax(0, 1fr) 175px; }
+.season-item:not(.season-item-movie).expanded .season-item-header{ grid-template-columns: minmax(0, 1fr) 193px; }
 
 .season-item:not(.season-item-movie).expanded .season-item-right {
-  width: 175px;
-  min-width: 175px;
-  grid-template-columns: 72px 44px 34px 16px;
+  width: 193px;
+  min-width: 193px;
+  grid-template-columns: 72px 44px 52px 16px;
 }
 
 .season-item:not(.season-item-movie).expanded .grp-row-actions{ display: flex; grid-column: 3; }
@@ -4339,13 +4340,19 @@ body.is-suppressing-hover #animeList .airing-list-cards .anime-movie-group:hover
   transform: translateY(-50%);
 }
 
-.season-item-movie .grp-metric{ transition: opacity var(--tf); }
+.season-item-movie .grp-metric,
+.season-item-movie .grp-state-badge{ transition: opacity var(--tf); }
 
+/* The action overlay is wider now (3 buttons), so clear the badge too while it is shown. */
 .season-item-movie:hover .grp-metric,
-.season-item-movie:focus-within .grp-metric{ opacity: 0; }
+.season-item-movie:focus-within .grp-metric,
+.season-item-movie:hover .grp-state-badge,
+.season-item-movie:focus-within .grp-state-badge{ opacity: 0; }
 
 .season-movie-type-badge{ color: var(--t2); background: rgba(var(--ink-rgb), 0.05); border: 1px solid var(--b1); }
 
+.season-complete-btn,
+.movie-complete-btn,
 .season-edit-btn,
 .season-delete-btn {
   width: 18px;
@@ -4362,11 +4369,22 @@ body.is-suppressing-hover #animeList .airing-list-cards .anime-movie-group:hover
   padding: 0;
 }
 
+.season-complete-btn svg,
+.movie-complete-btn svg,
 .season-edit-btn svg,
 .season-delete-btn svg{ width: 11px; height: 11px; stroke-width: 1.8; }
 
+.grp-item .season-complete-btn,
+.grp-item .movie-complete-btn,
 .grp-item .season-edit-btn,
 .grp-item .season-delete-btn{ width: 16px; height: 16px; }
+
+.season-complete-btn:hover,
+.movie-complete-btn:hover{ color: var(--success); }
+
+/* Already marked complete → the button undoes it, so keep it lit. */
+.season-complete-btn.is-complete,
+.movie-complete-btn.is-complete{ color: var(--success); }
 
 .season-edit-btn:hover{ color: var(--cyan); }
 
@@ -4635,10 +4653,13 @@ body.is-suppressing-hover #animeList .airing-list-cards .anime-movie-group:hover
   pointer-events: auto;
 }
 
-.movie-item .grp-metric{ transition: opacity var(--tf); }
+.movie-item .grp-metric,
+.movie-item .grp-state-badge{ transition: opacity var(--tf); }
 
 .movie-item:hover .grp-metric,
-.movie-item:focus-within .grp-metric{ opacity: 0; }
+.movie-item:focus-within .grp-metric,
+.movie-item:hover .grp-state-badge,
+.movie-item:focus-within .grp-state-badge{ opacity: 0; }
 
 .movie-open-link {
   position: relative;

@@ -139,11 +139,10 @@ const AnimeParser = {
         Logger.info(`${animeTitle} Ep${episodeNumber}`, { id: uniqueId });
       }
 
-      const coverImageElement = document.querySelector(".anime-featured img") || document.querySelector(".anime-main-image");
-      const rawCoverSrc = coverImageElement?.src || "";
-      const coverImage = /^https:\/\//i.test(rawCoverSrc) ? rawCoverSrc : null;
+      const coverImage = this.extractCoverImage();
 
       const siteAnimeId = this.extractSiteAnimeId();
+      const nextEpisodeSchedule = this.extractNextEpisodeSchedule();
 
       return {
         animeSlug,
@@ -159,10 +158,76 @@ const AnimeParser = {
         mediaType,
         releaseStatus,
         siteAnimeId,
+        nextEpisodeAt: nextEpisodeSchedule.nextEpisodeAt,
+        nextEpisodeTimezone: nextEpisodeSchedule.nextEpisodeTimezone,
       };
     } catch (e) {
       Logger.error("extractAnimeInfo failed:", e);
       return null;
+    }
+  },
+
+  resolveImageUrl(element) {
+    if (!element) return null;
+    const attr = (name) => element.getAttribute?.(name) || "";
+    const firstFromSet = (value) => String(value || "").split(",")[0].trim().split(/\s+/)[0];
+    const candidates = [
+      element.currentSrc,
+      attr("src"),
+      attr("data-src"),
+      firstFromSet(attr("data-srcset")),
+      firstFromSet(attr("srcset")),
+    ];
+    for (const candidate of candidates) {
+      const url = String(candidate || "").trim();
+      if (/^https:\/\//i.test(url)) return url;
+    }
+    return null;
+  },
+
+  extractCoverImage() {
+    try {
+      const selectors = [
+        ".anime-featured img",
+        "img.anime-main-image",
+        "img.wp-post-image",
+        ".anime-information img",
+      ];
+      for (const selector of selectors) {
+        for (const element of document.querySelectorAll(selector)) {
+          const url = this.resolveImageUrl(element);
+          if (url) return url;
+        }
+      }
+      for (const element of document.querySelectorAll("img[style*='aspect-ratio']")) {
+        if (!/aspect-ratio:\s*2\s*\/\s*3/i.test(element.getAttribute("style") || "")) continue;
+        const url = this.resolveImageUrl(element);
+        if (url) return url;
+      }
+    } catch {}
+    return null;
+  },
+
+  extractNextEpisodeSchedule() {
+    try {
+      const element =
+        document.querySelector(".next-scheduled-episode [data-countdown]") || document.querySelector("[data-countdown]");
+      if (!element) return { nextEpisodeAt: null, nextEpisodeTimezone: null };
+
+      const raw = String(element.getAttribute("data-countdown") || "").trim();
+      if (!raw) return { nextEpisodeAt: null, nextEpisodeTimezone: null };
+
+      let normalized = raw.replace(" ", "T");
+      if (!/(?:Z|[+-]\d{2}:?\d{2})$/i.test(normalized)) normalized += "Z";
+      const parsed = new Date(normalized);
+      if (!Number.isFinite(parsed.getTime())) return { nextEpisodeAt: null, nextEpisodeTimezone: null };
+
+      return {
+        nextEpisodeAt: parsed.toISOString(),
+        nextEpisodeTimezone: element.getAttribute("data-timezone") || null,
+      };
+    } catch {
+      return { nextEpisodeAt: null, nextEpisodeTimezone: null };
     }
   },
 
@@ -221,7 +286,7 @@ const AnimeParser = {
         }
         if (/^(?:aired?|προβλήθηκε)(?=\s|:|$)/i.test(labelText)) airedText = valueText;
       }
-      if (document.querySelector(".next-scheduled-episode [data-countdown], [data-countdown][data-timezone]")) return "RELEASING";
+      if (document.querySelector(".next-scheduled-episode [data-countdown], [data-countdown]")) return "RELEASING";
       if (airedText) {
         if (/\?|\bto\s+(?:\?|present|now|tbd)\b|έως\s+(?:\?|σήμερα)/i.test(airedText)) return "RELEASING";
         if (/\bto\s+(?!\?|present\b|now\b|tbd\b)\S|έως\s+(?!\?|σήμερα\b)\S/i.test(airedText)) return "FINISHED";

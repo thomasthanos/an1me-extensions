@@ -150,6 +150,46 @@ function extractAnimeTitlesFromHtml(html) {
 
 const AN1ME_UNREACHABLE = "an1me_unreachable";
 
+function pickImageUrlFromTag(tag) {
+  const attr = (name) => String(tag || "").match(new RegExp(`\\b${name}=["']([^"']+)["']`, "i"))?.[1] || null;
+  const firstFromSet = (value) => (value ? String(value).split(",")[0].trim().split(/\s+/)[0] : null);
+  const url = attr("data-src") || attr("src") || firstFromSet(attr("data-srcset")) || firstFromSet(attr("srcset"));
+  if (!url || /^data:/i.test(url)) return null;
+  return url;
+}
+
+function extractCoverImageFromHtml(html) {
+  const source = String(html || "");
+
+  const taggedImage = source.match(/<img\b[^>]*(?:anime-main-image|wp-post-image)[^>]*>/i);
+  if (taggedImage) {
+    const url = pickImageUrlFromTag(taggedImage[0]);
+    if (url) return url;
+  }
+
+  const h1At = source.search(/<h1\b/i);
+  const candidates = [];
+  for (const match of source.matchAll(/<img\b[^>]*>/gi)) {
+    if (h1At >= 0 && match.index > h1At) break;
+    if (!/aspect-ratio:\s*2\s*\/\s*3/i.test(match[0])) continue;
+    const url = pickImageUrlFromTag(match[0]);
+    if (url) candidates.push(url);
+  }
+  if (candidates.length > 0) return candidates[candidates.length - 1];
+
+  const ogMatch =
+    source.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ||
+    source.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+  return ogMatch?.[1] || null;
+}
+
+function extractCountdownTag(html) {
+  const source = String(html || "");
+  const scheduledBlock = source.match(/<div[^>]+class=["'][^"']*next-scheduled-episode[^"']*["'][\s\S]{0,2000}/i)?.[0] || null;
+  const tagPattern = /<[a-z][a-z0-9]*\b[^>]*\bdata-countdown=["'][^"']+["'][^>]*>/i;
+  return (scheduledBlock && scheduledBlock.match(tagPattern)?.[0]) || source.match(tagPattern)?.[0] || null;
+}
+
 async function fetchAn1mePage(url, timeoutMs) {
   const res = await an1meFetch(url, { timeoutMs });
   if (res.unreachable) throw new Error(AN1ME_UNREACHABLE);
@@ -174,7 +214,8 @@ async function fetchAnimePageInfo(slug) {
           resolvedSlug = candidateSlug;
           break;
         }
-      } catch {
+      } catch (error) {
+        if (String(error?.message || "").includes(AN1ME_UNREACHABLE)) throw error;
         continue;
       }
     }
@@ -225,13 +266,10 @@ async function fetchAnimePageInfo(slug) {
 
   let nextEpisodeAt = null;
   let nextEpisodeTimezone = null;
-  const countdownMatch =
-    html.match(
-      /<div[^>]+class=["'][^"']*next-scheduled-episode[^"']*["'][\s\S]*?<span[^>]+data-timezone=["']([^"']+)["'][^>]+data-countdown=["']([^"']+)["']/i,
-    ) || html.match(/<span[^>]+data-timezone=["']([^"']+)["'][^>]+data-countdown=["']([^"']+)["'][^>]*>/i);
-  if (countdownMatch) {
-    nextEpisodeTimezone = countdownMatch[1] || null;
-    const rawCountdown = countdownMatch[2] || "";
+  const countdownTag = extractCountdownTag(html);
+  if (countdownTag) {
+    nextEpisodeTimezone = countdownTag.match(/\bdata-timezone=["']([^"']+)["']/i)?.[1] || null;
+    const rawCountdown = countdownTag.match(/\bdata-countdown=["']([^"']+)["']/i)?.[1] || "";
     let normalizedCountdown = rawCountdown.trim().replace(" ", "T");
     // The site's own script interprets data-countdown as UTC (`new Date(str + 'Z')`);
     // without the suffix, Date() would parse the bare datetime as LOCAL time and skew
@@ -286,19 +324,7 @@ async function fetchAnimePageInfo(slug) {
   const fillerEpisodes = hasSiteEpisodeTypes ? parseScrapedEpisodeList(fillerText, totalEpisodes) : null;
   const canonEpisodes = hasSiteEpisodeTypes ? parseScrapedEpisodeList(canonText, totalEpisodes) : null;
 
-  let coverImage = null;
-  const imgMatch =
-    html.match(/<img[^>]+class=["'][^"']*anime-main-image[^"']*["'][^>]*src=["']([^"']+)["']/i) ||
-    html.match(/<img[^>]+src=["']([^"']+)["'][^>]*class=["'][^"']*anime-main-image[^"']*["']/i);
-  if (imgMatch) {
-    coverImage = imgMatch[1];
-  }
-  if (!coverImage) {
-    const ogMatch =
-      html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ||
-      html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
-    if (ogMatch) coverImage = ogMatch[1];
-  }
+  const coverImage = extractCoverImageFromHtml(html);
 
   let siteAnimeId = null;
   const idMatch =

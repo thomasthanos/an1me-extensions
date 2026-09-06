@@ -1361,7 +1361,9 @@
     document.addEventListener(
       "click",
       (e) => {
-        const target = e.target.closest(
+        const origin = e.target instanceof Element ? e.target : e.target?.parentElement || null;
+        if (!origin) return;
+        const target = origin.closest(
           "[data-open-nav-episode], .episode-navigation, .next-episode, .prev-episode, .episode-list-item, a, button",
         );
         if (!target) return;
@@ -1381,7 +1383,7 @@
           return;
         }
 
-        const link = e.target.closest("a[href]");
+        const link = origin.closest("a[href]");
         if (link && link.href && link.href !== location.href) {
           trackImmediately();
           return;

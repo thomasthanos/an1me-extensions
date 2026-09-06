@@ -1214,19 +1214,24 @@ window.AnimeTracker.AnimeCardRenderer = AnimeCardRenderer;
           : "";
 
         const movieTypeBadgeHtml = '<span class="meta-badge season-movie-type-badge grp-type-badge">Movie</span>';
+
+        // Seasons/parts inside a group are separate library entries, so each row gets its own
+        // list-state toggle — the same action the standalone card exposes as .anime-complete-toggle.
+        const isRowManuallyCompleted =
+          (globalThis.AnimeTrackerEntryState?.getResolvedListState?.(anime) || anime?.listState || "active") === "completed";
+        const rowActionsHtml = `<div class="season-item-actions grp-row-actions">
+                           <button class="season-complete-btn${isRowManuallyCompleted ? " is-complete" : ""}" data-slug="${UIHelpers.escapeHtml(slug)}" data-completed="${isRowManuallyCompleted}" title="${isRowManuallyCompleted ? "Unmark as completed" : "Mark as completed"}" aria-pressed="${isRowManuallyCompleted}">${UIHelpers.createIcon("check")}</button>
+                           <button class="season-edit-btn" data-slug="${UIHelpers.escapeHtml(slug)}" title="Edit title">${UIHelpers.createIcon("edit")}</button>
+                           <button class="season-delete-btn" data-slug="${UIHelpers.escapeHtml(slug)}" title="Delete">${UIHelpers.createIcon("delete")}</button>
+                       </div>`;
+
         const rightSideHtml = isMovie
           ? `${movieTypeBadgeHtml}${memberStatusBadgeHtml}
                        <span class="movie-duration grp-metric" title="${UIHelpers.escapeHtml(episodeBadgeText)}">${episodeBadgeText}</span>
-                       <div class="season-item-actions grp-row-actions">
-                           <button class="season-edit-btn" data-slug="${UIHelpers.escapeHtml(slug)}" title="Edit title">${UIHelpers.createIcon("edit")}</button>
-                           <button class="season-delete-btn" data-slug="${UIHelpers.escapeHtml(slug)}" title="Delete">${UIHelpers.createIcon("delete")}</button>
-                       </div>
+                       ${rowActionsHtml}
                        ${movieOpenIconHtml}`
           : `${memberStatusBadgeHtml}<span class="season-episode-badge grp-metric" title="${UIHelpers.escapeHtml(episodeBadgeText)}">${episodeBadgeText}</span>
-                       <div class="season-item-actions grp-row-actions">
-                           <button class="season-edit-btn" data-slug="${UIHelpers.escapeHtml(slug)}" title="Edit title">${UIHelpers.createIcon("edit")}</button>
-                           <button class="season-delete-btn" data-slug="${UIHelpers.escapeHtml(slug)}" title="Delete">${UIHelpers.createIcon("delete")}</button>
-                       </div>
+                       ${rowActionsHtml}
                        ${expandIconHtml}`;
 
         const html = this.renderGroupItem({
@@ -1377,9 +1382,15 @@ window.AnimeTracker.AnimeCardRenderer = AnimeCardRenderer;
       const statusBadgeHtml = hideStatusBadge
         ? ""
         : `<span class="meta-badge grp-state-badge ${statusView.badgeClass}">${statusIcon}${statusView.text}</span>`;
+      // Each movie in a merged group is its own library entry, so it gets its own list-state toggle.
+      const movieEntry = window.AnimeTracker.PopupState?.animeData?.[slug] || null;
+      const isRowManuallyCompleted =
+        !!movieEntry &&
+        (globalThis.AnimeTrackerEntryState?.getResolvedListState?.(movieEntry) || movieEntry.listState || "active") === "completed";
       const rightHtml = `${statusBadgeHtml}
                                 <span class="movie-duration grp-metric" title="${UIHelpers.escapeHtml(metricText)}">${metricText}</span>
                                 <div class="movie-item-actions grp-row-actions">
+                                    <button class="movie-complete-btn${isRowManuallyCompleted ? " is-complete" : ""}" data-slug="${UIHelpers.escapeHtml(slug)}" data-completed="${isRowManuallyCompleted}" title="${isRowManuallyCompleted ? "Unmark as completed" : "Mark as completed"}" aria-pressed="${isRowManuallyCompleted}">${UIHelpers.createIcon("check")}</button>
                                     <button class="movie-edit-btn" data-slug="${UIHelpers.escapeHtml(slug)}" title="Edit title">${UIHelpers.createIcon("edit")}</button>
                                     <button class="movie-delete-btn" data-slug="${UIHelpers.escapeHtml(slug)}" title="Delete">${UIHelpers.createIcon("delete")}</button>
                                 </div>

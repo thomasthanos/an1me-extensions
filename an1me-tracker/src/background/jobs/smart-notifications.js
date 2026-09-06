@@ -18,6 +18,8 @@ const SMART_NOTIF_TUNING = {
   activeUnknown: 3 * SN_HOUR,
   minGap: 15 * SN_MINUTE,
   dueGiveUp: 3 * SN_DAY,
+  errorBackoffBase: 30 * SN_MINUTE,
+  errorBackoffMax: 12 * SN_HOUR,
 };
 
 let smartNotifCheckInFlight = null;
@@ -44,6 +46,21 @@ function highestWatchedEpisode(anime) {
 }
 
 function computeNextCheckAt(cached, state, now) {
+  return applySmartNotifErrorBackoff(computeBaseNextCheckAt(cached, state, now), state, now);
+}
+
+function applySmartNotifErrorBackoff(nextCheckAt, state, now) {
+  const failures = Math.max(0, Number(state?.consecutiveFailures) || 0);
+  if (failures === 0) return nextCheckAt;
+  const delay = Math.min(
+    SMART_NOTIF_TUNING.errorBackoffBase * Math.pow(2, failures - 1),
+    SMART_NOTIF_TUNING.errorBackoffMax,
+  );
+  const since = snToMs(state?.lastErrorAt) || snToMs(state?.lastAttemptAt) || now;
+  return Math.max(nextCheckAt, since + delay);
+}
+
+function computeBaseNextCheckAt(cached, state, now) {
   const nextDropAt = snToMs(cached?.nextEpisodeAt);
   const lastActivityAt = Math.max(snToMs(state?.lastCheckedAt), snToMs(state?.lastAttemptAt));
   const minNext = lastActivityAt + SMART_NOTIF_TUNING.minGap;

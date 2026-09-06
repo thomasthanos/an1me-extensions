@@ -636,6 +636,7 @@
   let mountedViaShare = false;
   let shareWatcher = null;
   let shareWatcherScheduled = false;
+  let trackResizeObserver = null;
 
   const { isContextValid, parseProgressKey, buildItems } = window.AnimeTrackerContent.CWUtils;
 
@@ -833,8 +834,13 @@
     track.addEventListener("scroll", updateNavState, { passive: true });
 
     if (typeof ResizeObserver !== "undefined") {
-      const ro = new ResizeObserver(updateNavState);
-      ro.observe(track);
+      if (trackResizeObserver) {
+        try {
+          trackResizeObserver.disconnect();
+        } catch {}
+      }
+      trackResizeObserver = new ResizeObserver(updateNavState);
+      trackResizeObserver.observe(track);
     }
 
     setTimeout(updateNavState, 0);

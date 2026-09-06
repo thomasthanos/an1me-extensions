@@ -4,6 +4,10 @@
   const MAX_TIMEOUT_MS = 30000;
   const AN1ME_URL = /^https:\/\/(?:[a-z0-9-]+\.)?an1me\.to\//i;
 
+  try {
+    chrome.runtime.sendMessage({ type: "AN1ME_TAB_READY", url: location.href }, () => void chrome.runtime.lastError);
+  } catch {}
+
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (!message) return false;
 

@@ -290,6 +290,13 @@ async function repairAnimeInfoCacheUncoalesced(slug, forceRefresh = true) {
   try {
     const info = await fetchAnimePageInfo(slug);
     const entry = { ...info, cachedAt: Date.now() };
+    if (!entry.nextEpisodeAt && cached?.nextEpisodeAt) {
+      const previousDropAt = new Date(cached.nextEpisodeAt).getTime();
+      if (Number.isFinite(previousDropAt) && previousDropAt > Date.now()) {
+        entry.nextEpisodeAt = cached.nextEpisodeAt;
+        if (cached.nextEpisodeTimezone) entry.nextEpisodeTimezone = cached.nextEpisodeTimezone;
+      }
+    }
     await bgStorageSet({ [key]: entry });
     return { status: "fetched", entry };
   } catch (error) {
@@ -405,9 +412,17 @@ async function repairEpisodeTypesCacheUncoalesced(slug, title, forceRefresh = tr
     const externalTotal = Number(types?.totalEpisodes) || 0;
     return !infoTotal || !externalTotal || externalTotal === infoTotal;
   };
+  let aflParseEmpty = false;
   try {
     fillerSlug = await discoverFillerSlug(slug, title || null, { forceRefresh });
-    if (fillerSlug) episodeTypes = await fetchEpisodeTypesFromAnimeFillerList(fillerSlug);
+    if (fillerSlug) {
+      try {
+        episodeTypes = await fetchEpisodeTypesFromAnimeFillerList(fillerSlug);
+      } catch (error) {
+        if (error?.aflParseEmpty !== true) throw error;
+        aflParseEmpty = true;
+      }
+    }
     if (episodeTypes && !matchesInfoTotal(episodeTypes)) episodeTypes = null;
     if (!episodeTypes && title) {
       const jikanTypes = await fetchJikanEpisodes(title);
@@ -439,6 +454,25 @@ async function repairEpisodeTypesCacheUncoalesced(slug, title, forceRefresh = tr
   }
 
   if (!episodeTypes) {
+    if (aflParseEmpty) {
+      const backoffEntry =
+        cached && typeof cached === "object"
+          ? { ...cached, retryable: true, retryAt: Date.now() }
+          : {
+              error: "animefillerlist_parse_empty",
+              retryable: true,
+              retryAt: Date.now(),
+              cachedAt: Date.now(),
+              schemaVersion: self.AnimeTrackerCachePolicy.EPISODE_TYPES_SCHEMA_VERSION,
+            };
+      await bgStorageSet({ [key]: backoffEntry });
+      return {
+        status: "failed",
+        entry: cached && typeof cached === "object" ? cached : null,
+        error: "animefillerlist returned no episode rows",
+      };
+    }
+
     const notFoundEntry = {
       notFound: true,
       schemaVersion: self.AnimeTrackerCachePolicy.EPISODE_TYPES_SCHEMA_VERSION,

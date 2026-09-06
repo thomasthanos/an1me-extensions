@@ -308,18 +308,37 @@
     if (!info?.animeSlug) return;
     try {
       const pageMax = detectPageMaxEpisode(info.animeSlug, info.episodeNumber);
-      if (!(pageMax > 0)) return;
+      const scheduleAtMs = info.nextEpisodeAt ? new Date(info.nextEpisodeAt).getTime() : NaN;
+      const nextEpisodeAt = Number.isFinite(scheduleAtMs) && scheduleAtMs > Date.now() ? info.nextEpisodeAt : null;
+      if (!(pageMax > 0) && !nextEpisodeAt) return;
 
       const key = `animeinfo_${info.animeSlug}`;
       const result = await AT.Storage.get([key]);
       if (AT.Storage.isAbortResult(result)) return;
       const cached = (result && result[key]) || null;
       const cachedLatest = Number(cached?.latestEpisode) || 0;
-      if (pageMax <= cachedLatest) return;
+      const wantsEpisodeBump = pageMax > cachedLatest;
+      const wantsScheduleWrite = !!nextEpisodeAt && cached?.nextEpisodeAt !== nextEpisodeAt;
+      if (!wantsEpisodeBump && !wantsScheduleWrite) return;
+      const latestRead = await AT.Storage.get([key]);
+      if (AT.Storage.isAbortResult(latestRead)) return;
+      const base = (latestRead && latestRead[key]) || cached || {};
 
-      const updated = { ...(cached || {}), latestEpisode: pageMax };
-      await AT.Storage.set({ [key]: updated });
-      AT.Logger?.debug?.(`Bumped ${key}.latestEpisode → ${pageMax}`);
+      const payload = { ...base };
+      let changed = false;
+      if (pageMax > 0 && pageMax > (Number(base.latestEpisode) || 0)) {
+        payload.latestEpisode = pageMax;
+        changed = true;
+      }
+      if (nextEpisodeAt && base.nextEpisodeAt !== nextEpisodeAt) {
+        payload.nextEpisodeAt = nextEpisodeAt;
+        if (info.nextEpisodeTimezone) payload.nextEpisodeTimezone = info.nextEpisodeTimezone;
+        changed = true;
+      }
+      if (!changed) return;
+
+      await AT.Storage.set({ [key]: payload });
+      AT.Logger?.debug?.(`Updated ${key} from page`, { latestEpisode: payload.latestEpisode, nextEpisodeAt: payload.nextEpisodeAt });
     } catch (e) {
       AT.Logger?.warn?.("bumpLatestEpisodeFromPage failed:", e?.message || e);
     }

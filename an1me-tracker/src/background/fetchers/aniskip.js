@@ -87,7 +87,7 @@ async function getMalIdForSlug(slug, title) {
     }
     const data = await res.json();
     const malId = data?.data?.[0]?.mal_id || null;
-    bundle[slug] = { malId, cachedAt: Date.now() };
+    bundle[slug] = malId ? { malId, cachedAt: Date.now() } : { malId: null, cachedAt: Date.now(), httpMiss: true };
     scheduleSlugMalBundleFlush();
     return malId;
   } catch {

@@ -136,6 +136,10 @@
           publishRunningStatus(lastProgress);
         },
       });
+      if (heartbeatTimer) {
+        clearInterval(heartbeatTimer);
+        heartbeatTimer = null;
+      }
 
       if (result.truncated) {
         await writeStatus({
@@ -172,6 +176,10 @@
         });
       }
     } catch (e) {
+      if (heartbeatTimer) {
+        clearInterval(heartbeatTimer);
+        heartbeatTimer = null;
+      }
       const msg = String(e?.message || "");
       if (msg === "reconnect") {
         // Write a disconnect tombstone (not a raw key removal): the coordinated write bumps the

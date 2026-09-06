@@ -5,7 +5,7 @@
   const AT = window.AnimeTracker;
 
   const { AnimeStatus, getStatus: getAnimeStatus } = AT.StatusService;
-  const { deleteAnime } = AT.AnimeActions;
+  const { deleteAnime, toggleAnimeCompleted } = AT.AnimeActions;
   const { editAnimeTitle } = AT.AddAnimeDialog;
 
   let elements, _ipPatch, getActiveFilter, markInternalSave, normalizeCompactStatus, suppressHoverUntilMouseMove, updateStats;
@@ -138,7 +138,7 @@
   function renderCompactSectionHtml({ classPrefix, toggleId, label, subLabel, cardsHtml, isOpen }) {
     return `
             <div class="${classPrefix}-list-section">
-                <div class="${classPrefix}-list-label" id="${toggleId}">
+                <div class="${classPrefix}-list-label" id="${toggleId}" role="button" tabindex="0" aria-expanded="${isOpen ? "true" : "false"}">
                     <div class="${classPrefix}-list-label-left">
                         <span class="${classPrefix}-list-label-title">${label}</span>
                         <span class="${classPrefix}-list-label-sub">${subLabel}</span>
@@ -267,7 +267,7 @@
     window.AnimeTracker._animeDataRef = AT.PopupState.animeData;
 
     const entries = Object.entries(AT.PopupState.animeData).filter(([slug, anime]) => {
-      const matchesSearch = !filter || anime.title.toLowerCase().includes(filter.toLowerCase());
+      const matchesSearch = !filter || (anime.title || slug || "").toLowerCase().includes(filter.toLowerCase());
       const matchesCategory = categoryFilter(slug, anime);
       return matchesSearch && matchesCategory;
     });
@@ -277,7 +277,7 @@
 
     const inProgressAnime = ProgressManager.getInProgressAnime(AT.PopupState.animeData, visibleProgress)
       .filter((anime) => {
-        const matchesSearch = !filter || anime.title.toLowerCase().includes(filter.toLowerCase());
+        const matchesSearch = !filter || (anime.title || anime.slug || "").toLowerCase().includes(filter.toLowerCase());
         const trackedAnime = AT.PopupState.animeData[anime.slug];
         if (trackedAnime) {
           const status = getAnimeStatus(anime.slug, trackedAnime);
@@ -323,7 +323,7 @@
         case "date":
           return latestMap.get(b[0]) - latestMap.get(a[0]);
         case "name":
-          return animeA.title.localeCompare(animeB.title, "en");
+          return (animeA.title || a[0] || "").localeCompare(animeB.title || b[0] || "", "en");
         case "episodes":
           return (animeB.episodes?.length || 0) - (animeA.episodes?.length || 0);
         default:
@@ -495,7 +495,9 @@
       const cards = toggle.nextElementSibling;
       const chevron = toggle.querySelector(`.${chevronClass}`);
       if (!chevron || !cards) continue;
-      chevron.style.transform = cards.classList.contains("open") ? "rotate(0deg)" : "rotate(-90deg)";
+      const isOpen = cards.classList.contains("open");
+      chevron.style.transform = isOpen ? "rotate(0deg)" : "rotate(-90deg)";
+      toggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
     }
   }
 
@@ -564,6 +566,14 @@
           const isExpanded = hidden.classList.toggle("expanded");
           moreEps.textContent = isExpanded ? moreEps.dataset.lessText : moreEps.dataset.moreText;
         }
+        return;
+      }
+
+      const completeBtn = target.closest(".season-complete-btn, .movie-complete-btn");
+      if (completeBtn && list.contains(completeBtn) && completeBtn.dataset.slug) {
+        // Must run before the row-expansion handler below, hence the stopPropagation.
+        e.stopPropagation();
+        toggleAnimeCompleted(completeBtn.dataset.slug);
         return;
       }
 
@@ -643,6 +653,16 @@
 
     list.addEventListener("keydown", (e) => {
       if (e.key !== "Enter" && e.key !== " ") return;
+      const origin = e.target instanceof Element ? e.target : null;
+      if (origin) {
+        for (const [toggleId] of COMPACT_TOGGLE_CHEVRONS) {
+          const toggle = origin.closest(`#${toggleId}`);
+          if (!toggle || !list.contains(toggle)) continue;
+          e.preventDefault();
+          toggle.click();
+          return;
+        }
+      }
       const card = e.target.classList?.contains("anime-card") ? e.target : null;
       if (!card) return;
       e.preventDefault();

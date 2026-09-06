@@ -2,7 +2,7 @@
 
 <img src=".github/assets/banner-tracker.svg" alt="An1me.to Tracker">
 
-[![Version 7.2.4](.github/assets/badge-v-tracker.svg)](manifest.json)
+[![Version 7.4.0](.github/assets/badge-v-tracker.svg)](manifest.json)
 [![Manifest V3](.github/assets/badge-manifest.svg)](manifest.json)
 [![Cloud sync optional](.github/assets/badge-cloud-sync.svg)](PRIVACY.md)
 <br>
@@ -40,6 +40,11 @@ each other. If you don't sign in, it still works — everything just stays local
 - **Episode highlighting** — watched episodes are visually marked on the series page.
 - **Skip outro** button, with timings pulled from <a href="https://aniskip.com/"><img src=".github/assets/tag-aniskip.svg" alt="AniSkip" align="middle"></a>.
 - **Movies and multi-part series** handled separately from ordinary episodes.
+- **Never opens a tab to do its work** — metadata is fetched straight from the background worker.
+  If an1me.to ever answers with a challenge, the tracker borrows a tab you already have open
+  instead of creating one, and otherwise waits for the next attempt.
+- **Refreshes on its own** — covers, episode counts, airing status and new-episode checks keep
+  updating in the background on a timer. Opening the extension is never required to get fresh data.
 
 ### Your library
 
@@ -47,6 +52,8 @@ each other. If you don't sign in, it still works — everything just stays local
 - **Add anything manually**, including series you watched before installing.
 - Cover art, episode counts and metadata resolved automatically, with a **metadata repair** job that
   quietly fixes entries that came in incomplete.
+- **Mark anything complete by hand** — whole series from the card, and individual seasons, parts or
+  movies from their own row inside a merged group.
 - **Filler marking** via <a href="https://www.animefillerlist.com/"><img src=".github/assets/tag-animefillerlist.svg" alt="AnimeFillerList" align="middle"></a> — skip the padding
   or count it, your call.
 - **Export / import** your whole library as a file, any time.
@@ -129,7 +136,7 @@ never your identity. There is no analytics, no ad SDK and no data sale, anywhere
 
 ![An1me.to Tracker source layout](.github/assets/tree-tracker.svg)
 
-69 JavaScript modules, plain ES — no build step, no bundler, nothing minified. What you read is
+73 JavaScript modules, plain ES — no build step, no bundler, nothing minified. What you read is
 what runs.
 
 <img src=".github/assets/divider.svg" width="100%" alt="">
