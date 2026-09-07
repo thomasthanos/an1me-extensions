@@ -711,7 +711,7 @@ window.AnimeTracker.AnimeCardRenderer = AnimeCardRenderer;
   };
 
   Object.assign(AnimeCardRenderer, {
-    renderGroupShell({ variant, baseSlug, extraClass = "", coverHtml, title, metaRowHtml, itemsHtml }) {
+    renderGroupShell({ variant, baseSlug, extraClass = "", coverHtml, title, metaRowHtml, itemsHtml, footerHtml = "" }) {
       const { UIHelpers } = window.AnimeTracker;
       const v = VARIANT[variant];
       return `
@@ -729,6 +729,7 @@ window.AnimeTracker.AnimeCardRenderer = AnimeCardRenderer;
                     <div class="grp-content">
                         ${itemsHtml}
                     </div>
+                    ${footerHtml}
                 </div>
             `;
     },
@@ -1205,29 +1206,12 @@ window.AnimeTracker.AnimeCardRenderer = AnimeCardRenderer;
           ? `<button type="button" class="season-expand-icon grp-row-chevron movie-open-link" data-slug="${UIHelpers.escapeHtml(slug)}" title="Open anime page" aria-label="Open anime page">${UIHelpers.createIcon("chevron")}</button>`
           : "";
 
-        // Each season/part is its own library entry, so the expanded row carries the same action
-        // bar as a standalone card. States are resolved per entry, not from the group header.
-        const memberListState =
-          globalThis.AnimeTrackerEntryState?.getResolvedListState?.(anime) || anime?.listState || "active";
-        const isManuallyCompleted = memberListState === "completed";
-        const isDropped = memberStatusView.status === "dropped";
-        const isOnHold = memberStatusView.status === "on_hold";
-        const isFavorite = anime?.favorite === true;
-        const memberActionsHtml = `
-                            <div class="anime-card-actions">
-                                <button class="anime-favorite-toggle${isFavorite ? " is-favorite" : ""}" data-slug="${UIHelpers.escapeHtml(slug)}" data-favorite="${isFavorite}" title="${isFavorite ? "Remove from favorites" : "Mark as favorite"}" aria-pressed="${isFavorite}">${UIHelpers.createIcon(isFavorite ? "star-filled" : "star")}<span>${isFavorite ? "Favorited" : "Favorite"}</span></button>
-                                <button class="anime-onhold-toggle" data-slug="${UIHelpers.escapeHtml(slug)}" data-onhold="${isOnHold}" title="${isOnHold ? "Resume watching" : "Put on hold"}">${UIHelpers.createIcon("pause")}<span>${isOnHold ? "Resume" : "Hold"}</span></button>
-                                <button class="anime-complete-toggle" data-slug="${UIHelpers.escapeHtml(slug)}" data-completed="${isManuallyCompleted}" title="${isManuallyCompleted ? "Unmark as completed" : "Mark as completed"}">${UIHelpers.createIcon("check")}<span>${isManuallyCompleted ? "Undo" : "Complete"}</span></button>
-                                <button class="anime-drop-toggle" data-slug="${UIHelpers.escapeHtml(slug)}" data-dropped="${isDropped}" title="${isDropped ? "Unmark as dropped" : "Drop"}">${UIHelpers.createIcon("drop")}<span>${isDropped ? "Undrop" : "Drop"}</span></button>
-                            </div>`;
-
         const contentHtml = hasExpandableContent
           ? `<div class="season-item-content">
                             <div class="season-progress-container">
                                 ${progressInfoHTML}
                             </div>
                             ${episodesHTML}
-                            ${memberActionsHtml}
                         </div>`
           : "";
 
@@ -1348,7 +1332,36 @@ window.AnimeTracker.AnimeCardRenderer = AnimeCardRenderer;
         title: UIHelpers.escapeHtml(baseTitle),
         metaRowHtml: metaRowHtmlGroup,
         itemsHtml: seasonItemsHTML,
+        footerHtml: this.renderGroupActions(filteredSeasons),
       });
+    },
+
+    // One action bar at the bottom of the merged card. It acts on the whole franchise: every
+    // season/part/movie in the group is toggled together, and the button state reflects "all
+    // members are already in that state" so a second press undoes it.
+    renderGroupActions(entries) {
+      const { UIHelpers } = window.AnimeTracker;
+      const members = (Array.isArray(entries) ? entries : []).filter((entry) => entry?.slug);
+      if (members.length === 0) return "";
+
+      const listStateOf = (anime) =>
+        globalThis.AnimeTrackerEntryState?.getResolvedListState?.(anime) || anime?.listState || "active";
+      const allAre = (state) => members.every(({ anime }) => listStateOf(anime) === state);
+
+      const isCompleted = allAre("completed");
+      const isDropped = allAre("dropped");
+      const isOnHold = allAre("on_hold");
+      const isFavorite = members.every(({ anime }) => anime?.favorite === true);
+      const slugs = UIHelpers.escapeHtml(members.map(({ slug }) => slug).join(","));
+      const scope = members.length === 1 ? "" : ` (${members.length} items)`;
+
+      return `
+                <div class="grp-card-actions anime-card-actions">
+                    <button class="group-favorite-toggle${isFavorite ? " is-favorite" : ""}" data-group-slugs="${slugs}" data-favorite="${isFavorite}" title="${isFavorite ? "Remove from favorites" : "Mark as favorite"}${scope}" aria-pressed="${isFavorite}">${UIHelpers.createIcon(isFavorite ? "star-filled" : "star")}<span>${isFavorite ? "Favorited" : "Favorite"}</span></button>
+                    <button class="group-onhold-toggle" data-group-slugs="${slugs}" data-onhold="${isOnHold}" title="${isOnHold ? "Resume watching" : "Put on hold"}${scope}">${UIHelpers.createIcon("pause")}<span>${isOnHold ? "Resume" : "Hold"}</span></button>
+                    <button class="group-complete-toggle" data-group-slugs="${slugs}" data-completed="${isCompleted}" title="${isCompleted ? "Unmark as completed" : "Mark as completed"}${scope}">${UIHelpers.createIcon("check")}<span>${isCompleted ? "Undo" : "Complete"}</span></button>
+                    <button class="group-drop-toggle" data-group-slugs="${slugs}" data-dropped="${isDropped}" title="${isDropped ? "Unmark as dropped" : "Drop"}${scope}">${UIHelpers.createIcon("drop")}<span>${isDropped ? "Undrop" : "Drop"}</span></button>
+                </div>`;
     },
 
     extractBaseTitle(title) {

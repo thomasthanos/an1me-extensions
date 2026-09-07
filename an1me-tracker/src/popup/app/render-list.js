@@ -5,7 +5,7 @@
   const AT = window.AnimeTracker;
 
   const { AnimeStatus, getStatus: getAnimeStatus } = AT.StatusService;
-  const { deleteAnime } = AT.AnimeActions;
+  const { deleteAnime, toggleGroupCompleted, toggleGroupDropped, toggleGroupOnHold, toggleGroupFavorite } = AT.AnimeActions;
   const { editAnimeTitle } = AT.AddAnimeDialog;
 
   let elements, _ipPatch, getActiveFilter, markInternalSave, normalizeCompactStatus, suppressHoverUntilMouseMove, updateStats;
@@ -135,29 +135,12 @@
     return groups.reduce((count, group) => count + group[1].length, 0);
   }
 
-  // One status badge for the whole section. The cards inside stop repeating it (see the
-  // `-list-cards` rules in popup.css), so the state is stated once, outside the list.
-  const SECTION_STATUS_BADGES = {
-    completed: { badgeClass: "meta-badge-complete", icon: "check", text: "Completed" },
-    dropped: { badgeClass: "meta-badge-dropped", icon: "drop", text: "Dropped" },
-    airing: { badgeClass: "meta-badge-airing", icon: "", text: "Airing" },
-    onhold: { badgeClass: "meta-badge-onhold", icon: "pause", text: "On hold" },
-  };
-
-  function renderSectionStatusBadge(classPrefix) {
-    const badge = SECTION_STATUS_BADGES[classPrefix];
-    if (!badge) return "";
-    const icon = badge.icon ? AT.UIHelpers?.createIcon?.(badge.icon) || "" : "";
-    return `<span class="meta-badge section-status-badge ${badge.badgeClass}">${icon}${badge.text}</span>`;
-  }
-
   function renderCompactSectionHtml({ classPrefix, toggleId, label, subLabel, cardsHtml, isOpen }) {
     return `
             <div class="${classPrefix}-list-section">
                 <div class="${classPrefix}-list-label" id="${toggleId}" role="button" tabindex="0" aria-expanded="${isOpen ? "true" : "false"}">
                     <div class="${classPrefix}-list-label-left">
                         <span class="${classPrefix}-list-label-title">${label}</span>
-                        ${renderSectionStatusBadge(classPrefix)}
                         <span class="${classPrefix}-list-label-sub">${subLabel}</span>
                     </div>
                     <svg class="${classPrefix}-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform: ${isOpen ? "rotate(0deg)" : "rotate(-90deg)"}">
@@ -582,6 +565,26 @@
         if (hidden?.classList.contains("hidden-episodes")) {
           const isExpanded = hidden.classList.toggle("expanded");
           moreEps.textContent = isExpanded ? moreEps.dataset.lessText : moreEps.dataset.moreText;
+        }
+        return;
+      }
+
+      // Card-level action bar at the bottom of a merged card: acts on every member of the group.
+      // Must stop here so the click does not reach the card/row expansion handlers below.
+      const groupActionBtn = target.closest(
+        ".group-favorite-toggle, .group-onhold-toggle, .group-complete-toggle, .group-drop-toggle",
+      );
+      if (groupActionBtn && list.contains(groupActionBtn)) {
+        e.stopPropagation();
+        const slugs = (groupActionBtn.dataset.groupSlugs || "")
+          .split(",")
+          .map((slug) => slug.trim())
+          .filter(Boolean);
+        if (slugs.length > 0) {
+          if (groupActionBtn.classList.contains("group-complete-toggle")) void toggleGroupCompleted(slugs);
+          else if (groupActionBtn.classList.contains("group-drop-toggle")) void toggleGroupDropped(slugs);
+          else if (groupActionBtn.classList.contains("group-onhold-toggle")) void toggleGroupOnHold(slugs);
+          else if (groupActionBtn.classList.contains("group-favorite-toggle")) void toggleGroupFavorite(slugs);
         }
         return;
       }

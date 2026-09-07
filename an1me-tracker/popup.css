@@ -1340,24 +1340,33 @@ textarea:focus-visible{ outline: none; }
 .onhold-list-label-sub,
 .airing-list-label-sub{ font-size: 10px; color: rgba(99, 113, 141, 0.82); }
 
-/* The section states its status once, on the header … */
-.section-status-badge {
-  align-self: center;
-  font-size: 9px;
-  padding: 1px 6px;
-  letter-spacing: 0.02em;
-  flex-shrink: 0;
+/* One action bar at the bottom of a merged card, mirroring the standalone card: shown while the
+   card is expanded, hidden when it is collapsed. */
+.grp-card-actions {
+  display: none;
+  padding: 8px 10px 9px;
+  margin-top: 0;
+  border-top: 1px solid var(--b0);
 }
 
-.section-status-badge svg{ width: 9px; height: 9px; }
+.anime-season-group.expanded .grp-card-actions,
+.anime-movie-group.expanded .grp-card-actions{ display: flex; }
 
-/* … so the cards inside stop repeating it. Scoped to the section wrappers only, which keeps the
-   badge on every card in the main list, and keeps badges that say something different (e.g. an
-   "Airing" marker on a completed entry) visible. */
-.completed-list-cards .meta-badge-complete,
-.dropped-list-cards .meta-badge-dropped,
-.airing-list-cards .meta-badge-airing,
-.onhold-list-cards .meta-badge-onhold{ display: none; }
+/* Inside a status section the state is already given by the section itself, so the cards stop
+   repeating it. Scoped to the header/meta rows only: it must not hide the season status line
+   above, and it must not touch the main list (whose cards are outside these wrappers). */
+.completed-list-cards .anime-meta-row .meta-badge-complete,
+.completed-list-cards .grp-meta-row .meta-badge-complete,
+.completed-list-cards .grp-item-header .meta-badge-complete,
+.dropped-list-cards .anime-meta-row .meta-badge-dropped,
+.dropped-list-cards .grp-meta-row .meta-badge-dropped,
+.dropped-list-cards .grp-item-header .meta-badge-dropped,
+.airing-list-cards .anime-meta-row .meta-badge-airing,
+.airing-list-cards .grp-meta-row .meta-badge-airing,
+.airing-list-cards .grp-item-header .meta-badge-airing,
+.onhold-list-cards .anime-meta-row .meta-badge-onhold,
+.onhold-list-cards .grp-meta-row .meta-badge-onhold,
+.onhold-list-cards .grp-item-header .meta-badge-onhold{ display: none; }
 
 .completed-chevron,
 .dropped-chevron,
@@ -1669,10 +1678,6 @@ body.is-suppressing-hover #animeList .airing-list-cards .anime-movie-group:hover
 }
 
 .anime-card.expanded .anime-card-actions{ display: flex; }
-
-/* Same bar inside a merged card: the season row's own content is only rendered/visible while the
-   row is expanded, so it can show unconditionally here. */
-.season-item-content .anime-card-actions{ display: flex; }
 
 .anime-card-actions button {
   display: inline-flex;

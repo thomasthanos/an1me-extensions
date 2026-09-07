@@ -233,6 +233,112 @@
     }
   }
 
+  // Group variants: one transaction, one re-render, for every member of a merged card. The toggle
+  // only reverses when EVERY member is already in the target state, so a mixed group is first
+  // brought fully into that state and a second press clears it.
+  function normalizeGroupSlugs(slugs) {
+    const list = Array.isArray(slugs) ? slugs : String(slugs || "").split(",");
+    return [...new Set(list.map((slug) => String(slug || "").trim()).filter(Boolean))];
+  }
+
+  async function toggleGroupListState(slugs, targetState, logLabel) {
+    const requested = normalizeGroupSlugs(slugs);
+    if (requested.length === 0) return;
+
+    try {
+      const mutation = await AT.LibraryMutations.enqueue(`${targetState}:group:${requested.join("|")}`, async ({ commit, snapshot }) => {
+        const storedAnimeData =
+          snapshot.animeData && typeof snapshot.animeData === "object" ? snapshot.animeData : AT.PopupState.animeData || {};
+        const present = requested.filter((slug) => storedAnimeData[slug]);
+        if (present.length === 0) return { changed: false };
+
+        const stateOf = (entry) =>
+          globalThis.AnimeTrackerEntryState?.getResolvedListState?.(entry) || entry?.listState || "active";
+        const wasTarget = present.every((slug) => stateOf(storedAnimeData[slug]) === targetState);
+        const nextState = wasTarget ? "active" : targetState;
+        const stamp = new Date().toISOString();
+
+        const nextAnimeData = { ...storedAnimeData };
+        let deletedAnime = snapshot.deletedAnime || {};
+        for (const slug of present) {
+          const nextEntry = { ...storedAnimeData[slug] };
+          setManualListState(nextEntry, nextState, stamp, targetState === "completed" && !wasTarget);
+          nextAnimeData[slug] = nextEntry;
+          deletedAnime = clearDeletedAnimeSlug(deletedAnime, slug);
+        }
+
+        const currentVideoProgress = snapshot.videoProgress || {};
+        await commit(
+          { animeData: nextAnimeData, videoProgress: currentVideoProgress, deletedAnime },
+          { markInternalSave, immediate: true },
+        );
+
+        AT.PopupState.animeData = nextAnimeData;
+        AT.PopupState.videoProgress = currentVideoProgress;
+        return { changed: true, wasTarget, present };
+      });
+
+      if (!mutation?.changed) return;
+      for (const slug of mutation.present) syncWatchlistFromPopup(slug, mutation.wasTarget ? "watching" : targetState);
+      renderAnimeList(elements.searchInput?.value || "");
+      updateStats();
+    } catch (e) {
+      PopupLogger.error(logLabel, "Error:", e);
+    }
+  }
+
+  async function toggleGroupCompleted(slugs) {
+    return toggleGroupListState(slugs, "completed", "GroupComplete");
+  }
+
+  async function toggleGroupDropped(slugs) {
+    return toggleGroupListState(slugs, "dropped", "GroupDrop");
+  }
+
+  async function toggleGroupOnHold(slugs) {
+    return toggleGroupListState(slugs, "on_hold", "GroupOnHold");
+  }
+
+  async function toggleGroupFavorite(slugs) {
+    const requested = normalizeGroupSlugs(slugs);
+    if (requested.length === 0) return;
+
+    try {
+      const mutation = await AT.LibraryMutations.enqueue(`favorite:group:${requested.join("|")}`, async ({ commit, snapshot }) => {
+        const storedAnimeData =
+          snapshot.animeData && typeof snapshot.animeData === "object" ? snapshot.animeData : AT.PopupState.animeData || {};
+        const present = requested.filter((slug) => storedAnimeData[slug]);
+        if (present.length === 0) return { changed: false };
+
+        const wasFavorite = present.every((slug) => storedAnimeData[slug]?.favorite === true);
+        const now = new Date().toISOString();
+        const nextAnimeData = { ...storedAnimeData };
+        for (const slug of present) {
+          nextAnimeData[slug] = {
+            ...storedAnimeData[slug],
+            favorite: !wasFavorite,
+            favoritedAt: wasFavorite ? null : now,
+            favoriteUpdatedAt: now,
+          };
+        }
+        await commit({ animeData: nextAnimeData }, { markInternalSave, immediate: true });
+        AT.PopupState.animeData = nextAnimeData;
+        return { changed: true, wasFavorite };
+      });
+
+      if (!mutation?.changed) return;
+      renderAnimeList(elements.searchInput?.value || "");
+      try {
+        AT.UIHelpers?.showToast?.(mutation.wasFavorite ? "Removed from favorites" : "Added to favorites", {
+          type: "success",
+          duration: 1400,
+        });
+      } catch {}
+    } catch (e) {
+      PopupLogger.error("GroupFavorite", "Error:", e);
+    }
+  }
+
   AT.AnimeActions = {
     _init(d) {
       elements = d.elements;
@@ -247,6 +353,10 @@
     toggleAnimeDropped,
     toggleAnimeFavorite,
     toggleAnimeOnHold,
+    toggleGroupCompleted,
+    toggleGroupDropped,
+    toggleGroupOnHold,
+    toggleGroupFavorite,
     clearAllData,
   };
 })();
