@@ -868,7 +868,10 @@
           }
 
           try {
-            const baseSlug = getBaseSlug(slug);
+            // The site tells us the media type, so the cover lands on the same group key the
+            // library reads back (movies group under a different base than seasons).
+            const entryMediaType = animeData[slug]?.mediaType || detectedMediaType || null;
+            const baseSlug = getBaseSlug(slug, { isMovie: entryMediaType === "MOVIE" });
             if (metadataInfo.coverImage && !groupCoverImages[baseSlug]) {
               groupCoverImages[baseSlug] = metadataInfo.coverImage;
               changed = true;

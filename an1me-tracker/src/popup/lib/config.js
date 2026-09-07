@@ -213,51 +213,14 @@ const SeasonGrouping = {
     return 1;
   },
 
+  // Franchise + suffix rules now live in src/common/data/anime-identity.js so the content script
+  // and the background worker resolve identity exactly the same way.
   getMovieBaseSlug(slug) {
-    if (slug.startsWith("fate-zero") || slug.startsWith("fate-stay-night")) return "fate";
-    if (slug.startsWith("trinity-seven-nanatsu")) return "trinity-seven";
-    if (slug.startsWith("kimetsu-no-yaiba")) return "kimetsu-no-yaiba";
-    if (slug.startsWith("higashi-no-eden")) return "higashi-no-eden";
-    if (slug.startsWith("one-piece")) return "one-piece";
-    if (slug.startsWith("dragon-ball")) return "dragon-ball";
-    if (slug.startsWith("naruto")) return "naruto";
-    if (slug.startsWith("hunter-x-hunter") || slug.startsWith("hunterhunter")) return "hunter-x-hunter";
-    if (slug.startsWith("initial-d")) return "initial-d";
-
-    return slug
-      .replace(/-movie.*$/i, "")
-      .replace(/-film.*$/i, "")
-      .replace(/-3d.*$/i, "")
-      .replace(/-gekijouban.*$/i, "")
-      .replace(/-the-movie.*$/i, "");
+    return window.AnimeTracker.AnimeIdentity.getMovieBaseSlug(slug);
   },
 
   getBaseSlug(slug, anime = null) {
-    if (this.isMovie(slug, anime)) {
-      return this.getMovieBaseSlug(slug);
-    }
-
-    if (slug.startsWith("jujutsu-kaisen")) return "jujutsu-kaisen";
-    if (slug.startsWith("fate-zero") || slug.startsWith("fate-stay-night")) return "fate";
-    if (slug.startsWith("naruto")) return "naruto";
-    if (slug.startsWith("one-punch-man")) return "one-punch-man";
-    if (slug.startsWith("one-piece")) return "one-piece";
-    if (slug.startsWith("kimetsu-no-yaiba")) return "kimetsu-no-yaiba";
-    if (slug.startsWith("shingeki-no-kyojin")) return "shingeki-no-kyojin";
-    if (slug.startsWith("initial-d")) return "initial-d";
-    if (slug.startsWith("blue-lock")) return "blue-lock";
-    if (slug.startsWith("bleach")) return "bleach";
-    if (slug.startsWith("mashle")) return "mashle";
-    if (slug.startsWith("hunter-x-hunter") || slug.startsWith("hunterhunter")) return "hunter-x-hunter";
-
-    return slug
-      .replace(/-\d+(st|nd|rd|th)-season(-.+)?$/i, "")
-      .replace(/-season-?\d+(-[a-z-]+)?$/i, "")
-      .replace(/-s\d+$/i, "")
-      .replace(/-(part|cour)-?\d+(-[a-z-]+)?$/i, "")
-      .replace(/-20\d{2}$/i, "")
-      .replace(/-(ii|iii|iv|v|vi)$/i, "")
-      .replace(/-[a-z]+-hen$/i, "");
+    return window.AnimeTracker.AnimeIdentity.getBaseSlug(slug, { isMovie: this.isMovie(slug, anime) });
   },
 
   getChronologyInfo(baseSlug, slug, title = "") {

@@ -262,8 +262,11 @@
     if (epEl) epEl.textContent = `Episode ${epLabel}`;
     if (linkEl) linkEl.href = info.link || `https://an1me.to/watch/${slug}`;
     if (coverEl) {
-      if (info.coverImage) {
-        coverEl.src = info.coverImage;
+      // Cover URLs arrive from the an1me.to page and from metadata APIs, so they go through the
+      // same host allowlist the library cards use instead of straight into an <img src>.
+      const safeCover = AT.UIHelpers?.sanitizeImageUrl?.(info.coverImage) || null;
+      if (safeCover) {
+        coverEl.src = safeCover;
         coverEl.style.display = "";
       } else {
         coverEl.removeAttribute("src");
@@ -564,8 +567,9 @@
         if (slugCard) slugCard.dataset.hasMeta = "true";
         slugMeta.style.display = "";
         if (cover) {
-          if (coverUrl) {
-            cover.src = coverUrl;
+          const safeCoverUrl = AT.UIHelpers?.sanitizeImageUrl?.(coverUrl) || null;
+          if (safeCoverUrl) {
+            cover.src = safeCoverUrl;
             cover.style.display = "";
           } else {
             cover.removeAttribute("src");

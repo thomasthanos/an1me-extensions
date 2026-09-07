@@ -6,6 +6,7 @@ importScripts(
   "src/common/data/cache-policy.js",
   "src/common/data/media-type.js",
   "src/common/data/entry-state.js",
+  "src/common/data/anime-identity.js",
   "src/background/fetchers/aniskip.js",
   "src/background/fetchers/filler-discovery.js",
   "src/background/fetchers/an1me-gateway.js",
@@ -1507,10 +1508,18 @@ async function refreshFirebaseToken(refreshToken) {
       await _bgOnRefreshTransient("missing_fields", refreshToken);
       return { tokens: null, permanent: false, error: "missing_fields" };
     }
+    const expiresInSeconds = parseInt(data.expires_in, 10);
+    if (!Number.isFinite(expiresInSeconds)) {
+      // NaN here would make expiresAt NaN, and every "is it expired?" comparison against NaN is
+      // false, so the token would be treated as never expiring until a 401 forced a reauth.
+      console.warn("[BG] Token refresh returned a non-numeric expires_in — treating as transient");
+      await _bgOnRefreshTransient("bad_expires_in", refreshToken);
+      return { tokens: null, permanent: false, error: "bad_expires_in" };
+    }
     const tokens = {
       idToken: data.id_token,
       refreshToken: data.refresh_token,
-      expiresAt: Date.now() + parseInt(data.expires_in, 10) * 1000,
+      expiresAt: Date.now() + expiresInSeconds * 1000,
     };
 
     // Discard refreshed tokens if the user signed out mid-refresh — writing them back would restore the session.

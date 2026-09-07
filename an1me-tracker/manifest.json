@@ -118,6 +118,7 @@
       ],
       "js": [
         "src/common/data/multipart-mappings.js",
+        "src/common/data/anime-identity.js",
         "src/common/data/cache-policy.js",
         "src/common/data/media-type.js",
         "src/common/data/entry-state.js",

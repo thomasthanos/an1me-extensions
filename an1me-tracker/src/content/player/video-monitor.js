@@ -271,9 +271,13 @@ const VideoMonitor = {
               Notifications.showResumePrompt(
                 savedProgress,
                 () => {
-                  video.currentTime = savedProgress.currentTime;
+                  // Same clamp as the silent and auto resume paths: a saved position at or past the
+                  // end (stale entry, or a server swap to a shorter encode) would otherwise seek to
+                  // the end and instantly re-complete the episode.
+                  const target = Math.min(savedProgress.currentTime, Math.max(0, video.duration - 1));
+                  video.currentTime = target;
                   video.play().catch(() => {});
-                  Logger.success(`Resumed @ ${savedProgress.currentTime}s`);
+                  Logger.success(`Resumed @ ${Math.round(target)}s`);
                 },
                 () => {
                   video.currentTime = 0;

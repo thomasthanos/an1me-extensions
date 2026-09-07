@@ -118,6 +118,11 @@
       } else if (key.startsWith("episodeTypes_")) {
         const slug = key.slice("episodeTypes_".length);
         freshNow = isFillerFresh(value, all[`animeinfo_${slug}`]);
+      } else if (key.startsWith("fillerslug_")) {
+        // A tiny slug->slug mapping with no TTL of its own. It is only dead once its anime is
+        // gone, which is what used to make it the one metadata cache that never got reclaimed.
+        const slug = key.slice("fillerslug_".length);
+        freshNow = all[`animeinfo_${slug}`] !== undefined;
       } else {
         continue;
       }

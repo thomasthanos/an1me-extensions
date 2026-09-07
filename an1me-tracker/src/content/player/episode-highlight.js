@@ -7,23 +7,14 @@
 
   const AT = window.AnimeTrackerContent;
 
-  function getBaseSlug(slug) {
+  // Delegates to the shared resolver so the watch page groups exactly like the library does; this
+  // value is also used as the groupCoverImages key, which the popup reads back. Callers pass
+  // `options.isMovie` when the media type is known, because movies resolve through different base
+  // rules (one-piece-movie-01 -> one-piece, not one-piece-movie-01).
+  function getBaseSlug(slug, options = {}) {
     if (!slug || typeof slug !== "string") return slug || "";
-    const lower = slug.toLowerCase();
-    if (lower.startsWith("naruto")) return "naruto";
-    if (lower.startsWith("one-punch-man")) return "one-punch-man";
-    if (lower.startsWith("kimetsu-no-yaiba")) return "kimetsu-no-yaiba";
-    if (lower.startsWith("shingeki-no-kyojin")) return "shingeki-no-kyojin";
-    if (lower.startsWith("initial-d")) return "initial-d";
-    if (lower.startsWith("bleach")) return "bleach";
-    return lower
-      .replace(/-season-?\d+(-[a-z-]+)?$/i, "")
-      .replace(/-s\d+$/i, "")
-      .replace(/-\d+(st|nd|rd|th)-season$/i, "")
-      .replace(/-(part|cour)-?\d+(-[a-z-]+)?$/i, "")
-      .replace(/-20\d{2}$/i, "")
-      .replace(/-(ii|iii|iv|v|vi)$/i, "")
-      .replace(/-[a-z]+-hen$/i, "");
+    const Identity = globalThis.AnimeTrackerAnimeIdentity;
+    return Identity ? Identity.getBaseSlug(slug, options) : slug;
   }
 
   let _highlightStorageListener = null;

@@ -1517,7 +1517,7 @@ const AnilistService = {
   },
 
   _isSeasonLikeSlug(slug) {
-    return /-(?:season-?\d+|(?:\d+)(?:st|nd|rd|th)-season|s\d+|(?:part|cour)-?\d+|(?:ii|iii|iv|v|vi))(?=$|-)/i.test(String(slug || ""));
+    return window.AnimeTracker.AnimeIdentity.isSeasonLikeSlug(slug);
   },
 
   // Read-only warm used for the popup's first paint. loadCachedData() also purges bad keys and

@@ -614,7 +614,7 @@
         const seasonItem = seasonHeader.closest(".season-item");
         if (seasonItem && !seasonItem.classList.contains("season-item-movie")) {
           e.stopPropagation();
-          seasonItem.classList.toggle("expanded");
+          setHeaderExpanded(seasonHeader, seasonItem.classList.toggle("expanded"));
         }
         return;
       }
@@ -622,20 +622,20 @@
       const movieGroupHeader = target.closest(".movie-group-header");
       if (movieGroupHeader && list.contains(movieGroupHeader)) {
         const group = movieGroupHeader.closest(".anime-movie-group");
-        if (group) group.classList.toggle("expanded");
+        if (group) setHeaderExpanded(movieGroupHeader, group.classList.toggle("expanded"));
         return;
       }
       const seasonGroupHeader = target.closest(".season-group-header");
       if (seasonGroupHeader && list.contains(seasonGroupHeader)) {
         const group = seasonGroupHeader.closest(".anime-season-group");
-        if (group) group.classList.toggle("expanded");
+        if (group) setHeaderExpanded(seasonGroupHeader, group.classList.toggle("expanded"));
         return;
       }
       const partItemHeader = target.closest(".part-item-header");
       if (partItemHeader && list.contains(partItemHeader)) {
         e.stopPropagation();
         const partItem = partItemHeader.closest(".part-item");
-        if (partItem) partItem.classList.toggle("expanded");
+        if (partItem) setHeaderExpanded(partItemHeader, partItem.classList.toggle("expanded"));
         return;
       }
 
@@ -645,7 +645,8 @@
         const card = collapsibleHeader.closest(".anime-card");
         if (card && !card.classList.contains("expanded")) card.classList.add("expanded");
         const parent = collapsibleHeader.parentElement;
-        if (parent) parent.classList.toggle("collapsed");
+        // Inverted: this one tracks "collapsed", so expanded is the negation.
+        if (parent) setHeaderExpanded(collapsibleHeader, !parent.classList.toggle("collapsed"));
         return;
       }
 
@@ -676,13 +677,30 @@
         }
       }
       const card = e.target.classList?.contains("anime-card") ? e.target : null;
-      if (!card) return;
+      if (!card) {
+        // Reuse the click path so keyboard and mouse can never drift apart. Only headers that opted
+        // into role="button" are matched, which is exactly the set the click handler expands.
+        const header = origin?.closest(
+          '.season-item-header[role="button"], .movie-group-header[role="button"], .season-group-header[role="button"], .part-item-header[role="button"], .in-progress-header[role="button"], .episodes-header[role="button"], .parts-header[role="button"], .ip-group-header[role="button"]',
+        );
+        if (header && list.contains(header)) {
+          e.preventDefault();
+          header.click();
+        }
+        return;
+      }
       e.preventDefault();
       const wasExpanded = card.classList.toggle("expanded");
       card.setAttribute("aria-expanded", wasExpanded ? "true" : "false");
     });
 
     list.__cardListenersInstalled = true;
+  }
+
+  // The expandable headers are divs with role="button", so aria-expanded has to be maintained by
+  // hand: a screen reader otherwise announces a permanently collapsed control.
+  function setHeaderExpanded(header, expanded) {
+    if (header && header.hasAttribute("role")) header.setAttribute("aria-expanded", expanded ? "true" : "false");
   }
 
   function setupCardEventListeners() {

@@ -44,6 +44,20 @@
     }
   }
 
+  // animeinfo_/episodeTypes_/fillerslug_ are per-anime caches that no library transaction owns, so
+  // a delete has to drop them explicitly or they linger forever for a slug that no longer exists.
+  async function dropMetadataCaches(slugs) {
+    const list = (Array.isArray(slugs) ? slugs : [slugs]).filter(Boolean);
+    if (list.length === 0) return;
+    const keys = [];
+    for (const slug of list) keys.push(`animeinfo_${slug}`, `episodeTypes_${slug}`, `fillerslug_${slug}`);
+    try {
+      await AT.Storage.remove(keys);
+    } catch (e) {
+      PopupLogger.warn("Delete", "Metadata cache cleanup failed:", e?.message || e);
+    }
+  }
+
   async function deleteAnime(slug) {
     if (_deletingSlugs.has(slug)) return;
     _deletingSlugs.add(slug);
@@ -91,6 +105,7 @@
       });
 
       if (!mutation?.changed) return;
+      await dropMetadataCaches(slug);
       if (mutation.siteAnimeId) {
         chrome.runtime.sendMessage({ type: "WATCHLIST_SYNC", animeId: mutation.siteAnimeId, watchlistType: "remove" }, () => {
           if (chrome.runtime.lastError) {
@@ -205,6 +220,7 @@
 
   async function clearAllData() {
     try {
+      let clearedSlugs = [];
       await AT.LibraryMutations.enqueue("clear-library-progress", async ({ commit, snapshot }) => {
         const result = snapshot;
         const storedAnimeData = result.animeData && typeof result.animeData === "object" ? result.animeData : AT.PopupState.animeData || {};
@@ -215,6 +231,7 @@
         for (const [slug, entry] of Object.entries(storedAnimeData)) {
           deletedAnime[slug] = AT.MergeUtils?.buildDeletedAnimeTombstone?.(entry) || { deletedAt: new Date().toISOString() };
         }
+        clearedSlugs = Object.keys(storedAnimeData);
 
         await commit(
           { animeData: {}, videoProgress: {}, groupCoverImages: {}, deletedAnime },
@@ -223,6 +240,9 @@
         AT.PopupState.animeData = {};
         AT.PopupState.videoProgress = {};
       });
+
+      // Without this, wiping the library leaves one metadata cache entry per anime behind.
+      await dropMetadataCaches(clearedSlugs);
 
       renderAnimeList();
       updateStats();

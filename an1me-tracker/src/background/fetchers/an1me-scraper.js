@@ -1,7 +1,7 @@
 // an1me-scraper.js — scrapes an1me.to anime pages for metadata (episodes, status,
 // countdown, cover, id, duration); maps watch→info slugs and backfills animeData.
 function isSeasonLikeSlug(slug) {
-  return /-(?:season-?\d+|(?:\d+)(?:st|nd|rd|th)-season|s\d+|(?:part|cour)-?\d+|(?:ii|iii|iv|v|vi))(?=$|-)/i.test(String(slug || ""));
+  return self.AnimeTrackerAnimeIdentity.isSeasonLikeSlug(slug);
 }
 
 function toOrdinal(n) {
@@ -14,21 +14,11 @@ function toOrdinal(n) {
   return `${num}th`;
 }
 
-const WATCH_TO_INFO_SLUGS = {
-  hunterhunter: "hunter-x-hunter-2011",
-  "hunter-x-hunter-movie-1-phantom-rouge-movie": "hunter-x-hunter-movie-1-phantom-rouge",
-  "hunter-x-hunter-movie-2-the-last-mission-movie": "hunter-x-hunter-movie-2-the-last-mission",
-  "initial-d-final-stage-255": "initial-d-final-stage",
-};
-
 function buildAnimeInfoSlugCandidates(slug) {
   const input = String(slug || "").toLowerCase();
   if (!input) return [];
 
-  let clean = input;
-  if (WATCH_TO_INFO_SLUGS[input]) {
-    clean = WATCH_TO_INFO_SLUGS[input];
-  }
+  let clean = self.AnimeTrackerAnimeIdentity.getInfoSlug(input);
 
   const out = [clean];
   const add = (value) => {

@@ -405,7 +405,7 @@ const AnimeCardRenderer = {
                         ${skippedFillersIndicator}
                     </div>
                     <div class="anime-episodes collapsible collapsed">
-                        <div class="episodes-header">
+                        <div class="episodes-header" role="button" tabindex="0" aria-expanded="false">
                             <span class="episodes-title">Watched episodes</span>
                             <svg class="collapse-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <polyline points="6 9 12 15 18 9"/>
@@ -482,7 +482,7 @@ const AnimeCardRenderer = {
 
         return `
                 <div class="part-item ${statusClass}" data-part-start="${part.start}" data-part-end="${part.end}">
-                    <div class="part-item-header">
+                    <div class="part-item-header" role="button" tabindex="0" aria-expanded="false">
                         <span class="part-status-icon">${statusIcon}</span>
                         <span class="part-name">${UIHelpers.escapeHtml(part.name)}</span>
                         <span class="part-episodes">Ep ${part.start}-${part.end}</span>
@@ -507,7 +507,7 @@ const AnimeCardRenderer = {
     const collapsedClass = startExpanded ? "" : " collapsed";
     return `
             <div class="anime-parts collapsible${collapsedClass}">
-                <div class="parts-header">
+                <div class="parts-header" role="button" tabindex="0" aria-expanded="${collapsedClass ? "false" : "true"}">
                     <span class="parts-icon">📦</span>
                     <span class="parts-title">Parts (${partsConfig.length})</span>
                     <svg class="collapse-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -666,7 +666,7 @@ window.AnimeTracker.AnimeCardRenderer = AnimeCardRenderer;
 
       return `
                 <div class="ip-group">
-                    <div class="ip-group-header">
+                    <div class="ip-group-header" role="button" tabindex="0" aria-expanded="false">
                         <span class="ip-group-label">In Progress</span>
                         <span class="ip-group-count">${count}</span>
                         <svg class="ip-group-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform:rotate(-90deg);">
@@ -714,9 +714,12 @@ window.AnimeTracker.AnimeCardRenderer = AnimeCardRenderer;
     renderGroupShell({ variant, baseSlug, extraClass = "", coverHtml, title, metaRowHtml, itemsHtml, footerHtml = "" }) {
       const { UIHelpers } = window.AnimeTracker;
       const v = VARIANT[variant];
+      // The delegated click handler expands this group, so it has to be reachable and operable by
+      // keyboard too - it is a plain div, which gets neither focus nor Enter/Space for free.
+      const groupExpanded = /(?:^|\s)expanded(?:\s|$)/.test(extraClass) ? "true" : "false";
       return `
-                <div class="grp-card ${v.card}${extraClass ? " " + extraClass : ""}" data-base-slug="${baseSlug}">
-                    <div class="grp-header ${v.header}">
+                <div class="grp-card ${v.card}${extraClass ? " " + extraClass : ""}" data-base-slug="${UIHelpers.escapeHtml(baseSlug)}">
+                    <div class="grp-header ${v.header}" role="button" tabindex="0" aria-expanded="${groupExpanded}">
                         <div class="grp-logo">${coverHtml}</div>
                         <div class="grp-header-main">
                             <div class="grp-title-row"><span class="grp-name">${title}</span></div>
@@ -737,9 +740,13 @@ window.AnimeTracker.AnimeCardRenderer = AnimeCardRenderer;
     renderGroupItem({ variant, slug, statusClass, statusIcon, label, rightHtml, contentHtml = "", extraItemClass = "" }) {
       const { UIHelpers } = window.AnimeTracker;
       const v = VARIANT[variant];
+      // Only rows that actually reveal something become keyboard buttons: the click handler covers
+      // season rows and refuses movie rows, so anything else must not advertise itself as one.
+      const rowExpandable = variant === "season" && !!contentHtml && !String(extraItemClass).includes("season-item-movie");
+      const rowA11y = rowExpandable ? ' role="button" tabindex="0" aria-expanded="false"' : "";
       return `
                 <div class="grp-item ${v.item} ${statusClass}${extraItemClass ? " " + extraItemClass : ""}" data-slug="${UIHelpers.escapeHtml(slug)}">
-                    <div class="grp-item-header ${v.itemHeader}">
+                    <div class="grp-item-header ${v.itemHeader}"${rowA11y}>
                         <div class="grp-item-left">
                             <span class="grp-status-icon${statusIcon ? "" : " is-empty"}"${statusIcon ? "" : ' aria-hidden="true"'}>${statusIcon || ""}</span>
                             <span class="${v.label}" title="${label}">${label}</span>
@@ -1164,7 +1171,7 @@ window.AnimeTracker.AnimeCardRenderer = AnimeCardRenderer;
             const inProgressSection = inProgressTags
               ? `
                         <div class="anime-in-progress collapsible">
-                            <div class="in-progress-header">
+                            <div class="in-progress-header" role="button" tabindex="0" aria-expanded="true">
                                 <span class="in-progress-title">▶ In Progress (${inProgressEps.length})</span>
                                 <svg class="collapse-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <polyline points="6 9 12 15 18 9"/>

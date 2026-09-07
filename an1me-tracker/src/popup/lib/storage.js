@@ -1,42 +1,16 @@
 // storage.js — popup storage read/write; also hosts SlugUtils (slug cleanup/canonicalization).
+// Thin wrapper over the shared resolver in src/common/data/anime-identity.js. The rules used to be
+// copied here and in the content parser; keeping them in one place is what stops the popup and the
+// watch page from disagreeing about which slug an episode belongs to.
 const SlugUtils = {
   getCanonicalSlug(slug, title = "") {
-    const safeSlug = String(slug || "").toLowerCase();
-    const safeTitle = String(title || "").toLowerCase();
-    const context = `${safeSlug} ${safeTitle}`;
-
-    if (safeSlug.startsWith("jujutsu-kaisen") || safeTitle.includes("jujutsu kaisen")) {
-      if (/(?:^|-)0(?:-|$)/.test(safeSlug) || /\b(?:0|zero)\b/.test(safeTitle)) return "jujutsu-kaisen-0";
-      const mediaType = globalThis.AnimeTrackerMediaType?.infer(safeSlug, safeTitle);
-      if (mediaType && !["TV", "TV_SHORT"].includes(mediaType)) return safeSlug;
-      if (safeSlug.includes("shimetsu-kaiyuu") || safeSlug.includes("culling-game")) return safeSlug;
-      if (/season\s*3|part\s*3|culling\s*game|dead[-\s]*culling|shimetsu|kaiyuu/.test(context)) return "jujutsu-kaisen-season-3";
-      if (/season\s*2|2nd\s*season|shibuya|kaigyoku|gyokusetsu/.test(context)) return "jujutsu-kaisen-season-2";
-      return "jujutsu-kaisen";
-    }
-
-    if (safeSlug.startsWith("fate-zero") || safeTitle.includes("fate/zero") || safeTitle.includes("fate zero")) {
-      return "fate-zero";
-    }
-
-    return slug;
+    const Identity = globalThis.AnimeTrackerAnimeIdentity;
+    return Identity ? Identity.getCanonicalSlug(slug, title) : slug;
   },
 
   getCanonicalTitle(slug, title = "") {
-    const canonicalSlug = this.getCanonicalSlug(slug, title);
-    const rawTitle = String(title || "").trim();
-    if (!rawTitle) return rawTitle;
-
-    if (canonicalSlug === "fate-zero") {
-      const cleaned = rawTitle.replace(/\s+(?:season\s*2|2nd\s*season|second\s*season)\s*$/i, "").trim();
-      const lower = cleaned.toLowerCase();
-      if (lower === "fate zero" || lower === "fate/zero") {
-        return "Fate/Zero";
-      }
-      return cleaned;
-    }
-
-    return rawTitle;
+    const Identity = globalThis.AnimeTrackerAnimeIdentity;
+    return Identity ? Identity.getCanonicalTitle(slug, title) : String(title || "").trim();
   },
 };
 
@@ -405,6 +379,45 @@ const Storage = {
       return false;
     } finally {
       releaseLock();
+    }
+  },
+
+  // One-off repair for group cover keys written by older watch-page code, whose base-slug rule
+  // diverged from the library's: covers landed under keys the popup never reads (e.g.
+  // "one-piece-movie-01" or "fate-zero" instead of "one-piece" / "fate"). This copies them onto
+  // the canonical key and is deliberately additive - the stale key is left in place, so a wrong
+  // guess can never lose a cover.
+  async repairGroupCoverKeys() {
+    const SeasonGrouping = window.AnimeTracker?.SeasonGrouping;
+    const coordinator = window.AnimeTracker?.LibraryMutations;
+    if (!SeasonGrouping?.getBaseSlug || !coordinator?.enqueue) return { copied: 0 };
+
+    try {
+      return await coordinator.enqueue("group-cover-key-repair", async ({ commit, snapshot }) => {
+        const animeData = snapshot.animeData || {};
+        const covers = snapshot.groupCoverImages || {};
+        const next = { ...covers };
+        let copied = 0;
+
+        for (const [key, url] of Object.entries(covers)) {
+          // Only keys that are themselves library slugs can be re-resolved; anything else is left
+          // untouched because we cannot know which group it was meant for.
+          const entry = animeData[key];
+          if (!entry || typeof url !== "string" || !url) continue;
+          const canonical = SeasonGrouping.getBaseSlug(key, entry);
+          if (!canonical || canonical === key || next[canonical]) continue;
+          next[canonical] = url;
+          copied++;
+        }
+
+        if (copied === 0) return { copied: 0 };
+        await commit({ groupCoverImages: next }, { immediate: false });
+        (window.PopupLogger || console).log?.("Storage", `Group cover keys repaired: ${copied}`);
+        return { copied };
+      });
+    } catch (error) {
+      (window.PopupLogger || console).error?.("Storage", "Group cover key repair failed:", error);
+      return { copied: 0 };
     }
   },
 };

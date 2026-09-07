@@ -56,6 +56,24 @@ const AnimeParser = {
         /^(.+?)[-_](\d+)$/,
       ];
       const fallbackPattern = episodePatterns[episodePatterns.length - 1];
+      // These two read a bare trailing number, which is ambiguous: it is the episode in
+      // "one-piece-1015" but the season in "fate-zero-season-2". The explicit -episode-/-chapter-
+      // patterns are never ambiguous and stay unguarded.
+      const ambiguousPatterns = new Set([episodePatterns[2], fallbackPattern]);
+
+      // A dedicated episode segment (/watch/<slug>/episode-5) is authoritative.
+      const episodeSegmentNumber = (() => {
+        if (!episodeSlug) return null;
+        const m = episodeSlug.match(/ep(?:isode)?[-_]?(\d+)/i) || episodeSlug.match(/^(\d+)$/);
+        return m ? parseInt(m[1], 10) : null;
+      })();
+      // Season, part, cour and movie ordinals belong to the series identity, never to an episode.
+      const Identity = globalThis.AnimeTrackerAnimeIdentity;
+      const slugOrdinalIsIdentity =
+        (Identity
+          ? Identity.isSeasonLikeSlug(animeSlug)
+          : /-(?:season-?\d+|(?:part|cour)-?\d+|s\d+)(?=$|-)/i.test(animeSlug)) ||
+        /[-_](?:movie|film)[-_]?\d+$/i.test(animeSlug);
 
       for (const pattern of episodePatterns) {
         if (episodeFound) break;
@@ -64,6 +82,11 @@ const AnimeParser = {
           const candidate = parseInt(match[2], 10);
 
           if (pattern === fallbackPattern && candidate >= 1900 && candidate <= 2099) {
+            continue;
+          }
+          // Without this the trailing number is eaten off the slug and reported as the episode:
+          // fate-zero-season-2/episode-5 used to be recorded as fate-zero episode 2.
+          if (ambiguousPatterns.has(pattern) && (episodeSegmentNumber !== null || slugOrdinalIsIdentity)) {
             continue;
           }
           animeSlug = match[1];
@@ -432,49 +455,16 @@ const AnimeParser = {
     }
   },
 
+  // Both delegate to src/common/data/anime-identity.js so the watch page and the library cannot
+  // drift apart on which slug/title a page belongs to.
   normalizeSlugByTitle(slug, title) {
-    const safeSlug = String(slug || "").toLowerCase();
-    const safeTitle = String(title || "").toLowerCase();
-    const context = `${safeSlug} ${safeTitle}`;
-
-    if (safeSlug.startsWith("jujutsu-kaisen") || safeTitle.includes("jujutsu kaisen")) {
-      if (/(?:^|-)0(?:-|$)/.test(safeSlug) || /\b(?:0|zero)\b/.test(safeTitle)) return "jujutsu-kaisen-0";
-      const mediaType = globalThis.AnimeTrackerMediaType?.infer(safeSlug, safeTitle);
-      if (mediaType && !["TV", "TV_SHORT"].includes(mediaType)) return safeSlug;
-      if (safeSlug.includes("shimetsu-kaiyuu") || safeSlug.includes("culling-game")) {
-        return safeSlug;
-      }
-      if (/season\s*3|part\s*3|culling\s*game|dead[-\s]*culling|shimetsu|kaiyuu/.test(context)) {
-        return "jujutsu-kaisen-season-3";
-      }
-      if (/season\s*2|2nd\s*season|shibuya|kaigyoku|gyokusetsu/.test(context)) {
-        return "jujutsu-kaisen-season-2";
-      }
-      return "jujutsu-kaisen";
-    }
-
-    if (safeSlug.startsWith("fate-zero") || safeTitle.includes("fate/zero") || safeTitle.includes("fate zero")) {
-      return "fate-zero";
-    }
-
-    return slug;
+    const Identity = globalThis.AnimeTrackerAnimeIdentity;
+    return Identity ? Identity.getCanonicalSlug(slug, title) : slug;
   },
 
   normalizeTitleBySlug(slug, title) {
-    const canonicalSlug = this.normalizeSlugByTitle(slug, title);
-    const rawTitle = String(title || "").trim();
-    if (!rawTitle) return rawTitle;
-
-    if (canonicalSlug === "fate-zero") {
-      const cleaned = rawTitle.replace(/\s+(?:season\s*2|2nd\s*season|second\s*season)\s*$/i, "").trim();
-      const lower = cleaned.toLowerCase();
-      if (lower === "fate zero" || lower === "fate/zero") {
-        return "Fate/Zero";
-      }
-      return cleaned;
-    }
-
-    return rawTitle;
+    const Identity = globalThis.AnimeTrackerAnimeIdentity;
+    return Identity ? Identity.getCanonicalTitle(slug, title) : String(title || "").trim();
   },
 
   extractTitle(animeSlug) {

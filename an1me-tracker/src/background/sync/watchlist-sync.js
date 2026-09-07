@@ -74,33 +74,27 @@ async function directWatchlistFetch(animeId, type) {
     });
 
     const text = await res.text();
-    try {
-      const data = JSON.parse(text);
-      if (data?.success) {
-        dlog(
-          `%c WatchlistSync %c ✓ ${data.data?.message || "OK"}`,
-          "background:#22c55e;color:#fff;border-radius:3px 0 0 3px;padding:2px 6px;font-weight:700",
-          "color:#86efac",
-        );
-      } else {
-        console.warn(
-          `%c WatchlistSync %c ✗ ${data.data?.message || text.substring(0, 100)}`,
-          "background:#ef4444;color:#fff;border-radius:3px 0 0 3px;padding:2px 6px;font-weight:700",
-          "color:#fca5a5",
-        );
-      }
-    } catch {
-      dlog(
-        `%c WatchlistSync %c HTTP ${res.status} ${text.substring(0, 100)}`,
-        "background:#6366f1;color:#fff;border-radius:3px 0 0 3px;padding:2px 6px;font-weight:700",
-        "color:#a5b4fc",
-      );
+    // A 403 from an expired an1me.to session returns an HTML body, so JSON.parse throws and the
+    // failure used to disappear into a debug-only log while the caller counted it as a success.
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status} ${text.substring(0, 100)}`);
     }
-  } catch (e) {
-    console.warn(
-      `%c WatchlistSync %c ✗ ${e.message}`,
-      "background:#ef4444;color:#fff;border-radius:3px 0 0 3px;padding:2px 6px;font-weight:700",
-      "color:#fca5a5",
+    let data = null;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      throw new Error(`non-JSON response ${text.substring(0, 100)}`);
+    }
+    if (!data?.success) {
+      throw new Error(data?.data?.message || text.substring(0, 100) || "watchlist request rejected");
+    }
+    dlog(
+      `%c WatchlistSync %c ✓ ${data.data?.message || "OK"}`,
+      "background:#22c55e;color:#fff;border-radius:3px 0 0 3px;padding:2px 6px;font-weight:700",
+      "color:#86efac",
     );
+  } catch (e) {
+    // The caller logs it; rethrow so a failed watchlist change is never counted as applied.
+    throw e;
   }
 }

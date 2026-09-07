@@ -1509,6 +1509,10 @@
       await Storage.migrateMultiPartAnime();
     }
 
+    if (shouldRunMaintenance("repairGroupCoverKeys")) {
+      await Storage.repairGroupCoverKeys();
+    }
+
     const stored = await Storage.get(LIBRARY_SNAPSHOT_KEYS);
     const sourceRevision = normalizeLibraryRevision(stored.libraryMutationRevision);
     const canSkip =
@@ -2558,6 +2562,7 @@
           const chevron = ipGroupHeader.querySelector(".ip-group-chevron");
           if (content) {
             const isOpen = content.classList.toggle("open");
+            ipGroupHeader.setAttribute("aria-expanded", isOpen ? "true" : "false");
             if (chevron) chevron.style.transform = isOpen ? "rotate(0deg)" : "rotate(-90deg)";
           }
           return;
