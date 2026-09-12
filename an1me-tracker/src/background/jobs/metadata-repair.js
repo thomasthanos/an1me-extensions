@@ -324,8 +324,12 @@ async function repairAnimeInfoCacheUncoalesced(slug, forceRefresh = true) {
     // Specials and recaps listed as /watch/<slug>-episode-N inflate the scraped latestEpisode,
     // and that number drives the New Episode badge, the continue-watching gate and the episode
     // number in notifications.
+    // Only trust the clamp while the next episode is still in the FUTURE. The snapshot can be up
+    // to its TTL old, so once airingAt has passed, episode N may genuinely have aired and been
+    // uploaded - clamping then would hide a real new episode for hours.
     const nextEpisodeNumber = Number(schedule?.episode) || 0;
-    if (nextEpisodeNumber > 0 && Number(entry.latestEpisode) >= nextEpisodeNumber) {
+    const scheduleStillAhead = Number(schedule?.airingAt) > 0 && Number(schedule.airingAt) * 1000 > Date.now();
+    if (scheduleStillAhead && nextEpisodeNumber > 0 && Number(entry.latestEpisode) >= nextEpisodeNumber) {
       entry.latestEpisodeRaw = entry.latestEpisode;
       entry.latestEpisode = nextEpisodeNumber - 1;
       entry.latestEpisodeClampedBy = "anilist";

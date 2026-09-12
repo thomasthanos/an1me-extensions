@@ -297,7 +297,7 @@ const AnimeCardRenderer = {
         // ticker: the label used to be baked into the HTML string and froze while the popup was
         // open. An overdue drop is now a visible state ("due"/"delayed") instead of the countdown
         // silently disappearing the moment the air time passed.
-        const label = AT.AiringCountdown.format(nextEpisodeMs);
+        const label = window.AnimeTracker.AiringCountdown.format(nextEpisodeMs);
         const epSuffix = airingSchedule?.episode ? ` (ep. ${airingSchedule.episode})` : "";
         const tip = `Next episode${epSuffix}: ${nextEpisodeAt.toLocaleString()}`;
         inlineEtaHtml =
