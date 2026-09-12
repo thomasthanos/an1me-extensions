@@ -233,7 +233,12 @@ async function checkNewEpisodesOnce(disableGeneration) {
         const highestWatched = highestWatchedEpisode(anime);
         const alreadyNotified = Number(entry.notifiedEpisode) || 0;
         const pendingEpisode = Number(entry.pendingEpisode?.episode) || 0;
-        const isNew = latest > previousLatest && previousLatest > 0 && latest > highestWatched && latest > alreadyNotified;
+        // previousLatest > 0 was there to avoid firing on the very first scrape of a brand-new
+        // entry, but it also meant the FIRST episode ever discovered for a newly added anime
+        // never notified at all. A recorded baseline is the real condition: if we have checked
+        // this entry before, a higher number now is genuinely new.
+        const hasBaseline = previousLatest > 0 || Number(entry.lastCheckedAt) > 0;
+        const isNew = latest > previousLatest && hasBaseline && latest > highestWatched && latest > alreadyNotified;
 
         const stillEnabled =
           !isNew || (await bgStorageGet([SMART_NOTIF_SETTING_KEY]))[SMART_NOTIF_SETTING_KEY] === true;

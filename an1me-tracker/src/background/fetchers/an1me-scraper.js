@@ -140,6 +140,25 @@ function extractAnimeTitlesFromHtml(html) {
 
 const AN1ME_UNREACHABLE = "an1me_unreachable";
 
+// Release-status sources, strongest first. Three heuristics used to decide this between them with
+// no stated precedence, so they disagreed by construction: a leftover countdown tag alone could
+// declare RELEASING, and "fewer episodes uploaded than declared" could flip a finished show back
+// to RELEASING forever. Now only the highest-ranked available source decides, and anything
+// weaker may only fill a gap.
+const AN1ME_STATUS_SOURCE_RANK = Object.freeze({
+  anilist: 5,
+  explicit: 4,
+  "aired-finished": 3,
+  "aired-finished-single": 3,
+  "aired-open": 3,
+  countdown: 2,
+  availability: 1,
+});
+
+function an1meStatusRank(source) {
+  return AN1ME_STATUS_SOURCE_RANK[String(source || "")] || 0;
+}
+
 function pickImageUrlFromTag(tag) {
   const attr = (name) => String(tag || "").match(new RegExp(`\\b${name}=["']([^"']+)["']`, "i"))?.[1] || null;
   const firstFromSet = (value) => (value ? String(value).split(",")[0].trim().split(/\s+/)[0] : null);
@@ -260,17 +279,10 @@ async function fetchAnimePageInfo(slug) {
   if (countdownTag) {
     nextEpisodeTimezone = countdownTag.match(/\bdata-timezone=["']([^"']+)["']/i)?.[1] || null;
     const rawCountdown = countdownTag.match(/\bdata-countdown=["']([^"']+)["']/i)?.[1] || "";
-    let normalizedCountdown = rawCountdown.trim().replace(" ", "T");
-    // The site's own script interprets data-countdown as UTC (`new Date(str + 'Z')`);
-    // without the suffix, Date() would parse the bare datetime as LOCAL time and skew
-    // the countdown/notifications by the viewer's UTC offset.
-    if (normalizedCountdown && !/(?:Z|[+-]\d{2}:?\d{2})$/i.test(normalizedCountdown)) {
-      normalizedCountdown += "Z";
-    }
-    const parsedCountdown = new Date(normalizedCountdown);
-    if (Number.isFinite(parsedCountdown.getTime())) {
-      nextEpisodeAt = parsedCountdown.toISOString();
-    }
+    // data-timezone is what the string is actually in. It used to be captured, stored, synced and
+    // compared - but never applied, while the value itself was read as UTC, which skewed every
+    // scraped countdown by the site's offset (2-3h for Europe/Athens).
+    nextEpisodeAt = globalThis.AnimeTrackerZonedTime.parseZonedDateTime(rawCountdown, nextEpisodeTimezone);
   }
 
   if (!status && nextEpisodeAt) {
@@ -291,14 +303,11 @@ async function fetchAnimePageInfo(slug) {
     }
   }
 
-  if (
-    statusSource !== "explicit" &&
-    statusSource !== "aired-finished" &&
-    status === "FINISHED" &&
-    totalEpisodes &&
-    latestEpisode &&
-    latestEpisode < totalEpisodes
-  ) {
+  // Availability is the weakest signal there is: "the site has fewer episodes up than the
+  // declared total" is true of any finished show with one unnumbered or missing upload, and it
+  // used to flip those to RELEASING permanently. It may only fill a gap, never overrule a
+  // ranked source - see AN1ME_STATUS_SOURCE_RANK.
+  if (!status && totalEpisodes && latestEpisode && latestEpisode < totalEpisodes) {
     status = "RELEASING";
     statusSource = "availability";
   }
@@ -342,6 +351,34 @@ async function fetchAnimePageInfo(slug) {
   }
 
   const titles = extractAnimeTitlesFromHtml(html);
+
+  // AniList is the only source here that authoritatively knows whether a series has finished
+  // airing, so it outranks every page heuristic. It is read from the batched airing snapshot,
+  // which costs nothing extra: no per-anime request.
+  // Keyed by the library slug (what animeData uses), with resolvedSlug as the fallback for the
+  // case where a candidate slug won. Guarded because the schedule job is loaded later in the
+  // importScripts order and must never be able to take the whole scrape down with it.
+  const anilistView =
+    typeof getAiringScheduleEntry === "function"
+      ? await getAiringScheduleEntry(slug)
+          .then((hit) => hit || (resolvedSlug !== slug ? getAiringScheduleEntry(resolvedSlug) : null))
+          .catch(() => null)
+      : null;
+  const anilistStatus =
+    anilistView?.mediaStatus === "FINISHED"
+      ? "FINISHED"
+      : anilistView?.mediaStatus === "RELEASING" || anilistView?.mediaStatus === "NOT_YET_RELEASED"
+        ? "RELEASING"
+        : null;
+  if (anilistStatus && an1meStatusRank("anilist") >= an1meStatusRank(statusSource)) {
+    // One deliberate exception: if an1me.to still has episodes to upload, the entry is not
+    // "finished" from the user's point of view even once the broadcast has ended.
+    const siteStillUploading = anilistStatus === "FINISHED" && totalEpisodes && latestEpisode && latestEpisode < totalEpisodes;
+    if (!siteStillUploading) {
+      status = anilistStatus;
+      statusSource = "anilist";
+    }
+  }
 
   return {
     // Single source of truth: a hardcoded 4 here silently diverged from the policy module, so a

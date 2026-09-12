@@ -746,9 +746,64 @@
     return { total, done, ok, skipped, failed, retryableFailed, work, truncated };
   }
 
+  // AniList is the only source here that knows an unambiguous air time (a real epoch, no
+  // timezone attribute to guess at) AND which episode number that time belongs to. One call
+  // covers 50 shows; the previous approach - scraping data-countdown off one full /anime/<slug>/
+  // HTML page per anime - cost one page load per show per sweep.
+  const AIRING_PAGE_SIZE = 50;
+  const AIRING_QUERY = `query($ids:[Int]){
+  Page(perPage:${AIRING_PAGE_SIZE}){
+    media(id_in:$ids,type:ANIME){
+      id
+      status
+      episodes
+      nextAiringEpisode{ airingAt episode timeUntilAiring }
+    }
+  }
+}`;
+
+  // mediaIds -> Map<mediaId, {mediaStatus, episodes, airingAt, episode}>. Throws only on a hard
+  // failure; a page that errors is skipped so one bad batch cannot lose the rest.
+  async function fetchAiringSchedule(mediaIds) {
+    const ids = [...new Set((mediaIds || []).map((n) => Math.floor(Number(n))).filter((n) => Number.isFinite(n) && n > 0))];
+    const out = new Map();
+    if (ids.length === 0) return out;
+
+    for (let i = 0; i < ids.length; i += AIRING_PAGE_SIZE) {
+      const batch = ids.slice(i, i + AIRING_PAGE_SIZE);
+      let data;
+      try {
+        data = await gql(AIRING_QUERY, { ids: batch }, null);
+      } catch (error) {
+        // gql already paces and retries a 429 once. Anything left is this batch's problem.
+        logAiringWarn(`airing batch of ${batch.length} failed: ${error?.message || error}`);
+        continue;
+      }
+      for (const media of data?.Page?.media || []) {
+        const id = Number(media?.id);
+        if (!Number.isFinite(id)) continue;
+        const next = media.nextAiringEpisode || null;
+        out.set(id, {
+          mediaStatus: media.status || null,
+          episodes: Number.isFinite(Number(media.episodes)) ? Number(media.episodes) : null,
+          airingAt: next && Number.isFinite(Number(next.airingAt)) ? Number(next.airingAt) : null,
+          episode: next && Number.isFinite(Number(next.episode)) ? Number(next.episode) : null,
+        });
+      }
+    }
+    return out;
+  }
+
+  function logAiringWarn(message) {
+    try {
+      console.warn("[AniList]", message);
+    } catch {}
+  }
+
   const root = typeof globalThis !== "undefined" ? globalThis : self;
   root.AniListCore = {
     gql,
+    fetchAiringSchedule,
     slugify,
     localProgress,
     pushStatus,

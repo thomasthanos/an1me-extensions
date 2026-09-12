@@ -305,13 +305,32 @@ async function repairAnimeInfoCacheUncoalesced(slug, forceRefresh = true) {
   try {
     const info = await fetchAnimePageInfo(slug);
     const entry = { ...info, cachedAt: Date.now() };
+
+    const schedule = typeof getAiringScheduleEntry === "function" ? await getAiringScheduleEntry(slug).catch(() => null) : null;
+
+    // Carrying a stale future timestamp forward whenever a re-scrape found no countdown tag let a
+    // finished or rescheduled show display a phantom countdown until it expired on its own. Only
+    // keep it when AniList still agrees there is a next episode (or has no opinion at all).
     if (!entry.nextEpisodeAt && cached?.nextEpisodeAt) {
       const previousDropAt = new Date(cached.nextEpisodeAt).getTime();
-      if (Number.isFinite(previousDropAt) && previousDropAt > Date.now()) {
+      const anilistAgrees = Number(schedule?.airingAt) > 0 && schedule?.mediaStatus !== "FINISHED";
+      if (Number.isFinite(previousDropAt) && previousDropAt > Date.now() && (anilistAgrees || !schedule)) {
         entry.nextEpisodeAt = cached.nextEpisodeAt;
         if (cached.nextEpisodeTimezone) entry.nextEpisodeTimezone = cached.nextEpisodeTimezone;
       }
     }
+
+    // AniList knows which episode airs next, so episode N cannot legitimately be uploaded yet.
+    // Specials and recaps listed as /watch/<slug>-episode-N inflate the scraped latestEpisode,
+    // and that number drives the New Episode badge, the continue-watching gate and the episode
+    // number in notifications.
+    const nextEpisodeNumber = Number(schedule?.episode) || 0;
+    if (nextEpisodeNumber > 0 && Number(entry.latestEpisode) >= nextEpisodeNumber) {
+      entry.latestEpisodeRaw = entry.latestEpisode;
+      entry.latestEpisode = nextEpisodeNumber - 1;
+      entry.latestEpisodeClampedBy = "anilist";
+    }
+
     await bgStorageSet({ [key]: entry });
     return { status: "fetched", entry };
   } catch (error) {

@@ -285,17 +285,25 @@ const AnimeCardRenderer = {
       const knownTotalEpisodes = Number(AnilistService?.getTotalEpisodes(slug)) || Number(anime.totalEpisodes) || 0;
       const nextEpisodeAtRaw = AnilistService?.getNextEpisodeAt(slug);
       const nextEpisodeAt = nextEpisodeAtRaw ? new Date(nextEpisodeAtRaw) : null;
-      const hasUpcomingCountdown = !!nextEpisodeAt && Number.isFinite(nextEpisodeAt.getTime()) && nextEpisodeAt.getTime() > Date.now();
+      const nextEpisodeMs = nextEpisodeAt && Number.isFinite(nextEpisodeAt.getTime()) ? nextEpisodeAt.getTime() : null;
+      const airingSchedule = AnilistService?.getAiringSchedule?.(slug) || null;
+      // A schedule is worth showing for anything still releasing - being one episode behind does
+      // not make the next drop time irrelevant, but it used to hide the countdown entirely.
+      const showsSchedule =
+        nextEpisodeMs !== null && !isDropped && !isOnHold && !isCardComplete && (_isCaughtUpAiring || anilistStatus === "RELEASING");
 
-      if (_isCaughtUpAiring && hasUpcomingCountdown) {
-        const diffMs = nextEpisodeAt.getTime() - Date.now();
-        const totalMinutes = Math.max(1, Math.floor(diffMs / 60000));
-        const days = Math.floor(totalMinutes / (60 * 24));
-        const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
-        const minutes = totalMinutes % 60;
-        const countdownLabel = days > 0 ? `${days}d ${hours}h` : `${hours}h ${minutes}m`;
-        const tip = `Estimated time until the next episode on an1me.to: ${nextEpisodeAt.toLocaleString()}`;
-        inlineEtaHtml = `<span class="meta-time-eta meta-time-eta-site" title="${UIHelpers.escapeHtml(tip)}">🚀 ${UIHelpers.escapeHtml(countdownLabel)}</span>`;
+      if (showsSchedule) {
+        // Rendered as data, formatted by AiringCountdown, and re-rendered in place by one shared
+        // ticker: the label used to be baked into the HTML string and froze while the popup was
+        // open. An overdue drop is now a visible state ("due"/"delayed") instead of the countdown
+        // silently disappearing the moment the air time passed.
+        const label = AT.AiringCountdown.format(nextEpisodeMs);
+        const epSuffix = airingSchedule?.episode ? ` (ep. ${airingSchedule.episode})` : "";
+        const tip = `Next episode${epSuffix}: ${nextEpisodeAt.toLocaleString()}`;
+        inlineEtaHtml =
+          `<span class="meta-time-eta meta-time-eta-site${label.overdue ? " meta-time-eta-overdue" : ""}"` +
+          ` data-next-airing-at="${nextEpisodeMs}"` +
+          ` title="${UIHelpers.escapeHtml(tip)}">${UIHelpers.escapeHtml(label.text)}</span>`;
       } else if (StatsEngine && !isCardComplete && !isDropped && !isOnHold && knownTotalEpisodes > 0) {
         const allAnime = (window.AnimeTracker && window.AnimeTracker._animeDataRef) || null;
         const idx = allAnime ? StatsEngine.buildWatchIndex(allAnime, window.AnimeTracker?.PopupState?.libraryRevision) : null;

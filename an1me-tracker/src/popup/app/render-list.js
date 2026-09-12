@@ -378,13 +378,42 @@
             isOpen: AT.PopupState.currentCompactStatusOpen,
           })
         : "";
+    // "Caught up" was hardcoded, so the section said it even when the next drop was known. Lead
+    // with the soonest upcoming episode when we have one - that is the useful fact for a section
+    // whose whole purpose is shows the user is waiting on.
+    function buildAiringSubLabel(entries) {
+      const count = countGroupEntries(entries);
+      const suffix = `${count} anime`;
+      const AiringCountdown = AT.AiringCountdown;
+      const AnilistService = AT.AnilistService;
+      if (!AiringCountdown || !AnilistService) return `${suffix} · Caught up`;
+
+      // entries is [baseSlug, entry[], meta] tuples, so the slugs live one level down.
+      let soonest = null;
+      for (const group of entries) {
+        for (const entry of group[1] || []) {
+          const iso = entry?.slug ? AnilistService.getNextEpisodeAt?.(entry.slug) : null;
+          const ms = iso ? new Date(iso).getTime() : NaN;
+          if (!Number.isFinite(ms)) continue;
+          if (soonest === null || ms < soonest) soonest = ms;
+        }
+      }
+      if (soonest === null) return `${suffix} · Caught up`;
+      const label = AiringCountdown.format(soonest);
+      if (!label.text) return `${suffix} · Caught up`;
+      // Strip the emoji the card badges use; "next 3d 4h" reads as a wait, "due now"/"delayed"
+      // read as states and should not be prefixed with "next".
+      const bare = label.text.replace(/^[^\s]+\s/, "");
+      return soonest <= Date.now() ? `${suffix} · ${bare}` : `${suffix} · next in ${bare}`;
+    }
+
     const airingGroupHtml =
       airingEntries.length > 0
         ? renderCompactSectionHtml({
             classPrefix: "airing",
             toggleId: "airingListToggle",
             label: "⬤ AIRING LIST",
-            subLabel: `${countGroupEntries(airingEntries)} anime · Caught up`,
+            subLabel: buildAiringSubLabel(airingEntries),
             cardsHtml: airingCardsHtml,
             isOpen: AT.PopupState.currentCompactStatusOpen,
           })

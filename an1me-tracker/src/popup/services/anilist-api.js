@@ -1405,7 +1405,7 @@ const AnilistService = {
   },
 
   getStatus(slug) {
-    const data = this.cache[slug];
+    const data = this.cache[String(slug || "").toLowerCase()];
     if (!window.AnimeTracker.CachePolicy?.isInfoUsableSnapshot?.(data)) return null;
     return data.status || null;
   },
@@ -1417,15 +1417,47 @@ const AnilistService = {
   },
 
   getLatestEpisode(slug) {
-    const data = this.cache[slug];
+    const data = this.cache[String(slug || "").toLowerCase()];
     if (!data || data.latestEpisode == null || !window.AnimeTracker.CachePolicy?.isInfoUsableSnapshot?.(data)) return null;
     return data.latestEpisode;
   },
 
+  // Returns the authoritative schedule for the slug: the AniList airing schedule when we have
+  // one (real epoch, and it knows which episode number it is for), else the scraped countdown.
   getNextEpisodeAt(slug) {
-    const data = this.cache[slug];
+    const schedule = this.getAiringSchedule(slug);
+    if (schedule?.airingAt) return new Date(schedule.airingAt * 1000).toISOString();
+    const data = this.cache[String(slug || "").toLowerCase()];
     if (!data || !data.nextEpisodeAt || !window.AnimeTracker.CachePolicy?.isInfoUsableSnapshot?.(data)) return null;
     return data.nextEpisodeAt;
+  },
+
+  // { airingAt, episode, mediaStatus } | null - populated by primeAiringSchedule below.
+  getAiringSchedule(slug) {
+    const key = String(slug || "").toLowerCase();
+    const entry = this.airingSchedule?.[key];
+    if (!entry || !Number.isFinite(Number(entry.airingAt))) return null;
+    return entry;
+  },
+
+  getAnilistMediaStatus(slug) {
+    const key = String(slug || "").toLowerCase();
+    return this.airingSchedule?.[key]?.mediaStatus || null;
+  },
+
+  // Loaded alongside the info cache on popup boot; keyed by slug, lowercase.
+  airingSchedule: {},
+
+  async primeAiringSchedule() {
+    try {
+      const store = await window.AnimeTracker.Storage.get(["airing_schedule"]);
+      const raw = store?.airing_schedule?.bySlug || {};
+      const next = {};
+      for (const slug in raw) next[String(slug).toLowerCase()] = raw[slug];
+      this.airingSchedule = next;
+    } catch {
+      this.airingSchedule = {};
+    }
   },
 
   isFresh(slug) {

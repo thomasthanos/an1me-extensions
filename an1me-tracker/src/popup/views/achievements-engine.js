@@ -1040,7 +1040,11 @@
         result.backlog += latestAvail - highestWatched;
       }
 
-      const nextAtMs = info.nextEpisodeAt ? new Date(info.nextEpisodeAt).getTime() : NaN;
+      // Prefer the AniList schedule: a real epoch with a known episode number, rather than the
+      // scraped countdown that may be stale or absent. getNextEpisodeAt already applies that
+      // precedence, so ask it and only fall back to the raw cached value.
+      const scheduledIso = anilist?.getNextEpisodeAt?.(slug) || info.nextEpisodeAt || null;
+      const nextAtMs = scheduledIso ? new Date(scheduledIso).getTime() : NaN;
       if (Number.isFinite(nextAtMs)) {
         result.hasSchedule = true;
         const startMs = Math.max(nextAtMs, now);

@@ -1311,7 +1311,9 @@
     const { FillerService } = AT;
     await FillerService.loadCachedEpisodeTypes(animeData);
     await FillerService.loadStayedFillers();
-    await AT.AnilistService.primeCachedData(animeData);
+    // The airing schedule drives the countdown on every card, so it has to be in memory before
+    // the first paint or every airing card renders without one and only gains it on re-render.
+    await Promise.all([AT.AnilistService.primeCachedData(animeData), AT.AnilistService.primeAiringSchedule()]);
   }
 
   async function finalizeAfterMaintenance() {
@@ -2622,6 +2624,7 @@
     } catch {}
 
     FillerFetchUI.init();
+    AT.AiringCountdown.start();
 
     // Popup instances are ephemeral, but the background repair state is durable.
     // Restore any modal-eligible active import before auth/cloud initialization so a

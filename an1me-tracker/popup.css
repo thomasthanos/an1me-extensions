@@ -4838,6 +4838,10 @@ body.is-suppressing-hover #animeList .airing-list-cards .anime-movie-group:hover
 
 .meta-time-eta-site{ color: var(--cyan); }
 
+/* An episode whose scheduled time has passed by more than the upload-lag window: still shown,
+   but visibly not a normal countdown. */
+.meta-time-eta-overdue{ color: var(--warning); }
+
 .set-password-overlay.dialog-overlay{ background: rgba(5, 7, 12, 0.78); z-index: 9999; }
 
 .set-password-overlay.visible{ animation: setPwOverlayIn 0.16s ease-out; }

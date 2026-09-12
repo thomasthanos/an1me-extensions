@@ -240,14 +240,15 @@ const AnimeParser = {
       const raw = String(element.getAttribute("data-countdown") || "").trim();
       if (!raw) return { nextEpisodeAt: null, nextEpisodeTimezone: null };
 
-      let normalized = raw.replace(" ", "T");
-      if (!/(?:Z|[+-]\d{2}:?\d{2})$/i.test(normalized)) normalized += "Z";
-      const parsed = new Date(normalized);
-      if (!Number.isFinite(parsed.getTime())) return { nextEpisodeAt: null, nextEpisodeTimezone: null };
+      // Same fix as the background scraper: data-timezone says what zone the wall-clock string
+      // is in, so apply it instead of assuming UTC.
+      const timezone = element.getAttribute("data-timezone") || null;
+      const iso = globalThis.AnimeTrackerZonedTime.parseZonedDateTime(raw, timezone);
+      if (!iso) return { nextEpisodeAt: null, nextEpisodeTimezone: null };
 
       return {
-        nextEpisodeAt: parsed.toISOString(),
-        nextEpisodeTimezone: element.getAttribute("data-timezone") || null,
+        nextEpisodeAt: iso,
+        nextEpisodeTimezone: timezone,
       };
     } catch {
       return { nextEpisodeAt: null, nextEpisodeTimezone: null };

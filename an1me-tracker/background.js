@@ -4,6 +4,7 @@
 importScripts(
   "src/common/cloud.js",
   "src/common/data/cache-policy.js",
+  "src/common/data/zoned-time.js",
   "src/common/data/media-type.js",
   "src/common/data/entry-state.js",
   "src/common/data/anime-identity.js",
@@ -29,7 +30,7 @@ const CLOUD_CONSUMER_POLL_MIN_GAP_MS = 3 * 60 * 1000;
 
 importScripts("src/common/data/merge-utils.js");
 
-importScripts("src/common/data/anilist-core.js", "src/background/sync/anilist-sync.js");
+importScripts("src/common/data/anilist-core.js", "src/background/sync/anilist-sync.js", "src/background/jobs/airing-schedule.js");
 importScripts("src/common/boot-check.js");
 
 const sharedMergeUtils = self.AnimeTrackerMergeUtils || {};
@@ -3877,6 +3878,7 @@ chrome.runtime.onStartup.addListener(() => {
     console.warn("[BG] Smart notification startup reconciliation failed:", error?.message || error);
   });
   ensureLibraryAutoRefreshAlarm();
+  ensureAiringScheduleAlarm();
 
   // A gateway tab we created but never reaped (worker torn down before its close timer fired)
   // would otherwise be re-adopted as "not ours" and live forever.
@@ -3933,8 +3935,19 @@ chrome.alarms.onAlarm.addListener((alarm) => {
     return;
   }
 
+  if (alarm.name === AIRING_SCHEDULE_ALARM) {
+    refreshAiringSchedule().catch((e) => console.log("[BG] Airing schedule refresh failed:", e?.message || e));
+    return;
+  }
+
   if (alarm.name === LIBRARY_AUTO_REFRESH_ALARM || alarm.name === LIBRARY_STARTUP_CATCHUP_ALARM) {
-    ensureLibraryFresh([]).catch((e) => console.log("[BG] Library auto-refresh failed:", e?.message || e));
+    // The schedule is what decides which entries are even due for a re-scrape, so refresh it
+    // first and let the library sweep read the result.
+    refreshAiringSchedule()
+      .catch((e) => console.log("[BG] Airing schedule refresh failed:", e?.message || e))
+      .finally(() => {
+        ensureLibraryFresh([]).catch((e) => console.log("[BG] Library auto-refresh failed:", e?.message || e));
+      });
     return;
   }
 
@@ -4023,6 +4036,7 @@ migratePerKeyCachesOnce();
 ensureDailyCleanupAlarmScheduled();
 
 ensureLibraryAutoRefreshAlarm();
+ensureAiringScheduleAlarm();
 
 (async () => {
   try {
