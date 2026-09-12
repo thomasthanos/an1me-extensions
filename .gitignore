@@ -5,3 +5,4 @@ an1me-tracker/backend/serviceAccountKey.json
 
 an1me-tracker/dist/
 /an1me-tracker/dist
+*.zip
