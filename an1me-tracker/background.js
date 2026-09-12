@@ -737,6 +737,8 @@ async function ensureDailyCleanupAlarmScheduled() {
 }
 const LIBRARY_AUTO_REFRESH_ALARM = "libraryAutoRefresh";
 const LIBRARY_AUTO_REFRESH_MINUTES = 180;
+// One-shot, armed on browser startup: see the comment at the onStartup call site.
+const LIBRARY_STARTUP_CATCHUP_ALARM = "libraryStartupCatchup";
 
 async function ensureLibraryAutoRefreshAlarm() {
   try {
@@ -3876,6 +3878,15 @@ chrome.runtime.onStartup.addListener(() => {
   });
   ensureLibraryAutoRefreshAlarm();
 
+  // A gateway tab we created but never reaped (worker torn down before its close timer fired)
+  // would otherwise be re-adopted as "not ours" and live forever.
+  reapOrphanAn1meGatewayTab().catch(() => {});
+
+  // Alarms do not fire while the browser is closed, so after a restart the library can be hours
+  // stale. Refresh it in the background shortly after startup - the whole point is that this
+  // happens before the user opens the popup, not because they did.
+  chrome.alarms.create(LIBRARY_STARTUP_CATCHUP_ALARM, { delayInMinutes: 1 });
+
   // Ensure cloud sync survives browser restart
   (async () => {
     try {
@@ -3905,6 +3916,11 @@ chrome.runtime.onConnect.addListener((port) => {
 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === AN1ME_IDLE_CLOSE_ALARM) {
+    handleAn1meGatewayAlarm(alarm.name).catch((e) => console.log("[BG] an1me gateway tab cleanup failed:", e?.message || e));
+    return;
+  }
+
   if (alarm.name === METADATA_REPAIR_ALARM) {
     runMetadataRepairBatch().catch((error) => {
       console.log("[BG] Metadata repair alarm failed:", error);
@@ -3917,7 +3933,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
     return;
   }
 
-  if (alarm.name === LIBRARY_AUTO_REFRESH_ALARM) {
+  if (alarm.name === LIBRARY_AUTO_REFRESH_ALARM || alarm.name === LIBRARY_STARTUP_CATCHUP_ALARM) {
     ensureLibraryFresh([]).catch((e) => console.log("[BG] Library auto-refresh failed:", e?.message || e));
     return;
   }

@@ -68,15 +68,26 @@
     } catch {}
   }
 
-  async function fetchAn1meViaTab(url) {
+  async function fetchAn1meViaGateway(url) {
     const reply = await new Promise((resolve) => {
+      // settle-once + wall clock: sendMessage's callback never fires if the worker dies mid-flight,
+      // and the gateway's own budget can exceed the probe timeout once it retries.
+      let settled = false;
+      const finish = (value) => {
+        if (settled) return;
+        settled = true;
+        resolve(value);
+      };
+      const timer = setTimeout(() => finish(null), PROBE_TIMEOUT_MS + 5000);
       try {
         chrome.runtime.sendMessage({ type: "AN1ME_GATEWAY_FETCH", url, timeoutMs: PROBE_TIMEOUT_MS }, (r) => {
           void chrome.runtime.lastError;
-          resolve(r || null);
+          clearTimeout(timer);
+          finish(r || null);
         });
       } catch {
-        resolve(null);
+        clearTimeout(timer);
+        finish(null);
       }
     });
     if (!reply || reply.unreachable || typeof reply.text !== "string") return null;
@@ -84,47 +95,21 @@
   }
   async function probeSlug(slug) {
     if (!slug) return false;
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), PROBE_TIMEOUT_MS);
-    try {
-      const url = `https://an1me.to/anime/${encodeURIComponent(slug)}/`;
-      const viaTab = await fetchAn1meViaTab(url);
-      if (viaTab) return viaTab.ok;
-
-      const res = await fetch(url, {
-        method: "GET",
-        signal: ctrl.signal,
-        redirect: "follow",
-        cache: "no-store",
-        credentials: "omit",
-      });
-
-      return res.ok;
-    } catch {
-      return false;
-    } finally {
-      clearTimeout(timer);
-    }
+    const url = `https://an1me.to/anime/${encodeURIComponent(slug)}/`;
+    // Gateway only. The raw credentials:"omit" fetch that used to back this up had no challenge
+    // detection, so a Cloudflare interstitial answered 200 and this returned true - confirming a
+    // bad slug and renaming the library entry under it.
+    const probe = await fetchAn1meViaGateway(url);
+    return probe ? probe.ok : false;
   }
 
   async function searchAn1meForTitle(title) {
     const q = String(title || "").trim();
     if (!q) return null;
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), PROBE_TIMEOUT_MS);
     try {
       const url = `https://an1me.to/?s=${encodeURIComponent(q)}&post_type=anime`;
-      const viaTab = await fetchAn1meViaTab(url);
-      const html = viaTab ? (viaTab.ok ? viaTab.text : null) : await (async () => {
-        const res = await fetch(url, {
-          method: "GET",
-          signal: ctrl.signal,
-          redirect: "follow",
-          cache: "no-store",
-          credentials: "omit",
-        });
-        return res.ok ? await res.text() : null;
-      })();
+      const search = await fetchAn1meViaGateway(url);
+      const html = search && search.ok ? search.text : null;
       if (html === null) return null;
 
       // Collect ALL /anime/ links and pick the one whose slug best matches the searched
@@ -157,8 +142,6 @@
       return bestRatio >= 0.5 ? best : null;
     } catch {
       return null;
-    } finally {
-      clearTimeout(timer);
     }
   }
 

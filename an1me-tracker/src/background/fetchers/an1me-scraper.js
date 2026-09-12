@@ -344,7 +344,9 @@ async function fetchAnimePageInfo(slug) {
   const titles = extractAnimeTitlesFromHtml(html);
 
   return {
-    schemaVersion: 4,
+    // Single source of truth: a hardcoded 4 here silently diverged from the policy module, so a
+    // bump in one place either invalidated every cached snapshot or falsely validated it.
+    schemaVersion: globalThis.AnimeTrackerCachePolicy.INFO_SCHEMA_VERSION,
     totalEpisodes,
     mediaType,
     status,

@@ -10,7 +10,8 @@
     "identity",
     "alarms",
     "notifications",
-    "sidePanel"
+    "sidePanel",
+    "declarativeNetRequestWithHostAccess"
   ],
   "host_permissions": [
     "https://an1me.to/*",
@@ -29,6 +30,15 @@
     "https://media.kitsu.app/*",
     "https://img1.ak.crunchyroll.com/*"
   ],
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "an1me_headers",
+        "enabled": true,
+        "path": "src/background/dnr-rules.json"
+      }
+    ]
+  },
   "action": {
     "default_popup": "popup.html",
     "default_icon": {

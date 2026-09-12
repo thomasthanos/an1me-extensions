@@ -1336,56 +1336,10 @@
     });
   }
 
-  let _ensureFreshAt = 0;
-  async function runAutoFetchIfNeeded() {
-    const now = Date.now();
-    if (now - _ensureFreshAt < 30000) return;
-    _ensureFreshAt = now;
-    try {
-      const prioritySlugs = Object.entries(animeData || {})
-        .filter(([, anime]) => {
-          const total = Number(anime?.totalEpisodes) || 0;
-          const highest = Math.max(
-            0,
-            ...(Array.isArray(anime?.episodes) ? anime.episodes : []).map((episode) => Number(episode?.number) || 0),
-          );
-          return total > 0 && highest >= total;
-        })
-        .sort(([, left], [, right]) => new Date(right?.lastWatched || 0).getTime() - new Date(left?.lastWatched || 0).getTime())
-        .slice(0, 25)
-        .map(([slug]) => slug);
-      chrome.runtime.sendMessage({ type: "ENSURE_LIBRARY_FRESH", prioritySlugs }, () => void chrome.runtime.lastError);
-    } catch {}
-  }
-
-  async function startSignInMetadataRepair() {
-    const response = await sendRuntimeMessage(
-      {
-        type: "START_LIBRARY_REPAIR",
-        forceInfoRefresh: false,
-        forceFillerRefresh: false,
-        isMobile: !detectHasGoogleAuth(),
-        auto: true,
-        origin: "sign-in",
-      },
-      30000,
-    );
-    if (!response?.success) {
-      throw new Error(response?.error || "Failed to start sign-in fetch");
-    }
-
-    const responseState = response.state || null;
-    try {
-      const persistedState = await syncMetadataRepairStateFromStorage({ autoOpenRunning: true });
-      if (persistedState) return persistedState;
-      await applyMetadataRepairState(responseState, { autoOpenRunning: true });
-      return responseState;
-    } catch (error) {
-      PopupLogger.warn("Login", `Could not read the latest sign-in fetch state: ${error?.message || error}`);
-      await applyMetadataRepairState(responseState, { autoOpenRunning: true });
-      return responseState;
-    }
-  }
+  // Freshness is the background worker's job, on its own alarms (libraryAutoRefresh every 180min
+  // plus a one-shot catch-up on browser startup). The popup no longer asks for a refresh when it
+  // opens: doing so tied "I looked at my library" to "fetch the library", which is why a warm
+  // cache still showed a fetch after any gap longer than the TTL.
 
   async function warmCoverCache() {
     try {
@@ -1403,6 +1357,10 @@
         if (safe) urls.push(safe);
       }
       await CoverCache.warm(urls);
+      // Reclaim covers no library entry points at any more. Runs after warming so the set we
+      // keep is exactly what was just requested.
+      const removed = await CoverCache.prune(new Set(urls));
+      if (removed > 0) PopupLogger.debug("CoverCache", `pruned ${removed} unreferenced cover(s)`);
     } catch (e) {
       PopupLogger.debug("CoverCache", "warm failed:", e?.message || e);
     }
@@ -1523,7 +1481,6 @@
       sourceRevision === lastHydratedLibraryRevision;
 
     if (canSkip) {
-      if (!request.skipAutoFetch) await runAutoFetchIfNeeded();
       return {
         skipped: true,
         revision: sourceRevision,
@@ -1566,8 +1523,6 @@
     renderAnimeList(getActiveFilter());
     await Promise.all([updateStats(), loadGoalAndBadgeState()]);
 
-    if (!request.skipAutoFetch) await runAutoFetchIfNeeded();
-
     return {
       skipped: false,
       revision: lastHydratedLibraryRevision,
@@ -1593,7 +1548,7 @@
 
       let hydration = null;
       if (request.cloudMode !== "none" && !AT.PopupState.libraryLoaded) {
-        hydration = await hydrateLibraryWithRecovery({ ...request, skipAutoFetch: true }, context);
+        hydration = await hydrateLibraryWithRecovery(request, context);
       }
 
       if (request.cloudMode !== "none") {
@@ -1669,7 +1624,6 @@
   function loadAndSyncData(options = {}) {
     return libraryLoadController.request({
       cloudMode: options.cloudMode || "none",
-      skipAutoFetch: options.skipAutoFetch === true,
       forceHydrate: options.forceHydrate === true,
       allowRevisionSkip: options.allowRevisionSkip !== false,
       loadPreferences: options.loadPreferences ?? !AT.PopupState.libraryLoaded,
@@ -1685,10 +1639,19 @@
     });
   }
 
+  // A side panel that is shown, hidden and shown again used to fire a fresh 90s cloud round trip
+  // every single time. Nothing changes cloud-side in a few seconds of tab switching.
+  const POPUP_CLOUD_REFRESH_MIN_GAP_MS = 2 * 60 * 1000;
+  let _lastCloudRefreshAt = 0;
+
   function refreshPopupCloudData(forceFresh = false, options = {}) {
     if (!AT?.FirebaseSync?.getUser?.()) {
       return Promise.resolve({ success: true, skipped: true, reason: "not-authenticated" });
     }
+    if (!forceFresh && options.debounce === true && Date.now() - _lastCloudRefreshAt < POPUP_CLOUD_REFRESH_MIN_GAP_MS) {
+      return Promise.resolve({ success: true, skipped: true, reason: "debounced" });
+    }
+    _lastCloudRefreshAt = Date.now();
     return loadAndSyncData({
       ...options,
       cloudMode: forceFresh ? "force" : "regular",
@@ -1706,7 +1669,7 @@
   function startPopupCloudRefresh() {
     stopPopupCloudRefresh();
     popupCloudRefreshTimer = setInterval(() => {
-      refreshPopupCloudData(false, { skipAutoFetch: true })
+      refreshPopupCloudData(false)
         .catch((e) => PopupLogger.debug("Sync", "Periodic cloud refresh skipped:", e?.message || e));
     }, 3 * 60 * 1000);
   }
@@ -1974,9 +1937,9 @@
         const startedAt = Date.now();
         try {
           if (FirebaseSync.getUser()) {
-            await refreshPopupCloudData(true, { skipAutoFetch: true });
+            await refreshPopupCloudData(true);
           } else {
-            await loadData({ skipAutoFetch: true });
+            await loadData();
           }
           const elapsed = Date.now() - startedAt;
           if (elapsed < 500) await new Promise((r) => setTimeout(r, 500 - elapsed));
@@ -2783,11 +2746,21 @@
 
     FirebaseSync.init({
       onUserSignedIn: async (user) => {
-        const signInCloudLoad = refreshPopupCloudData(false, { skipAutoFetch: true, reason: "popup:sign-in" }).then(
-          (result) => ({ result, error: null }),
-          (error) => ({ result: null, error }),
-        );
         showMainApp(user);
+
+        // Paint from local storage immediately. The cloud poll below can take up to 90s, and
+        // awaiting it here is what made a signed-in popup sit on a loading state before showing
+        // a library that was already on disk.
+        const localFirst = loadData({ reason: "popup:sign-in-local" }).catch((error) => {
+          PopupLogger.warn("Storage", `Local-first load failed: ${error?.message || error}`);
+        });
+
+        const signInCloudLoad = localFirst
+          .then(() => refreshPopupCloudData(false, { reason: "popup:sign-in" }))
+          .then(
+            (result) => ({ result, error: null }),
+            (error) => ({ result: null, error }),
+          );
 
         try {
           const needs = await window.FirebaseLib?.isReauthNeeded?.();
@@ -2810,24 +2783,9 @@
         const cloudLoadResult = await signInCloudLoad;
         if (cloudLoadResult.error) {
           const syncError = cloudLoadResult.error;
-          PopupLogger.warn("Login", `Cloud refresh failed before sign-in fetch: ${syncError?.message || syncError}`);
-          try {
-            await loadData({ skipAutoFetch: true, reason: "popup:sign-in-fallback" });
-          } catch (localLoadError) {
-            PopupLogger.warn("Login", `Local fallback failed before sign-in fetch: ${localLoadError?.message || localLoadError}`);
-          }
-        }
-
-        try {
-          const repairState = await startSignInMetadataRepair();
-          const fetchTotal = Number(repairState?.fetchTotal) || 0;
-          PopupLogger.log(
-            "Login",
-            `Sign-in fetch planned: ${fetchTotal} pending item(s), UI=${repairState?.uiMode || "status"}`,
-          );
-        } catch (repairError) {
-          PopupLogger.error("Login", "Failed to start sign-in fetch:", repairError);
-          setMetadataRepairStatus("Fetch Error", false, { error: true, title: repairError?.message || "Metadata fetch failed" });
+          // Not fatal and not worth a toast: the local library is already on screen from
+          // localFirst above, and the periodic refresh will retry.
+          PopupLogger.warn("Login", `Cloud refresh failed: ${syncError?.message || syncError}`);
         }
 
         try {
@@ -2991,7 +2949,7 @@
     }
 
     startPopupCloudRefresh();
-    refreshPopupCloudData(false).catch((error) => {
+    refreshPopupCloudData(false, { debounce: true, reason: "popup:visibility" }).catch((error) => {
       PopupLogger.debug("Sync", "Visibility refresh skipped:", error?.message || error);
     });
   });

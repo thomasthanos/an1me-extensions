@@ -1,5 +1,5 @@
 // watchlist-sync.js — mirrors watchlist changes to an1me.to: forwards to a live
-// tab when one is open, else POSTs directly to the site's admin-ajax endpoint.
+// tab when one is open, else POSTs to the site's admin-ajax endpoint through the gateway.
 async function syncWatchlistToSite(animeId, type, animeSlug = null) {
   dlog(
     `%c WatchlistSync %c ${type} %c anime #${animeId}`,
@@ -66,14 +66,21 @@ async function directWatchlistFetch(animeId, type) {
     formData.append("anime_id", animeId.toString());
     formData.append("type", type);
 
-    const res = await fetchWithTimeout(AJAX_URL, {
+    // Routed through the gateway rather than a bare fetch, so this POST gets the same challenge
+    // detection, timeout/network retry and tab fallback as every other an1me.to request. A bare
+    // SW fetch here had none of that and read a Cloudflare interstitial as a hard failure.
+    const res = await an1meFetch(AJAX_URL, {
       method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: formData.toString(),
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      timeoutMs: 10000,
     });
 
-    const text = await res.text();
+    if (res.unreachable) {
+      throw new Error("an1me.to unreachable");
+    }
+
+    const text = typeof res.text === "string" ? res.text : "";
     // A 403 from an expired an1me.to session returns an HTML body, so JSON.parse throws and the
     // failure used to disappear into a debug-only log while the caller counted it as a success.
     if (!res.ok) {

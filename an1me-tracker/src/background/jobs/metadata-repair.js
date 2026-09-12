@@ -45,12 +45,16 @@ function getMetadataRepairRemainingFetches(state) {
   return Math.max(0, total - completed);
 }
 
-// A fetch that rebuilds the library from scratch deserves the full fetch panel; a handful of
-// expired entries inside an otherwise-cached library is just an update and belongs in the
-// bottom-right status line. Both conditions must hold for the panel: enough items to be worth
-// a modal, and the bulk of what was examined actually needing a fetch.
+// Only work the user actually asked for is allowed to say so. Everything else - the alarm-driven
+// refresh, the startup catch-up, a targeted top-up - runs "silent": the cards still update live as
+// each entry lands (the popup watches the animeinfo_/episodeTypes_ storage keys), but nothing is
+// written to the status line and no panel opens. Refreshing cache the user never asked about is
+// housekeeping, not an event, and announcing it on every popup open is what made a warm library
+// look like it was fetching from scratch every time.
+//
+// "status" is kept for a manual run whose panel the user closed; "modal" is the full fetch panel.
 function resolveMetadataRepairUiMode(origin, fetchCount, consideredTotal = 0) {
-  if (origin === "manual") return "modal";
+  if (origin !== "manual") return "silent";
 
   const fetches = Math.max(0, Number(fetchCount) || 0);
   if (fetches < METADATA_REPAIR_MODAL_FETCH_THRESHOLD) return "status";
@@ -696,7 +700,8 @@ async function startLibraryRepair(options = {}) {
   if (existing?.status === "running") {
     const existingAutoMode = existing.options?.auto === true ? true : existing.options?.auto === false ? false : null;
     const existingOrigin = normalizeMetadataRepairOrigin(existing.origin, false, existingAutoMode);
-    const hasExplicitUiMode = existing.uiMode === "modal" || existing.uiMode === "status";
+    const hasExplicitUiMode =
+      existing.uiMode === "modal" || existing.uiMode === "status" || existing.uiMode === "silent";
     const shouldPromoteToManual = requestedOrigin === "manual" && existingOrigin !== "manual";
     const shouldPromoteToSignIn =
       requestedOrigin === "sign-in" && existingOrigin !== "manual" && (existingOrigin !== "sign-in" || !hasExplicitUiMode);
@@ -874,6 +879,24 @@ async function maybeStartPendingMetadataRepair() {
   return true;
 }
 
+// The popup used to compute this and hand it over on every open, which is exactly the coupling
+// Part B removes. The heuristic itself is worth keeping: a show the user has caught up on is the
+// one whose next episode they care about, so it goes to the front of the queue.
+function deriveMetadataRepairPriorities(animeData, limit = 25) {
+  return Object.entries(animeData || {})
+    .filter(([, anime]) => {
+      const total = Number(anime?.totalEpisodes) || 0;
+      const highest = Math.max(
+        0,
+        ...(Array.isArray(anime?.episodes) ? anime.episodes : []).map((episode) => Number(episode?.number) || 0),
+      );
+      return total > 0 && highest >= total;
+    })
+    .sort(([, left], [, right]) => new Date(right?.lastWatched || 0).getTime() - new Date(left?.lastWatched || 0).getTime())
+    .slice(0, limit)
+    .map(([slug]) => slug);
+}
+
 async function ensureLibraryFresh(prioritySlugs = []) {
   let existingState = await getMetadataRepairState();
   if (existingState?.status === "running") {
@@ -903,10 +926,12 @@ async function ensureLibraryFresh(prioritySlugs = []) {
 
   const stored = await bgStorageGet(["animeData"]);
   const animeData = stored.animeData || {};
+  const priorities =
+    Array.isArray(prioritySlugs) && prioritySlugs.length > 0 ? prioritySlugs : deriveMetadataRepairPriorities(animeData);
   const plan = await buildLibraryRepairPlan(animeData, {
     forceInfoRefresh: false,
     forceFillerRefresh: false,
-    prioritySlugs,
+    prioritySlugs: priorities,
   });
   if (!plan.items.length) return false;
 

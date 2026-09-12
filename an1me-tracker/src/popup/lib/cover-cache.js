@@ -5,6 +5,8 @@
   const AT = (window.AnimeTracker = window.AnimeTracker || {});
 
   const CACHE_NAME = "at-covers-v1";
+  // Below this there is nothing worth reclaiming and a prune would just cost a keys() walk.
+  const PRUNE_MIN_ENTRIES = 40;
   const mem = new Map();
   const fetching = new Set();
 
@@ -52,8 +54,10 @@
     fetching.add(url);
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000);
+    // an1me.to covers go through the gateway only. The credentials:"omit" fallback that used to
+    // back this up had no challenge detection, so a Cloudflare stub could be cached as an image.
     const request = isAn1meUrl(url)
-      ? fetchViaAn1meGateway(url).then((blob) => (blob ? new Response(blob) : fetch(url, { credentials: "omit", cache: "force-cache", signal: controller.signal })))
+      ? fetchViaAn1meGateway(url).then((blob) => (blob ? new Response(blob) : null))
       : fetch(url, { credentials: "omit", cache: "force-cache", signal: controller.signal });
     request
       .then(async (resp) => {
@@ -75,6 +79,29 @@
     resolve(url) {
       if (!url) return url;
       return mem.get(url) || url;
+    },
+
+    // The cover store had no eviction at all, so every cover an entry ever pointed at stayed on
+    // disk forever - including art replaced by a re-scrape and entries the user deleted. Keyed on
+    // "still referenced by the library" rather than on age, because CacheStorage keeps no
+    // timestamps to age against.
+    async prune(validUrls) {
+      if (!cachesAvailable()) return 0;
+      const cache = await openCache();
+      if (!cache) return 0;
+      try {
+        const keys = await cache.keys();
+        if (keys.length <= PRUNE_MIN_ENTRIES) return 0;
+        const keep = validUrls instanceof Set ? validUrls : new Set(validUrls || []);
+        let removed = 0;
+        for (const request of keys) {
+          if (keep.has(request.url)) continue;
+          if (await cache.delete(request)) removed++;
+        }
+        return removed;
+      } catch {
+        return 0;
+      }
     },
 
     async warm(urls) {

@@ -28,10 +28,10 @@
   // Mirrors resolveMetadataRepairUiMode() in the worker; only used for states persisted
   // before the worker started stamping uiMode explicitly.
   function getMetadataRepairUiMode(state) {
-    if (state?.uiMode === "modal" || state?.uiMode === "status") return state.uiMode;
+    if (state?.uiMode === "modal" || state?.uiMode === "status" || state?.uiMode === "silent") return state.uiMode;
 
     const origin = state?.origin || (state?.options?.auto === true ? "background" : "manual");
-    if (origin === "manual") return "modal";
+    if (origin !== "manual") return "silent";
 
     const progress = getMetadataRepairProgress(state);
     const fetches = Math.max(0, Number(state?.fetchTotal) || progress.total || 0);
@@ -151,8 +151,9 @@
     }
 
     const uiMode = getMetadataRepairUiMode(state);
+    const isSilent = uiMode === "silent" && !ensureOpen;
     const shouldOpen = ensureOpen || (autoOpenRunning && state.status === "running" && uiMode === "modal");
-    if (!ensureOpen && uiMode === "status" && FillerFetchUI.state.isOpen) {
+    if (!ensureOpen && (uiMode === "status" || uiMode === "silent") && FillerFetchUI.state.isOpen) {
       FillerFetchUI.close();
     }
     if (shouldOpen && !FillerFetchUI.state.isOpen) {
@@ -167,9 +168,11 @@
       const updatedAt = state.updatedAt ? Date.parse(state.updatedAt) : 0;
       const progress = getMetadataRepairProgress(state);
       if (!updatedAt || Date.now() - updatedAt > METADATA_REPAIR_STALE_MS) {
-        setMetadataRepairStatus(
-          progress.total > 0 ? `Resuming ${progress.processed}/${progress.total}...` : "Resuming import...",
-        );
+        if (!isSilent) {
+          setMetadataRepairStatus(
+            progress.total > 0 ? `Resuming ${progress.processed}/${progress.total}...` : "Resuming import...",
+          );
+        }
 
         // The persisted counters remain authoritative while an MV3 worker is waking up.
         // Keep them visible and only nudge the background at a bounded rate.
@@ -191,6 +194,10 @@
       }
       lastMetadataRepairResumeNudgeAt = 0;
       const nextStep = progress.total > 0 ? Math.min(progress.total, progress.processed + 1) : 0;
+      if (isSilent) {
+        // Deliberately mute: cards still refresh live via applyAnimeInfoCacheChange.
+        return state;
+      }
       if (uiMode === "status") {
         setMetadataRepairStatus(
           progress.remaining > 0 ? `Fetching ${progress.remaining} anime...` : "Fetching data...",
@@ -203,25 +210,32 @@
 
     if (state.status === "completed") {
       if (state.followUpPending === true) {
-        setMetadataRepairStatus("Fetching data...");
+        if (!isSilent) setMetadataRepairStatus("Fetching data...");
         return state;
       }
-      const label = state.failed > 0 ? `Import Complete (${state.failed} failed)` : "Import Complete";
-      setMetadataRepairStatus(label, true);
-      if (previousStatus !== "completed" || previousState?.runId !== state.runId) {
+      const isNewRun = previousStatus !== "completed" || previousState?.runId !== state.runId;
+      if (!isSilent) {
+        const label = state.failed > 0 ? `Import Complete (${state.failed} failed)` : "Import Complete";
+        setMetadataRepairStatus(label, true);
+      }
+      if (isNewRun) {
         scheduleDeferredListRefresh({ delayMs: 0 });
         await updateStats();
       }
       if (applyVersion !== metadataRepairApplyVersion) return state;
-      scheduleDefaultSyncStatusRestore();
+      if (!isSilent) scheduleDefaultSyncStatusRestore();
       return state;
     }
 
     if (state.status === "error") {
-      setMetadataRepairStatus("Import Error", false, {
-        error: true,
-        title: state.errorMessage || "Metadata import failed",
-      });
+      // A background refresh that failed is not the user's problem to look at - the alarms retry
+      // it. Only a run the user started reports its own failure.
+      if (!isSilent) {
+        setMetadataRepairStatus("Import Error", false, {
+          error: true,
+          title: state.errorMessage || "Metadata import failed",
+        });
+      }
       return state;
     }
 

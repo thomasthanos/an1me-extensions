@@ -28,7 +28,6 @@
     const reason = String(options.reason || "library-load").trim() || "library-load";
     return {
       cloudMode: normalizeCloudMode(options.cloudMode),
-      skipAutoFetch: options.skipAutoFetch === true,
       forceHydrate: options.forceHydrate === true,
       allowRevisionSkip: options.allowRevisionSkip !== false,
       loadPreferences: options.loadPreferences === true,
@@ -43,7 +42,6 @@
     const cloudMode = CLOUD_PRIORITY[right.cloudMode] > CLOUD_PRIORITY[left.cloudMode] ? right.cloudMode : left.cloudMode;
     return {
       cloudMode,
-      skipAutoFetch: left.skipAutoFetch && right.skipAutoFetch,
       forceHydrate: left.forceHydrate || right.forceHydrate,
       allowRevisionSkip: left.allowRevisionSkip && right.allowRevisionSkip,
       loadPreferences: left.loadPreferences || right.loadPreferences,
@@ -54,7 +52,6 @@
   function requestCovers(active, incoming) {
     if (!active) return false;
     if (CLOUD_PRIORITY[active.cloudMode] < CLOUD_PRIORITY[incoming.cloudMode]) return false;
-    if (active.skipAutoFetch && !incoming.skipAutoFetch) return false;
     if (!active.forceHydrate && incoming.forceHydrate) return false;
     if (active.allowRevisionSkip && !incoming.allowRevisionSkip) return false;
     if (!active.loadPreferences && incoming.loadPreferences) return false;

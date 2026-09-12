@@ -10,6 +10,14 @@
 
   const INFO_TTL = 24 * HOUR;
   const INFO_AIRING_RECHECK = 6 * HOUR;
+  // A scheduled air time is when the episode *airs*, not when a fansub upload appears. Expiring
+  // the cache exactly at nextEpisodeAt meant the one refresh that mattered fired before there was
+  // anything to find, and the next attempt was a blind 6h later.
+  const INFO_AIRING_GRACE = 20 * MINUTE;
+  // For the few hours after a drop is due, check more often: this is the only window in which new
+  // episodes actually appear, so it is worth spending requests on.
+  const INFO_AIRING_DROP_WINDOW = 6 * HOUR;
+  const INFO_AIRING_DROP_RECHECK = 45 * MINUTE;
   const INFO_SETTLED_TTL = 30 * DAY;
   const EPISODE_TYPES_TTL = 24 * HOUR;
   const FILLER_FINISHED_TTL = 7 * DAY;
@@ -41,7 +49,12 @@
     if (info.retryable) return at + RETRYABLE_TTL;
     if (info.status === "RELEASING") {
       const nextMs = toMs(info.nextEpisodeAt);
-      if (Number.isFinite(nextMs) && nextMs > at) return Math.min(nextMs, at + INFO_TTL);
+      if (Number.isFinite(nextMs)) {
+        // Before the drop: wake just after it, never before.
+        if (nextMs + INFO_AIRING_GRACE > at) return Math.min(nextMs + INFO_AIRING_GRACE, at + INFO_TTL);
+        // Overdue: the episode was due but nothing was found yet (a late upload, or a delay).
+        if (at - nextMs < INFO_AIRING_DROP_WINDOW) return at + INFO_AIRING_DROP_RECHECK;
+      }
       return at + INFO_AIRING_RECHECK;
     }
     if (isSettledInfo(info)) return at + INFO_SETTLED_TTL;
@@ -66,12 +79,28 @@
     );
   }
 
+  // A retryable backoff entry that still carries prior scraped values is usable data; a pure-error
+  // backoff entry carries nothing and used to be read as authoritative "status: null,
+  // nextEpisodeAt: null" by the popup.
   function isInfoUsableSnapshot(info) {
+    if (!info) return false;
+    if (!Number.isFinite(toMs(info.cachedAt))) return false;
+    if (info.notFound) return false;
+    if (Number(info.schemaVersion || 0) < INFO_SCHEMA_VERSION) return false;
+    if (info.retryable && !hasInfoPayload(info)) return false;
+    if (info.error && !hasInfoPayload(info)) return false;
+    return true;
+  }
+
+  function hasInfoPayload(info) {
     return !!(
       info &&
-      Number.isFinite(toMs(info.cachedAt)) &&
-      !info.notFound &&
-      Number(info.schemaVersion || 0) >= INFO_SCHEMA_VERSION
+      (info.status ||
+        Number(info.totalEpisodes) > 0 ||
+        Number(info.latestEpisode) > 0 ||
+        info.nextEpisodeAt ||
+        info.coverImage ||
+        info.title)
     );
   }
 
@@ -137,6 +166,7 @@
   const exports = {
     INFO_TTL,
     INFO_AIRING_RECHECK,
+    INFO_AIRING_GRACE,
     INFO_SETTLED_TTL,
     isSettledInfo,
     EPISODE_TYPES_TTL,
