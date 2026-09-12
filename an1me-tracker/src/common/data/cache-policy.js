@@ -23,7 +23,10 @@
   const FILLER_FINISHED_TTL = 7 * DAY;
   const NOT_FOUND_TTL = 3 * DAY;
   const RETRYABLE_TTL = 15 * MINUTE;
-  const INFO_SCHEMA_VERSION = 4;
+  // 5: added nativeTitle + synonyms, which the filler matcher needs. A bump invalidates every
+  // cached info snapshot and forces one full re-scrape - silent and alarm-driven, so the user
+  // does not see it.
+  const INFO_SCHEMA_VERSION = 5;
   const EPISODE_TYPES_SCHEMA_VERSION = 3;
 
   function toMs(value) {

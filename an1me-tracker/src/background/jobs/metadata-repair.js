@@ -447,8 +447,12 @@ async function repairEpisodeTypesCacheUncoalesced(slug, title, forceRefresh = tr
     return !infoTotal || !externalTotal || externalTotal === infoTotal;
   };
   let aflParseEmpty = false;
+  let fillerMatch = null;
   try {
-    fillerSlug = await discoverFillerSlug(slug, title || null, { forceRefresh });
+    // The info entry carries nativeTitle and synonyms, which is most of what makes the match
+    // work; passing only `title` was why the old code needed a hardcoded JP->EN table.
+    fillerMatch = await discoverFillerSlug(slug, title || null, { forceRefresh, info });
+    fillerSlug = fillerMatch?.slug || null;
     if (fillerSlug) {
       try {
         episodeTypes = await fetchEpisodeTypesFromAnimeFillerList(fillerSlug);
@@ -457,9 +461,38 @@ async function repairEpisodeTypesCacheUncoalesced(slug, title, forceRefresh = tr
         aflParseEmpty = true;
       }
     }
+
+    // An an1me per-season entry matched against an absolute-numbered AnimeFillerList show needs
+    // its episode numbers shifted, or the marks land on the wrong episodes entirely.
+    if (episodeTypes && fillerMatch?.needsOffset) {
+      const offset = Number(globalThis.AnimeTrackerMultipartMappings?.EPISODE_OFFSET_MAPPING?.[slug]) || 0;
+      if (offset > 0) {
+        episodeTypes = rebaseEpisodeTypes(episodeTypes, offset, infoTotal || null);
+      } else if (infoTotal && Number(episodeTypes.totalEpisodes) > infoTotal) {
+        // No known offset and the listing is clearly longer than this season: marks would be
+        // wrong and silently so, which is worse than having none. Refuse the match.
+        (typeof dlog === "function" ? dlog : () => {})(
+          `[AnimeTracker] Rejecting ${fillerSlug} for ${slug}: absolute numbering (${episodeTypes.totalEpisodes} eps) with no known offset`,
+        );
+        episodeTypes = null;
+      }
+    }
+
     if (episodeTypes && !matchesInfoTotal(episodeTypes)) episodeTypes = null;
     if (!episodeTypes && title) {
-      const jikanTypes = await fetchJikanEpisodes(title);
+      // Reuse an already-cached MAL id if AniSkip resolved one, so the Jikan search can be
+      // skipped entirely. Read straight from the bundle rather than via getMalIdForSlug, which
+      // would kick off exactly the search we are trying to avoid.
+      let cachedMalId = 0;
+      try {
+        const bundleRead = await bgStorageGet(["malIdForSlugBundle"]);
+        cachedMalId = Number(bundleRead.malIdForSlugBundle?.[slug]?.malId) || 0;
+      } catch {}
+
+      const jikanTypes = await fetchJikanEpisodes(title, {
+        malId: cachedMalId,
+        extraKeys: collectFillerMatchKeys(slug, title, info),
+      });
       // An empty filler array is a valid all-canon result; the object and episode-total match are the validity checks.
       if (jikanTypes && matchesInfoTotal(jikanTypes)) {
         episodeTypes = jikanTypes;

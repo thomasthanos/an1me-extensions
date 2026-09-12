@@ -351,6 +351,17 @@ async function fetchAnimePageInfo(slug) {
   }
 
   const titles = extractAnimeTitlesFromHtml(html);
+  const nativeTitle = extractScrapedDetail(html, "Native|Εγχώρια|Ιαπωνικά", 200);
+  const synonymsText = extractScrapedDetail(html, "Συνώνυμα|Synonyms?|Εναλλακτικοί", 400);
+  const englishDetail = extractScrapedDetail(html, "Αγγλικα|Αγγλικά|English", 200);
+  const synonyms = synonymsText
+    ? [...new Set(
+        synonymsText
+          .split(/[,;]|\s•\s/)
+          .map((part) => cleanScrapedTitle(part))
+          .filter((part) => part && part.length > 1),
+      )]
+    : [];
 
   // AniList is the only source here that authoritatively knows whether a series has finished
   // airing, so it outranks every page heuristic. It is read from the batched airing snapshot,
@@ -396,7 +407,11 @@ async function fetchAnimePageInfo(slug) {
     resolvedSlug,
     durationSeconds,
     title: titles.title,
-    englishTitle: titles.englishTitle,
+    // The <h1> spans are the primary source; the detail row is the fallback when the page only
+    // carries the English title down there.
+    englishTitle: titles.englishTitle || (englishDetail ? cleanScrapedTitle(englishDetail) : null),
+    nativeTitle: nativeTitle ? cleanScrapedTitle(nativeTitle) : null,
+    synonyms,
     fillerEpisodes,
     canonEpisodes,
     episodeTypesSource: hasSiteEpisodeTypes ? "an1me" : null,

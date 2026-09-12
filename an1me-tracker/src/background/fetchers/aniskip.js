@@ -81,6 +81,9 @@ async function getMalIdForSlug(slug, title) {
       clearTimeout(timer);
     }
     if (!res.ok) {
+      // 429 means "ask again later", not "this show has no MAL entry". Caching it as a miss
+      // locked the show out of skip times for the whole httpMiss TTL.
+      if (res.status === 429) return null;
       bundle[slug] = { malId: null, cachedAt: Date.now(), httpMiss: true };
       scheduleSlugMalBundleFlush();
       return null;
