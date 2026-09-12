@@ -113,6 +113,10 @@ const SLUGS = [
   // trinity seven / higashi / dragon ball
   "trinity-seven", "trinity-seven-nanatsu-no-taizai-to-nana-madoushi",
   "higashi-no-eden", "higashi-no-eden-movie-i-king-of-eden", "higashi-no-eden-movie-ii-paradise-lost",
+  // Numeric spellings of the same two movies, which the number and label paths used to disagree on.
+  "higashi-no-eden-movie-1", "higashi-no-eden-movie-2",
+  // Slugs containing "-3"/"-2" that are NOT that season: the naruto includes/endsWith divergence.
+  "naruto-shippuuden-movie-3-inheritors-of-the-will-of-fire", "one-punch-man-movie-2-something",
   "dragon-ball", "dragon-ball-z", "dragon-ball-super", "dragon-ball-super-broly",
   "dragon-ball-daima",
   // generic season/part/roman forms

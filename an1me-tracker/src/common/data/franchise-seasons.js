@@ -219,7 +219,82 @@
     return { number: franchise.default.number, label: franchise.default.label, franchiseId: franchise.id };
   }
 
-  const exports = { FRANCHISES, resolveSeason, findFranchise };
+  // Franchises shown in in-universe chronological order rather than by release, where the group
+  // renders date separators instead of season numbers. Same shape as the season rules: ordered,
+  // first hit wins. `fromTitle` means "use the entry's own title, falling back to `label`".
+  //
+  // Kept as data for the same reason the season rules are: this was an 85-line if-chain of
+  // returns that differed only in three field values.
+  const CHRONOLOGIES = Object.freeze({
+    fate: {
+      // Shown as the group's own heading in place of any member's title.
+      displayTitle: "Fate",
+      rules: [
+        { startsWith: ["fate-zero"], order: 10, separator: "1994", label: "Fate/Zero" },
+        { exact: ["fate-stay-night"], order: 20, separator: "2004", label: "Fate/stay night" },
+        { any: ["unlimited-blade-works-prologue"], order: 30, separator: "2004", label: "Unlimited Blade Works - Prologue" },
+        {
+          any: ["unlimited-blade-works-season-2", "unlimited-blade-works-2nd-season"],
+          order: 40,
+          separator: "2004",
+          label: "Unlimited Blade Works Season 2",
+        },
+        { any: ["unlimited-blade-works"], order: 35, separator: "2004", label: "Unlimited Blade Works" },
+        // Real an1me.to slugs use roman numerals + subtitles, e.g.
+        // fate-stay-night-movie-heavens-feel-iii-spring-song. The roman patterns are anchored so
+        // "-i" cannot match inside "-ii"/"-iii".
+        { any: ["heavens-feel-3", "spring-song"], re: /heavens-feel-iii(-|$)/, order: 52, separator: "2004", label: "Heaven's Feel III: Spring Song" },
+        { any: ["heavens-feel-2", "lost-butterfly"], re: /heavens-feel-ii(-|$)/, order: 51, separator: "2004", label: "Heaven's Feel II: Lost Butterfly" },
+        { any: ["heavens-feel-1", "presage-flower"], re: /heavens-feel-i(-|$)/, order: 50, separator: "2004", label: "Heaven's Feel I: Presage Flower" },
+        { any: ["heavens-feel"], order: 50, separator: "2004", label: "Heaven's Feel", fromTitle: true },
+      ],
+      // Anything in the franchise the rules above do not name.
+      fallback: { order: 900, separator: "Other", label: null, fromTitle: true },
+    },
+  });
+
+  function getChronologyDisplayTitle(baseSlug) {
+    return CHRONOLOGIES[String(baseSlug || "")]?.displayTitle || null;
+  }
+
+  function isChronologyGroup(baseSlug) {
+    return Object.prototype.hasOwnProperty.call(CHRONOLOGIES, String(baseSlug || ""));
+  }
+
+  function titleizeSlug(slug) {
+    return String(slug || "")
+      .replace(/-/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+
+  function chronologyRuleMatches(rule, slug) {
+    if (rule.exact && rule.exact.includes(slug)) return true;
+    if (rule.startsWith && rule.startsWith.some((prefix) => slug.startsWith(prefix))) return true;
+    if (rule.any && rule.any.some((token) => slug.includes(token))) return true;
+    if (rule.re && rule.re.test(slug)) return true;
+    return false;
+  }
+
+  // { order, separatorLabel, itemLabel } or null when the base slug is not a chronology group.
+  function resolveChronology(baseSlug, slug, title = "") {
+    const chronology = CHRONOLOGIES[String(baseSlug || "")];
+    if (!chronology) return null;
+
+    const value = lower(slug);
+    const rawTitle = String(title || "").trim();
+    const build = (rule) => ({
+      order: rule.order,
+      separatorLabel: rule.separator,
+      itemLabel: rule.fromTitle ? rawTitle || rule.label || titleizeSlug(slug) : rule.label,
+    });
+
+    for (const rule of chronology.rules) {
+      if (chronologyRuleMatches(rule, value)) return build(rule);
+    }
+    return build(chronology.fallback);
+  }
+
+  const exports = { FRANCHISES, CHRONOLOGIES, resolveSeason, findFranchise, resolveChronology, isChronologyGroup, getChronologyDisplayTitle };
   const root = typeof globalThis !== "undefined" ? globalThis : self;
   root.AnimeTrackerFranchiseSeasons = exports;
   if (typeof window !== "undefined") {

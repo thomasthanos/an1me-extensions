@@ -45,13 +45,41 @@ const ONE_PIECE_MOVIES = Object.freeze([
   { number: 15, slug: "one-piece-film-red", label: "Film: Red", releasedAt: "2022-08-06" },
 ]);
 
+// Franchises whose individual movies need naming, beyond the generic "-movie-N" parsing.
+// One entry per movie carrying both its order and its label, because these used to be resolved
+// by two different condition sets in getMovieNumber and getMovieLabel: the number keyed off
+// "king"/"-1" while the label keyed off "-i-"/"-1-"/"-i" plus the title.
+const FRANCHISE_MOVIES = Object.freeze({
+  "higashi-no-eden": [
+    { number: 1, label: "Movie I: King of Eden", any: ["-i-", "-1-", "king"], endsAny: ["-i", "-1"], titleAny: ["king"] },
+    { number: 2, label: "Movie II: Paradise Lost", any: ["-ii-", "-2-", "paradise"], endsAny: ["-ii", "-2"], titleAny: ["paradise"] },
+  ],
+});
+
+// { number, label } or null.
+function resolveFranchiseMovie(slug, title = "") {
+  const value = String(slug || "").toLowerCase();
+  const titleValue = String(title || "").toLowerCase();
+  for (const [prefix, movies] of Object.entries(FRANCHISE_MOVIES)) {
+    if (!value.includes(prefix)) continue;
+    for (const movie of movies) {
+      const hit =
+        (movie.any || []).some((token) => value.includes(token)) ||
+        (movie.endsAny || []).some((token) => value.endsWith(token)) ||
+        (titleValue && (movie.titleAny || []).some((token) => titleValue.includes(token)));
+      if (hit) return { number: movie.number, label: movie.label };
+    }
+  }
+  return null;
+}
+
 function CANONICAL_EPISODE_OFFSET_MAPPING() {
   return (typeof window !== "undefined" && window.AnimeTrackerMultipartMappings?.EPISODE_OFFSET_MAPPING) || {};
 }
 
 const SeasonGrouping = {
   isChronologyGroup(baseSlug) {
-    return baseSlug === "fate";
+    return window.AnimeTracker.FranchiseSeasons.isChronologyGroup(baseSlug);
   },
 
   isMovie(slug, anime = null) {
@@ -190,10 +218,8 @@ const SeasonGrouping = {
       return romanMap[romanMatch[1].toLowerCase()] || 1;
     }
 
-    if (slug.includes("higashi-no-eden")) {
-      if (slug.includes("king") || slug.includes("-1")) return 1;
-      if (slug.includes("paradise") || slug.includes("-2")) return 2;
-    }
+    const franchiseMovie = resolveFranchiseMovie(slug, title);
+    if (franchiseMovie) return franchiseMovie.number;
 
     const filmOrder = {
       "film-gold": 13,
@@ -218,96 +244,15 @@ const SeasonGrouping = {
     return window.AnimeTracker.AnimeIdentity.getBaseSlug(slug, { isMovie: this.isMovie(slug, anime) });
   },
 
+  // Chronology rules are declared in src/common/data/franchise-seasons.js alongside the season
+  // rules, so all of a franchise's ordering knowledge sits in one place.
   getChronologyInfo(baseSlug, slug, title = "") {
-    if (baseSlug !== "fate") return null;
-
-    const lowerSlug = String(slug || "").toLowerCase();
-    const rawTitle = String(title || "").trim();
-
-    if (lowerSlug.startsWith("fate-zero")) {
-      return {
-        order: 10,
-        separatorLabel: "1994",
-        itemLabel: "Fate/Zero",
-      };
-    }
-
-    if (lowerSlug === "fate-stay-night") {
-      return {
-        order: 20,
-        separatorLabel: "2004",
-        itemLabel: "Fate/stay night",
-      };
-    }
-
-    if (lowerSlug.includes("unlimited-blade-works-prologue")) {
-      return {
-        order: 30,
-        separatorLabel: "2004",
-        itemLabel: "Unlimited Blade Works - Prologue",
-      };
-    }
-
-    if (lowerSlug.includes("unlimited-blade-works-season-2") || lowerSlug.includes("unlimited-blade-works-2nd-season")) {
-      return {
-        order: 40,
-        separatorLabel: "2004",
-        itemLabel: "Unlimited Blade Works Season 2",
-      };
-    }
-
-    if (lowerSlug.includes("unlimited-blade-works")) {
-      return {
-        order: 35,
-        separatorLabel: "2004",
-        itemLabel: "Unlimited Blade Works",
-      };
-    }
-
-    // Real an1me.to slugs use roman numerals + subtitles, e.g.
-    // fate-stay-night-movie-heavens-feel-iii-spring-song.
-    if (lowerSlug.includes("heavens-feel-3") || lowerSlug.includes("spring-song") || /heavens-feel-iii(-|$)/.test(lowerSlug)) {
-      return {
-        order: 52,
-        separatorLabel: "2004",
-        itemLabel: "Heaven's Feel III: Spring Song",
-      };
-    }
-
-    if (lowerSlug.includes("heavens-feel-2") || lowerSlug.includes("lost-butterfly") || /heavens-feel-ii(-|$)/.test(lowerSlug)) {
-      return {
-        order: 51,
-        separatorLabel: "2004",
-        itemLabel: "Heaven's Feel II: Lost Butterfly",
-      };
-    }
-
-    if (lowerSlug.includes("heavens-feel-1") || lowerSlug.includes("presage-flower") || /heavens-feel-i(-|$)/.test(lowerSlug)) {
-      return {
-        order: 50,
-        separatorLabel: "2004",
-        itemLabel: "Heaven's Feel I: Presage Flower",
-      };
-    }
-
-    if (lowerSlug.includes("heavens-feel")) {
-      return {
-        order: 50,
-        separatorLabel: "2004",
-        itemLabel: rawTitle || "Heaven's Feel",
-      };
-    }
-
-    return {
-      order: 900,
-      separatorLabel: "Other",
-      itemLabel: rawTitle || slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-    };
+    return window.AnimeTracker.FranchiseSeasons.resolveChronology(baseSlug, slug, title);
   },
 
   getGroupDisplayTitle(baseSlug, fallbackTitle = "") {
-    if (baseSlug === "fate") return "Fate";
-    return fallbackTitle;
+    const Seasons = window.AnimeTracker.FranchiseSeasons;
+    return Seasons.getChronologyDisplayTitle(baseSlug) || fallbackTitle;
   },
 
   // Pure slug parsing, no franchise knowledge: the ordinal/season/part/roman forms.
@@ -386,14 +331,8 @@ const SeasonGrouping = {
     const onePieceMovie = this.getOnePieceMovieInfo(slug, title);
     if (onePieceMovie) return onePieceMovie.label;
 
-    if (slug.includes("higashi-no-eden")) {
-      if (slug.includes("-i-") || slug.includes("-1-") || slug.endsWith("-i")) return "Movie I: King of Eden";
-      if (slug.includes("-ii-") || slug.includes("-2-") || slug.endsWith("-ii")) return "Movie II: Paradise Lost";
-      if (title) {
-        if (title.toLowerCase().includes("king")) return "Movie I: King of Eden";
-        if (title.toLowerCase().includes("paradise")) return "Movie II: Paradise Lost";
-      }
-    }
+    const franchiseMovie = resolveFranchiseMovie(slug, title);
+    if (franchiseMovie) return franchiseMovie.label;
 
     const filmMatch = slug.match(/-film-([a-z-]+)/i);
     if (filmMatch) {

@@ -1727,6 +1727,70 @@
     "groupDisplayTitle": "Higashi no Eden Movie II: Paradise Lost",
     "onePieceMovie": null
   },
+  "higashi-no-eden-movie-1": {
+    "isMovie": true,
+    "isMovieDisplay": true,
+    "seriesBase": "higashi-no-eden",
+    "movieBase": "higashi-no-eden",
+    "seasonNumber": 1,
+    "seasonLabel": "Movie",
+    "movieNumber": 1,
+    "movieLabel": "Movie I: King of Eden",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Higashi No Eden Movie 1",
+    "onePieceMovie": null
+  },
+  "higashi-no-eden-movie-2": {
+    "isMovie": true,
+    "isMovieDisplay": true,
+    "seriesBase": "higashi-no-eden",
+    "movieBase": "higashi-no-eden",
+    "seasonNumber": 1,
+    "seasonLabel": "Movie",
+    "movieNumber": 2,
+    "movieLabel": "Movie II: Paradise Lost",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Higashi No Eden Movie 2",
+    "onePieceMovie": null
+  },
+  "naruto-shippuuden-movie-3-inheritors-of-the-will-of-fire": {
+    "isMovie": true,
+    "isMovieDisplay": true,
+    "seriesBase": "naruto",
+    "movieBase": "naruto",
+    "seasonNumber": 2,
+    "seasonLabel": "Movie",
+    "movieNumber": 3,
+    "movieLabel": "Movie 3",
+    "movieReleaseTs": 0,
+    "entryOrder": 2,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Naruto Shippuuden Movie 3 Inheritors Of The Will Of Fire",
+    "onePieceMovie": null
+  },
+  "one-punch-man-movie-2-something": {
+    "isMovie": true,
+    "isMovieDisplay": true,
+    "seriesBase": "one-punch-man",
+    "movieBase": "one-punch-man",
+    "seasonNumber": 1,
+    "seasonLabel": "Movie",
+    "movieNumber": 2,
+    "movieLabel": "Movie 2",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "One Punch Man Movie 2 Something",
+    "onePieceMovie": null
+  },
   "dragon-ball": {
     "isMovie": false,
     "isMovieDisplay": false,
@@ -2311,6 +2375,11 @@
         "slug": "one-punch-man-season-3",
         "seasonNum": 3,
         "isMovie": false
+      },
+      {
+        "slug": "one-punch-man-movie-2-something",
+        "seasonNum": 4,
+        "isMovie": true
       }
     ],
     "jujutsu-kaisen": [
@@ -2422,8 +2491,13 @@
         "isMovie": true
       },
       {
-        "slug": "naruto-shippuuden-movie-6-road-to-ninja",
+        "slug": "naruto-shippuuden-movie-3-inheritors-of-the-will-of-fire",
         "seasonNum": 5,
+        "isMovie": true
+      },
+      {
+        "slug": "naruto-shippuuden-movie-6-road-to-ninja",
+        "seasonNum": 6,
         "isMovie": true
       }
     ],
@@ -2748,13 +2822,23 @@
         "isMovie": false
       },
       {
-        "slug": "higashi-no-eden-movie-i-king-of-eden",
+        "slug": "higashi-no-eden-movie-1",
         "seasonNum": 2,
         "isMovie": true
       },
       {
-        "slug": "higashi-no-eden-movie-ii-paradise-lost",
+        "slug": "higashi-no-eden-movie-i-king-of-eden",
         "seasonNum": 3,
+        "isMovie": true
+      },
+      {
+        "slug": "higashi-no-eden-movie-2",
+        "seasonNum": 4,
+        "isMovie": true
+      },
+      {
+        "slug": "higashi-no-eden-movie-ii-paradise-lost",
+        "seasonNum": 5,
         "isMovie": true
       }
     ],
