@@ -26,6 +26,25 @@ The version in `manifest.json` is the single source of truth.
   including the native title and synonyms, which were being scraped off the page and thrown away.
   This replaced a 17-entry hardcoded table, a Japanese-to-English map, and a chain of regexes that
   guessed at slugs and probed only the first five.
+- **Every franchise's season, arc and chronology layout is now declared once.**
+  `getSeasonNumber` and `getSeasonLabel` were the same nine-franchise `if`-chain written twice,
+  differing only in what they returned, and the Fate chronology was a third chain with "fate"
+  hardcoded in two more places. They are now ordered rule tables in
+  `src/common/data/franchise-seasons.js`, read by a single resolver that defines the one order in
+  which franchise rules, generic slug parsing and defaults are consulted — so a number and its
+  label can no longer disagree by construction.
+- **Bleach TYBW cours can be ordered.** Parts 1, 2 and 3 all carried season number 2 while having
+  three distinct labels, so nothing could sort them against each other.
+- **Part ranges, slug renames and episode offsets are derived from one cour layout.** Three tables
+  in two files described the same two franchises from different directions: one said Bleach TYBW
+  part 3 covers absolute episodes 27–40, the other said its offset is 26. Both were right, and
+  nothing but care kept them so — while the offsets drive a migration that renames stored slugs
+  and renumbers watched episodes.
+- **Grouping regression tests** (`node test/grouping.test.js`, `node test/multipart.test.js`) over a
+  135-slug corpus. Group keys and group membership are hard failures, because the grouping key is
+  persisted and cloud-synced: moving it silently files your progress and cover art under a key
+  nothing reads any more. Display and ordering changes surface as a reviewable diff.
+
 - **A regression test for filler matching** (`node test/filler-match.test.js`, no dependencies) over
   a real index snapshot: 22 hand-verified cases including shows that must stay *unmatched*, plus
   assertions that no OVA/movie listing wins a series query and that every manual override points at
@@ -37,6 +56,15 @@ The version in `manifest.json` is the single source of truth.
   additive — no existing key is removed or overwritten — and idempotent.
 
 ### Fixed
+
+- **A Naruto movie was filed under Boruto's season.** The season number matched `"-3"` anywhere in
+  the slug while the label matched it only at the end, so
+  `naruto-shippuuden-movie-3-inheritors-of-the-will-of-fire` was numbered season 3 and labelled
+  Shippuden at the same time.
+- **A standalone `-part-2` sorted identically to part 1.** With no season number of its own it fell
+  through to the default 1 — the same number as the base entry — and both rendered as "Season 1".
+- **`higashi-no-eden-movie-1` rendered as "Movie 1"** instead of "Movie I: King of Eden", because
+  its number and its label were resolved from two different condition sets.
 
 - **Fetching required an an1me.to tab to be open.** The gateway could not tell its own timeout from
   a Cloudflare block: any thrown error, including its own 8-second abort, was counted as a block, and
