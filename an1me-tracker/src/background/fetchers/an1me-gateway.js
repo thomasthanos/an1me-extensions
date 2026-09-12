@@ -1,10 +1,19 @@
 // an1me-gateway.js - single entry point for every an1me.to request.
 //
 // Order of attempts:
-//   1. Direct fetch from the service worker (host permissions + cookies, with the request headers
-//      shaped by the static declarativeNetRequest ruleset). This is the normal path and costs
+//   1. Direct fetch from the service worker (host permissions + cookies, with Referer/Origin
+//      normalized by the static declarativeNetRequest ruleset). This is the normal path and costs
 //      nothing - no tab, no page load, no flicker. A timeout or a transport error is retried here
 //      with a longer budget; ONLY a real Cloudflare interstitial gives up on this path.
+//
+//      On the DNR ruleset, measured rather than assumed: an1me.to serves the full page (HTTP 200,
+//      ~189KB) to a plain non-browser request carrying no Referer and no Origin, and the response
+//      is byte-identical with those headers set. So the ruleset is NOT what makes this path work -
+//      the retry/backoff logic below is. It is kept only to normalize the one difference a plain
+//      client cannot reproduce, an extension-origin request advertising
+//      "Origin: chrome-extension://..." and "Sec-Fetch-Site: none". Sec-Fetch-* are deliberately
+//      NOT in the ruleset: they are browser-controlled fetch metadata that DNR is not documented
+//      to allow setting, and one rejected header can invalidate the whole ruleset.
 //   2. An an1me.to tab, whose content bridge does the fetch from the page's own network context so
 //      it carries cf_clearance/__cf_bm and the WordPress session cookie: a tab the user already
 //      has open if there is one, otherwise a hidden background tab we create and reap.
@@ -622,6 +631,14 @@ try {
       ..._an1meCounters,
     };
     console.table([info]);
+    // An invalid static ruleset is skipped with only a warning in chrome://extensions, so surface
+    // it here rather than letting it look like it is doing something.
+    try {
+      const rulesets = await chrome.declarativeNetRequest.getEnabledRulesets();
+      console.log(`[BG] DNR rulesets enabled: ${rulesets.join(", ") || "(none)"}`);
+    } catch (e) {
+      console.log("[BG] DNR ruleset status unavailable:", e?.message || e);
+    }
     return info;
   };
 } catch {}

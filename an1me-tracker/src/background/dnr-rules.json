@@ -6,10 +6,7 @@
       "type": "modifyHeaders",
       "requestHeaders": [
         { "header": "referer", "operation": "set", "value": "https://an1me.to/" },
-        { "header": "origin", "operation": "set", "value": "https://an1me.to" },
-        { "header": "sec-fetch-site", "operation": "set", "value": "same-origin" },
-        { "header": "sec-fetch-mode", "operation": "set", "value": "cors" },
-        { "header": "sec-fetch-dest", "operation": "set", "value": "empty" }
+        { "header": "origin", "operation": "set", "value": "https://an1me.to" }
       ]
     },
     "condition": {
