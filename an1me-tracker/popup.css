@@ -1373,16 +1373,19 @@ textarea:focus-visible{ outline: none; }
 .onhold-chevron,
 .airing-chevron{ width: 12px; height: 12px; color: var(--t3); flex-shrink: 0; transition: transform var(--tn); }
 
+/* Compact status sections (Completed / Dropped / Airing / On hold).
+   These used to collapse by animating grid-template-rows 0fr -> 1fr under a permanent
+   will-change. grid-template-rows is a LAYOUT property, so every frame of the 300ms animation
+   re-laid-out the whole section - and Completed holds every finished anime in the library.
+   While collapsed the content also stayed in the layout tree, merely clipped. Collapsed content
+   is now display:none (no layout at all) and opening plays a compositor-only fade, so the cost
+   no longer grows with the size of the list. */
 .completed-list-cards,
 .dropped-list-cards,
 .airing-list-cards,
 .onhold-list-cards {
-  display: grid;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-  overflow: hidden;
+  display: block;
   padding: 0;
-  will-change: grid-template-rows;
 }
 
 .completed-list-cards,
@@ -1394,13 +1397,10 @@ textarea:focus-visible{ outline: none; }
 .dropped-list-cards .list-inner,
 .airing-list-cards .list-inner,
 .onhold-list-cards .list-inner {
-  min-height: 0;
-  overflow: hidden;
-  padding: 0 10px;
-  display: flex;
+  display: none;
   flex-direction: column;
   gap: 8px;
-  transition: padding 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+  padding: 10px;
 }
 
 .completed-list-cards .list-inner > *,
@@ -1408,15 +1408,22 @@ textarea:focus-visible{ outline: none; }
 .airing-list-cards .list-inner > *,
 .onhold-list-cards .list-inner > *{ flex-shrink: 0; }
 
-.completed-list-cards.open,
-.dropped-list-cards.open,
-.airing-list-cards.open,
-.onhold-list-cards.open{ grid-template-rows: 1fr; }
-
 .completed-list-cards.open .list-inner,
 .dropped-list-cards.open .list-inner,
 .airing-list-cards.open .list-inner,
-.onhold-list-cards.open .list-inner{ padding: 10px; }
+.onhold-list-cards.open .list-inner{ display: flex; }
+
+/* Only on a user click (render-list.js adds .revealing), never on a re-render of a section that
+   is already open. opacity + transform are composited: no layout or paint per frame. */
+.completed-list-cards.open.revealing .list-inner,
+.dropped-list-cards.open.revealing .list-inner,
+.airing-list-cards.open.revealing .list-inner,
+.onhold-list-cards.open.revealing .list-inner{ animation: compact-list-reveal 0.18s ease-out; }
+
+@keyframes compact-list-reveal {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
 
 .completed-list-cards .anime-card,
 .completed-list-cards .anime-season-group,
@@ -1461,9 +1468,8 @@ textarea:focus-visible{ outline: none; }
   box-shadow: 0 2px 8px rgba(var(--shadow-rgb), 0.24);
   content-visibility: auto;
   contain-intrinsic-size: auto 78px;
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
+  /* No translateZ(0)/backface-visibility: that promoted EVERY card to its own compositor layer.
+     content-visibility + containment already isolate a card's layout and paint. */
   contain: layout paint;
 }
 
@@ -1490,8 +1496,6 @@ textarea:focus-visible{ outline: none; }
   box-shadow:
     inset 0 1px 0 rgba(var(--ink-rgb), 0.07),
     inset 0 -1px 2px rgba(var(--shadow-rgb), 0.18);
-  backdrop-filter: blur(4px) saturate(112%);
-  -webkit-backdrop-filter: blur(4px) saturate(112%);
   overflow: hidden;
 }
 
@@ -1546,15 +1550,17 @@ body.is-suppressing-hover #animeList .airing-list-cards .anime-movie-group:hover
   box-shadow: 0 2px 8px rgba(var(--shadow-rgb), 0.2) !important;
 }
 
+/* Card expand/collapse fades only. Every geometry property here - the parent's grid-template-rows
+   and margin, and each child's max-height/margin/padding - used to animate at the same time, six
+   layout animations per click. A card changing height moves every card below it, so each frame
+   re-laid-out the visible list, not just the one card. Heights now change in a single layout on
+   click; only opacity animates, which the compositor handles without layout or paint. */
 .anime-card-content {
   display: grid;
   grid-template-rows: 0fr;
   margin-top: 0;
   opacity: 0;
-  transition:
-    grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 0.2s ease,
-    margin-top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: opacity 0.2s ease;
 }
 
 .anime-card-content-inner {
@@ -1566,10 +1572,7 @@ body.is-suppressing-hover #animeList .airing-list-cards .anime-movie-group:hover
   grid-template-rows: 1fr;
   opacity: 1;
   margin-top: 10px;
-  transition:
-    grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 0.25s ease 0.05s,
-    margin-top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: opacity 0.25s ease 0.05s;
 }
 
 .anime-title-row{ min-height: 19px; }
@@ -1758,10 +1761,7 @@ body.is-suppressing-hover #animeList .airing-list-cards .anime-movie-group:hover
   max-height: 0;
   overflow: hidden;
   opacity: 0;
-  transition:
-    max-height var(--tn),
-    opacity var(--tn),
-    margin var(--tn);
+  transition: opacity var(--tn);
 }
 
 .anime-card.expanded .progress-container{ max-height: 80px; opacity: 1; margin-bottom: 6px; }
@@ -1838,11 +1838,7 @@ body.is-suppressing-hover #animeList .airing-list-cards .anime-movie-group:hover
   max-height: 0;
   overflow: hidden;
   opacity: 0;
-  transition:
-    max-height var(--tn),
-    opacity var(--tn),
-    margin var(--tn),
-    padding var(--tn);
+  transition: opacity var(--tn);
 }
 
 .anime-card.expanded .anime-in-progress{ max-height: 200px; opacity: 1; margin-bottom: 7px; padding: 7px 9px; }
@@ -1873,10 +1869,7 @@ body.is-suppressing-hover #animeList .airing-list-cards .anime-movie-group:hover
   opacity: 1;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  transition:
-    max-height var(--tn),
-    margin var(--tn),
-    opacity var(--tn);
+  transition: opacity var(--tn);
 }
 
 .in-progress-content::-webkit-scrollbar{ width: 0; height: 0; }
@@ -1891,10 +1884,7 @@ body.is-suppressing-hover #animeList .airing-list-cards .anime-movie-group:hover
   max-height: 0;
   overflow: hidden;
   opacity: 0;
-  transition:
-    max-height var(--tn),
-    opacity var(--tn),
-    margin var(--tn);
+  transition: opacity var(--tn);
 }
 
 .anime-card.expanded .anime-meta{ max-height: 30px; opacity: 1; margin-bottom: 4px; }
@@ -1903,10 +1893,7 @@ body.is-suppressing-hover #animeList .airing-list-cards .anime-movie-group:hover
   max-height: 0;
   overflow: hidden;
   opacity: 0;
-  transition:
-    max-height var(--tn),
-    opacity var(--tn),
-    margin var(--tn);
+  transition: opacity var(--tn);
 }
 
 .anime-card.expanded .anime-episodes{ max-height: 270px; opacity: 1; margin-top: 6px; }
@@ -1924,15 +1911,10 @@ body.is-suppressing-hover #animeList .airing-list-cards .anime-movie-group:hover
   box-shadow:
     inset 0 1px 0 rgba(var(--ink-rgb), 0.04),
     inset 0 -10px 16px -18px rgba(var(--shadow-rgb), 0.42);
-  backdrop-filter: blur(6px) saturate(112%);
-  -webkit-backdrop-filter: blur(6px) saturate(112%);
   transition:
-    grid-template-rows 0.22s ease,
     background var(--tf),
     border-color var(--tf),
-    box-shadow var(--tf),
-    padding var(--tn);
-  will-change: grid-template-rows;
+    box-shadow var(--tf);
 }
 
 .anime-episodes.collapsible::after {
@@ -2011,9 +1993,7 @@ body.is-suppressing-hover #animeList .airing-list-cards .anime-movie-group:hover
   padding-top: 5px;
   max-height: none;
   overflow-y: hidden;
-  transition:
-    padding-top 0.22s ease,
-    opacity 0.2s ease;
+  transition: opacity 0.2s ease;
   padding-right: 2px;
   opacity: 1;
   scrollbar-width: none;
@@ -2177,10 +2157,11 @@ body.is-suppressing-hover #animeList .airing-list-cards .anime-movie-group:hover
   border-right: 1px solid rgba(var(--warning-rgb), 0.13);
   border-bottom: none;
   border-radius: 0 0 var(--r-sm) var(--r-sm);
-  transition: max-height 0.2s ease;
+  /* No max-height transition: this group sits above the entire list, so animating its height
+     re-laid-out every card below it on every frame. It now opens in one layout. */
 }
 
-.ip-group-content.open{ max-height: 800px; border-bottom: 1px solid rgba(var(--warning-rgb), 0.13); transition: max-height 0.25s ease; }
+.ip-group-content.open{ max-height: 800px; border-bottom: 1px solid rgba(var(--warning-rgb), 0.13); }
 
 .ip-group-content-inner{ padding: 5px 7px 7px; }
 
@@ -3886,11 +3867,7 @@ body.is-suppressing-hover #animeList .airing-list-cards .anime-movie-group:hover
   max-height: 0;
   overflow: hidden;
   opacity: 0;
-  transition:
-    max-height var(--tn),
-    opacity var(--tn),
-    margin var(--tn),
-    padding var(--tn);
+  transition: opacity var(--tn);
   background: var(--bg-3);
   border: 1px solid var(--b1);
   border-radius: var(--r-sm);
@@ -3919,10 +3896,7 @@ body.is-suppressing-hover #animeList .airing-list-cards .anime-movie-group:hover
   gap: 4px;
   max-height: 180px;
   overflow: hidden;
-  transition:
-    max-height var(--tn),
-    margin var(--tn),
-    opacity var(--tn);
+  transition: opacity var(--tn);
 }
 
 .anime-parts.collapsed .parts-content{ max-height: 0; margin-top: 0; opacity: 0; }
@@ -3963,7 +3937,7 @@ body.is-suppressing-hover #animeList .airing-list-cards .anime-movie-group:hover
 .part-item.expanded .part-expand-icon{ transform: rotate(90deg); color: rgba(var(--ink-rgb), 0.45); }
 
 .part-item-content,
-.season-item-content{ max-height: 0; overflow: hidden; opacity: 0; transition: all var(--tn); margin-top: 0; }
+.season-item-content{ max-height: 0; overflow: hidden; opacity: 0; transition: opacity var(--tn); margin-top: 0; }
 
 .part-item.expanded .part-item-content {
   max-height: 180px;
@@ -4069,7 +4043,8 @@ body.is-suppressing-hover #animeList .airing-list-cards .anime-movie-group:hover
   overflow: hidden;
   opacity: 0;
   margin-top: 0;
-  transition: all var(--tn);
+  /* opacity only: "all" animated max-height and margin, i.e. layout, on every group expand. */
+  transition: opacity var(--tn);
 }
 
 .anime-season-group.expanded .grp-content {
@@ -4115,8 +4090,6 @@ body.is-suppressing-hover #animeList .airing-list-cards .anime-movie-group:hover
   box-shadow:
     inset 0 1px 0 rgba(var(--ink-rgb), 0.04),
     inset 0 -10px 16px -18px rgba(var(--shadow-rgb), 0.42);
-  backdrop-filter: blur(6px) saturate(112%);
-  -webkit-backdrop-filter: blur(6px) saturate(112%);
   overflow: visible;
   transition:
     border-color var(--tf),
@@ -4763,8 +4736,6 @@ body.is-suppressing-hover #animeList .airing-list-cards .anime-movie-group:hover
     inset 0 1px 0 rgba(var(--ink-rgb), 0.06),
     inset 0 -1px 2px rgba(var(--shadow-rgb), 0.12),
     0 0 0 1px var(--badge-border);
-  backdrop-filter: blur(3px) saturate(110%);
-  -webkit-backdrop-filter: blur(3px) saturate(110%);
   color: var(--badge-fg);
   white-space: nowrap;
   flex-shrink: 0;
@@ -7971,6 +7942,11 @@ body.is-suppressing-hover #animeList .airing-list-cards .anime-movie-group:hover
 
 @media (prefers-reduced-motion: reduce) {
   .anime-list{ transition: none; }
+
+  .completed-list-cards.open.revealing .list-inner,
+  .dropped-list-cards.open.revealing .list-inner,
+  .airing-list-cards.open.revealing .list-inner,
+  .onhold-list-cards.open.revealing .list-inner{ animation: none; }
 }
 
 @media (max-width: 400px) {
@@ -8032,8 +8008,7 @@ body.is-suppressing-hover #animeList .airing-list-cards .anime-movie-group:hover
   .search-input,
   .footer,
   .goals-smart-banner,
-  .ach-featured,
-  .meta-time-progress-bar {
+  .ach-featured {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }

@@ -543,8 +543,17 @@
         e.stopPropagation();
         const cards = toggle.nextElementSibling;
         if (cards) {
-          cards.classList.toggle("open");
-          AT.PopupState.currentCompactStatusOpen = cards.classList.contains("open");
+          const opening = !cards.classList.contains("open");
+          cards.classList.toggle("open", opening);
+          // The reveal animation is opt-in per click. Keying it off .open alone would replay it on
+          // every re-render of a section that is already open.
+          if (opening) {
+            cards.classList.add("revealing");
+            cards.addEventListener("animationend", () => cards.classList.remove("revealing"), { once: true });
+          } else {
+            cards.classList.remove("revealing");
+          }
+          AT.PopupState.currentCompactStatusOpen = opening;
           AT.saveLibraryPreferences?.();
         }
         refreshCompactChevrons();

@@ -57,6 +57,23 @@ The version in `manifest.json` is the single source of truth.
 
 ### Fixed
 
+- **Opening the Completed list, and expanding or collapsing cards, dropped frames.** The list
+  sections collapsed by animating `grid-template-rows` under a permanent `will-change`, which forced
+  the entire section to be laid out again on every frame of the animation — and the Completed list
+  holds every finished anime in the library. While collapsed, that content also stayed in the
+  layout tree, merely clipped. A single card expand ran six layout animations at once (the card
+  body plus five inner panels animating height, margin and padding), and because a card changing
+  height moves every card below it, each frame re-laid-out the visible list. Collapsed sections now
+  leave the layout tree entirely, and every expand/collapse changes height in one layout and only
+  fades, which the compositor handles without layout or paint.
+- **Scrolling a long list was heavy regardless of expanding.** Every card carried several
+  `backdrop-filter` blurs (on each badge, the progress bar and the episode panel) over a card
+  background that is fully opaque, so the blur only ever sampled a solid colour — full rendering
+  cost, no visual effect. Every card was also promoted to its own compositor layer. Both are gone.
+- **Every expand/collapse click wrote to the cloud.** Toggling a list section saved the preference
+  and immediately pushed it to Firestore, with several storage writes per click that also refreshed
+  the sync status. The local save is still immediate; the upload now waits until the clicking stops.
+
 - **A Naruto movie was filed under Boruto's season.** The season number matched `"-3"` anywhere in
   the slug while the label matched it only at the end, so
   `naruto-shippuuden-movie-3-inheritors-of-the-will-of-fire` was numbered season 3 and labelled

@@ -1417,6 +1417,34 @@
   // chosen status has no entries in the active category. Only an actual chip click updates this.
   let preferredCompactStatus = "airing";
 
+  // The cloud half of saving preferences is trailing-debounced. Every section expand/collapse and
+  // every status-chip click lands here, and each one used to stamp playbackSettingsUpdatedAt and
+  // push a sidecar sync straight to Firestore: several storage writes plus a network request per
+  // click, with the pendingSidecars write re-triggering the sync-status UI. The local write stays
+  // immediate; only the upload waits until the clicking stops.
+  const LIBRARY_PREFS_CLOUD_DEBOUNCE_MS = 1500;
+  let _libraryPrefsCloudTimer = null;
+
+  function pushLibraryPreferencesToCloud() {
+    _libraryPrefsCloudTimer = null;
+    return Promise.resolve(chrome.storage.local.set({ playbackSettingsUpdatedAt: new Date().toISOString() }))
+      .then(() => AT.FirebaseSync?.queuePlaybackSettingsSave?.())
+      .catch((e) => window.__atSwallow("savePref:cloud", e));
+  }
+
+  function scheduleLibraryPreferencesCloudPush() {
+    if (_libraryPrefsCloudTimer) clearTimeout(_libraryPrefsCloudTimer);
+    _libraryPrefsCloudTimer = setTimeout(pushLibraryPreferencesToCloud, LIBRARY_PREFS_CLOUD_DEBOUNCE_MS);
+  }
+
+  // A popup closed inside the debounce window still starts the upload. Best effort: the page is
+  // going away, so the message to the worker can be lost - the local preference is already saved.
+  window.addEventListener("pagehide", () => {
+    if (!_libraryPrefsCloudTimer) return;
+    clearTimeout(_libraryPrefsCloudTimer);
+    void pushLibraryPreferencesToCloud();
+  });
+
   // Single writer for userPreferences: every call sends the whole object, so a partial write
   // here would silently drop whichever preference it left out.
   function persistLibraryPreferences({ rememberCompactStatus = false } = {}) {
@@ -1434,8 +1462,7 @@
       if (saved && typeof saved.catch === "function") saved.catch((e) => window.__atSwallow("savePref", e));
 
       Promise.resolve(saved)
-        .then(() => chrome.storage.local.set({ playbackSettingsUpdatedAt: new Date().toISOString() }))
-        .then(() => AT.FirebaseSync?.queuePlaybackSettingsSave?.())
+        .then(() => scheduleLibraryPreferencesCloudPush())
         .catch((e) => window.__atSwallow("savePref:cloud", e));
     } catch {}
   }
