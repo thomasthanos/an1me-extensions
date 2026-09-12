@@ -19,17 +19,12 @@ const DONATE_LINKS = {
   revolut: "https://revolut.me/thomas2873",
 };
 
-const ANIME_PARTS_CONFIG = {
-  "fate-zero": [
-    { name: "Fate/Zero S1", start: 1, end: 13, displayStart: 1, displayEnd: 13 },
-    { name: "Fate/Zero S2", start: 14, end: 25, displayStart: 1, displayEnd: 12 },
-  ],
-  "bleach-sennen-kessen-hen": [
-    { name: "Part 1", start: 1, end: 13 },
-    { name: "Part 2: Ketsubetsu-tan", start: 14, end: 26 },
-    { name: "Part 3: Soukoku-tan", start: 27, end: 40 },
-  ],
-};
+// Derived from the cour layout in src/common/data/multipart-mappings.js, alongside the slug
+// renames and episode offsets, so the absolute ranges here cannot drift from the offsets used to
+// renumber stored episodes.
+function ANIME_PARTS_CONFIG_SOURCE() {
+  return (typeof window !== "undefined" && window.AnimeTrackerMultipartMappings?.ANIME_PARTS_CONFIG) || {};
+}
 
 const ONE_PIECE_MOVIES = Object.freeze([
   null,
@@ -669,7 +664,10 @@ const SeasonGrouping = {
 window.AnimeTracker = window.AnimeTracker || {};
 window.AnimeTracker.CONFIG = CONFIG;
 window.AnimeTracker.DONATE_LINKS = DONATE_LINKS;
-window.AnimeTracker.ANIME_PARTS_CONFIG = ANIME_PARTS_CONFIG;
+Object.defineProperty(window.AnimeTracker, "ANIME_PARTS_CONFIG", {
+  get: ANIME_PARTS_CONFIG_SOURCE,
+  configurable: true,
+});
 Object.defineProperty(window.AnimeTracker, "CANONICAL_EPISODE_OFFSET_MAPPING", {
   get: CANONICAL_EPISODE_OFFSET_MAPPING,
   enumerable: true,
