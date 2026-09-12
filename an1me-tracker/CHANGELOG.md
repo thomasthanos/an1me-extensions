@@ -13,6 +13,23 @@ The version in `manifest.json` is the single source of truth.
 
 ### Added
 
+- **Airing schedule from AniList.** One batched query returns the next air time, the episode number
+  that time belongs to, and the series status for 50 shows at once, replacing a full HTML page load
+  per anime per sweep. an1me.to stays authoritative for what is *uploaded*; AniList becomes
+  authoritative for what *airs when*.
+- **Live countdowns.** The next-episode countdown ticks while the popup is open instead of freezing
+  at render time, shows even when you are an episode behind, and renders *due now* / *delayed* once
+  the scheduled time passes rather than silently disappearing. The airing section header now leads
+  with the soonest upcoming drop instead of always saying "Caught up".
+- **Filler matching against the real AnimeFillerList index.** The site's full show list is fetched
+  once, cached for 30 days, and matched with a scored comparison against every title we know —
+  including the native title and synonyms, which were being scraped off the page and thrown away.
+  This replaced a 17-entry hardcoded table, a Japanese-to-English map, and a chain of regexes that
+  guessed at slugs and probed only the first five.
+- **A regression test for filler matching** (`node test/filler-match.test.js`, no dependencies) over
+  a real index snapshot: 22 hand-verified cases including shows that must stay *unmatched*, plus
+  assertions that no OVA/movie listing wins a series query and that every manual override points at
+  a slug that exists.
 - **Per-card group action bar.** Mark every member of a merged card completed, dropped or on hold, or
   favourite the whole group, in a single transaction instead of row by row.
 - **One-time group cover repair.** Cover art previously written under a stale grouping key is copied
@@ -21,6 +38,54 @@ The version in `manifest.json` is the single source of truth.
 
 ### Fixed
 
+- **Fetching required an an1me.to tab to be open.** The gateway could not tell its own timeout from
+  a Cloudflare block: any thrown error, including its own 8-second abort, was counted as a block, and
+  three slow page loads disabled the working path for everyone. With no site tab open, the rest of
+  the sweep was then written off as unreachable. Timeouts and transport errors are now retried on the
+  direct path with a longer budget, and only a genuine interstitial gives up on it. Measured
+  afterwards: an1me.to serves the full page to a plain request with no Referer and no Origin, so the
+  site was never the obstacle.
+- **Tab creation was unreachable code.** The documented last resort was gated behind a storage flag
+  nothing in the codebase ever wrote. It is now the default fallback, uses a hidden background tab,
+  and is reaped by an alarm plus a startup sweep — an 8-second `setTimeout` routinely died with the
+  service worker and orphaned the tab permanently.
+- **Cloudflare interstitials could be cached as real metadata.** The interstitial is served *from*
+  an1me.to, so the content bridge was injected into it and answered the readiness ping, after which
+  the gateway adopted that tab, received 200 plus stub HTML, and stored the stub's absent episode
+  counts, status and cover art as authoritative. Bridge replies are now checked too.
+- **Every popup open announced a fetch.** Opening the popup awaited a cloud poll and then started a
+  metadata sweep. That sweep is gated to 6 hours and airing entries expire on a 6-hour recheck, so
+  the two periods lined up: any overnight gap or PC restart landed on "Fetching N anime…". Refresh is
+  now alarm-driven with a catch-up shortly after browser startup, and runs silently — cards still
+  update live as data lands. The popup paints from local storage first and no longer blocks on the
+  cloud.
+- **The airing countdown ignored the site's timezone.** `data-timezone` was captured, stored, synced
+  and compared, but never applied, while the value itself was read as UTC — skewing every scraped
+  countdown by the site's offset (2–3 hours for Europe/Athens), and by a further hour across daylight
+  saving.
+- **Release status was decided by three heuristics that disagreed by construction.** A leftover
+  countdown tag alone could declare a show airing, and "fewer episodes uploaded than declared" could
+  flip a finished show back to airing permanently — true of any finished show with one missing or
+  unnumbered upload. Sources are now explicitly ranked, with AniList as the tiebreaker, and only the
+  strongest available source decides.
+- **A finished show could display a phantom countdown.** A stale future air time was carried forward
+  whenever a re-scrape found no countdown tag; it is now only kept while AniList still agrees a next
+  episode exists.
+- **Specials and recaps inflated the latest-episode number**, which drives the New Episode badge, the
+  continue-watching prompt and the episode number in notifications. It is now bounded by the episode
+  AniList says airs next — but only while that time is still in the future, so a recent upload is
+  never hidden.
+- **A mixed-case slug resolved on one code path and not the other**, producing an "Airing" badge with
+  no countdown, or the reverse.
+- **The first episode discovered for a newly added anime never notified.**
+- **Three requests bypassed the gateway entirely** — the watchlist POST, the slug-migration probes and
+  an1me cover images — so none of them had challenge detection, retries or a fallback. The probe
+  fallback was actively harmful: with no challenge detection an interstitial answered 200, so a bad
+  slug was confirmed as valid and the library entry renamed under it. Also fixes a `ReferenceError`
+  thrown from the search helper's `finally` block.
+- **Rate limits were cached as permanent misses.** A 429 from Jikan or the AniSkip MAL lookup was
+  recorded as "this show has no data", locking it out for the whole cache lifetime.
+- **The cover cache never evicted anything**, keeping every cover any entry had ever pointed at.
 - **Wrong episode recorded on two-segment watch URLs.** For a series whose slug ends in a number,
   `/watch/<slug>/episode-N/` had the trailing number chewed off the slug and reported as the episode:
   `fate-zero-season-2/episode-5` was recorded as *Fate/Zero episode 2*. Season, part, cour and movie
