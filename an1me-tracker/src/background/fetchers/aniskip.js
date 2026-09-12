@@ -65,7 +65,9 @@ async function getMalIdForSlug(slug, title) {
   if (!slug) return null;
   const bundle = await loadSlugMalBundle();
   const cached = bundle[slug];
-  if (cached) {
+  // Hits written before `matched` existed came from a blind first-search-result pick, which can be a
+  // different show entirely. Re-resolve those rather than trusting them for 30 days; misses are kept.
+  if (cached && (cached.matched === true || !cached.malId)) {
     const age = Date.now() - (Number(cached.cachedAt) || 0);
     const ttl = cached.httpMiss ? SLUG_TO_MAL_HTTP_MISS_TTL_MS : SLUG_TO_MAL_TTL_MS;
     if (age < ttl) return cached.malId || null;
@@ -76,7 +78,7 @@ async function getMalIdForSlug(slug, title) {
     const timer = setTimeout(() => ctrl.abort(), 10000);
     let res;
     try {
-      res = await fetch(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(title)}&limit=1`, { signal: ctrl.signal });
+      res = await fetch(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(title)}&limit=5`, { signal: ctrl.signal });
     } finally {
       clearTimeout(timer);
     }
@@ -89,8 +91,22 @@ async function getMalIdForSlug(slug, title) {
       return null;
     }
     const data = await res.json();
-    const malId = data?.data?.[0]?.mal_id || null;
-    bundle[slug] = malId ? { malId, cachedAt: Date.now() } : { malId: null, cachedAt: Date.now(), httpMiss: true };
+    // Scored against every title Jikan returns, with the same matcher the filler lookup uses. Taking
+    // data[0] from a limit=1 search accepted Jikan's top hit as truth - and this id also feeds the
+    // Jikan filler fallback, so a wrong pick broke Skip Outro and filler marks together.
+    const candidates = [];
+    for (const item of data?.data || []) {
+      if (!item?.mal_id) continue;
+      const titles = [item.title, item.title_english, item.title_japanese, ...(item.titles || []).map((t) => t?.title)];
+      for (const candidateTitle of titles) {
+        if (candidateTitle) candidates.push({ id: item.mal_id, title: candidateTitle });
+      }
+    }
+    const match = self.AnimeTrackerTitleMatch?.bestMatch([title], candidates, 0.82) || null;
+    const malId = match ? Number(match.id) || null : null;
+    bundle[slug] = malId
+      ? { malId, cachedAt: Date.now(), matched: true }
+      : { malId: null, cachedAt: Date.now(), httpMiss: true };
     scheduleSlugMalBundleFlush();
     return malId;
   } catch {
@@ -127,8 +143,12 @@ async function fetchAniSkipOutroStart(slug, title, episodeNumber, episodeLength)
       clearTimeout(timer);
     }
     if (!res.ok) {
-      bundle[cacheKey] = { outroStart: null, cachedAt: Date.now() };
-      scheduleAniSkipBundleFlush();
+      // Only a 404 means "AniSkip has no outro for this episode". A 429, a 5xx or anything else is
+      // transient, and caching it as a miss removed Skip Outro for that episode for a whole week.
+      if (res.status === 404) {
+        bundle[cacheKey] = { outroStart: null, cachedAt: Date.now() };
+        scheduleAniSkipBundleFlush();
+      }
       return null;
     }
     const data = await res.json();
@@ -141,8 +161,7 @@ async function fetchAniSkipOutroStart(slug, title, episodeNumber, episodeLength)
     scheduleAniSkipBundleFlush();
     return outroStart;
   } catch {
-    bundle[cacheKey] = { outroStart: null, cachedAt: Date.now() };
-    scheduleAniSkipBundleFlush();
+    // Timeout or network error: transient, so nothing is cached and the next episode load retries.
     return null;
   }
 }

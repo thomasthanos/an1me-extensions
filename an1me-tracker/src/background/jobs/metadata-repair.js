@@ -490,7 +490,10 @@ async function repairEpisodeTypesCacheUncoalesced(slug, title, forceRefresh = tr
       let cachedMalId = 0;
       try {
         const bundleRead = await bgStorageGet(["malIdForSlugBundle"]);
-        cachedMalId = Number(bundleRead.malIdForSlugBundle?.[slug]?.malId) || 0;
+        // Only an id the AniSkip lookup confirmed by title match. Unmarked entries came from a blind
+        // first-search-result pick, and reusing one here put another show's filler data on this entry.
+        const malEntry = bundleRead.malIdForSlugBundle?.[slug];
+        cachedMalId = malEntry?.matched === true ? Number(malEntry.malId) || 0 : 0;
       } catch {}
 
       const jikanTypes = await fetchJikanEpisodes(title, {
@@ -693,9 +696,21 @@ async function runMetadataRepairBatch(options = {}) {
 
       logEntry = buildMetadataRepairLog(item.slug, item.title || item.slug, infoResult, fillerResult);
       const counts = countMetadataRepairOutcome(logEntry);
+
+      // Re-read before writing. The resolve above awaits the network, and other writers change this
+      // state meanwhile: a manual Fetch promotes origin/uiMode, a sign-in queues pendingSignInSweep,
+      // ensureLibraryFresh reorders the pending items. Spreading the copy read before the wait
+      // silently reverted all of them - a Fetch pressed during a silent sweep went silent again
+      // within one item, and a queued sign-in sweep was lost. Only this batch's own fields go on top.
+      const fresh = await getMetadataRepairState();
+      if (!fresh || fresh.status !== "running" || fresh.runId !== state.runId) {
+        return false;
+      }
+      state = fresh;
+      const freshItems = Array.isArray(state.items) ? state.items : items;
       const processed = (Number(state.processed) || 0) + 1;
       const nextQueueIndex = index + 1;
-      const nextItem = items[nextQueueIndex] || null;
+      const nextItem = freshItems[nextQueueIndex] || null;
       const updatedAt = new Date().toISOString();
 
       state = {
@@ -713,7 +728,7 @@ async function runMetadataRepairBatch(options = {}) {
         updatedAt,
       };
 
-      if (nextQueueIndex >= items.length) {
+      if (nextQueueIndex >= freshItems.length) {
         await finalizeMetadataRepair(state, {
           status: "completed",
           completedAt: updatedAt,

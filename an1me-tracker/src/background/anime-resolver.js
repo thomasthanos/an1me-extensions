@@ -42,8 +42,11 @@ async function resolveAnimeMetadataUncoalesced(slug, options = {}) {
   const errors = [];
 
   try {
+    // Retries force a refresh. A failed attempt writes a short "retryable" backoff entry, and an
+    // unforced second attempt found that entry "fresh" and returned it as status "cached" - so the
+    // retry never retried, and the failure was recorded as a cache hit.
     infoResult = await runMetadataRepairWithRetry(
-      () => repairAnimeInfoCache(slug, options.forceInfoRefresh === true),
+      (attempt) => repairAnimeInfoCache(slug, options.forceInfoRefresh === true || attempt > 1),
       { attempts: options.attempts },
     );
   } catch (error) {
@@ -66,11 +69,11 @@ async function resolveAnimeMetadataUncoalesced(slug, options = {}) {
   if (options.includeEpisodeTypes !== false) {
     try {
       fillerResult = await runMetadataRepairWithRetry(
-        () =>
+        (attempt) =>
           repairEpisodeTypesCache(
             slug,
             title,
-            options.forceFillerRefresh === true,
+            options.forceFillerRefresh === true || attempt > 1,
             resolvedMediaType,
             options.mediaTypeUpdatedAt || null,
           ),

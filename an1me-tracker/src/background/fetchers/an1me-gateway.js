@@ -527,6 +527,12 @@ async function an1meFetchUncoalesced(url, options) {
   const deadline = Date.now() + totalBudget;
   const remaining = () => deadline - Date.now();
 
+  // A non-GET that timed out or dropped mid-flight may already have been applied by the server, so
+  // re-sending it - on the direct path or through a tab - can apply it twice. For those, only a
+  // challenge (refused before any processing) is allowed to try again.
+  const idempotent = req.method === "GET" || req.method === "HEAD";
+  let maybeDelivered = false;
+
   if (an1meDirectAllowed()) {
     let attempt = 0;
     while (attempt < 2 && remaining() > 1000) {
@@ -551,6 +557,10 @@ async function an1meFetchUncoalesced(url, options) {
       // rather than condemning the path and falling through to the tab rung.
       if (outcome.kind === "timeout") _an1meCounters.directTimeout++;
       else _an1meCounters.directNetwork++;
+      if (!idempotent) {
+        maybeDelivered = true;
+        break;
+      }
       attempt++;
       if (attempt < 2) {
         const backoff = an1meJitter(AN1ME_DIRECT_RETRY_BASE_MS * Math.pow(2, attempt - 1));
@@ -560,7 +570,7 @@ async function an1meFetchUncoalesced(url, options) {
     }
   }
 
-  if (remaining() > 1000) {
+  if (!maybeDelivered && remaining() > 1000) {
     const viaTab = await an1meTabFetch(url, req, Math.min(firstTimeout, Math.max(1000, remaining())), deadline);
     if (viaTab) return viaTab;
   }

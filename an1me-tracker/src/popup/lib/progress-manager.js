@@ -96,16 +96,18 @@ const ProgressManager = {
         continue;
       }
 
+      // Every change below builds a NEW entry object instead of editing the input in place. The input
+      // entries are the same objects the maintenance pipeline later counts as its "before" baseline,
+      // so in-place edits made the removal invisible to change detection: duplicate episodes were
+      // cleaned in memory on every load and never persisted or synced.
       if (!anime.episodes) {
-        cleaned[slug].episodes = [];
-        cleaned[slug].totalWatchTime = 0;
+        cleaned[slug] = { ...anime, episodes: [], totalWatchTime: 0 };
         continue;
       }
 
       if (!Array.isArray(anime.episodes)) {
         log("Cleanup", "Episodes is not an array for:", slug);
-        cleaned[slug].episodes = [];
-        cleaned[slug].totalWatchTime = 0;
+        cleaned[slug] = { ...anime, episodes: [], totalWatchTime: 0 };
         continue;
       }
 
@@ -118,9 +120,12 @@ const ProgressManager = {
         }
       });
 
-      cleaned[slug].episodes = Array.from(episodeMap.values()).sort((a, b) => a.number - b.number);
-
-      cleaned[slug].totalWatchTime = cleaned[slug].episodes.reduce((sum, ep) => sum + (ep.duration || 0), 0);
+      const episodes = Array.from(episodeMap.values()).sort((a, b) => a.number - b.number);
+      const totalWatchTime = episodes.reduce((sum, ep) => sum + (ep.duration || 0), 0);
+      const sameEpisodes = episodes.length === anime.episodes.length && episodes.every((ep, i) => ep === anime.episodes[i]);
+      if (!sameEpisodes || anime.totalWatchTime !== totalWatchTime) {
+        cleaned[slug] = { ...anime, episodes, totalWatchTime };
+      }
     }
 
     return cleaned;

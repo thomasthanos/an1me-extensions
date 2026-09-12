@@ -248,6 +248,8 @@ window.AnimeTracker.Logger = {
   "use strict";
 
   const _dialogState = new WeakMap();
+  // The one inline confirm currently on screen, so a new one can settle it instead of orphaning it.
+  let _activeConfirmFinish = null;
 
   function focusableIn(root) {
     if (!root) return [];
@@ -260,7 +262,12 @@ window.AnimeTracker.Logger = {
 
   function open(overlay, opts = {}) {
     if (!overlay) return;
-    const restoreTo = document.activeElement;
+    // Idempotent: opening an overlay that is already open must not stack a second focus trap. The
+    // state map only ever held the newest handler, so close() removed that one and every extra open
+    // leaked a keydown listener onto the overlay.
+    const previous = _dialogState.get(overlay);
+    if (previous) overlay.removeEventListener("keydown", previous.trapHandler);
+    const restoreTo = previous?.restoreTo || document.activeElement;
     overlay.classList.add("visible");
     overlay.setAttribute("aria-hidden", "false");
     const trapHandler = (e) => {
@@ -308,6 +315,10 @@ window.AnimeTracker.Logger = {
 
   function inlineConfirm({ title, body, confirmLabel = "Delete", cancelLabel = "Cancel", danger = true } = {}) {
     return new Promise((resolve) => {
+      // Settle the prompt this one replaces as cancelled. Removing its node alone left its document-wide
+      // Enter listener and 60s timer alive, so after pressing delete on A and then on B, one Enter
+      // confirmed BOTH - deleting A with no prompt on screen for it.
+      if (_activeConfirmFinish) _activeConfirmFinish(false);
       document.querySelectorAll(".at-confirm-toast").forEach((n) => n.remove());
 
       const el = document.createElement("div");
@@ -330,7 +341,11 @@ window.AnimeTracker.Logger = {
       el.querySelector(".at-confirm-cancel").textContent = cancelLabel;
       el.querySelector(".at-confirm-ok").textContent = confirmLabel;
 
+      let settled = false;
       const finish = (value) => {
+        if (settled) return;
+        settled = true;
+        if (_activeConfirmFinish === finish) _activeConfirmFinish = null;
         el.classList.add("at-confirm-toast--leaving");
         setTimeout(() => {
           try {
@@ -352,10 +367,20 @@ window.AnimeTracker.Logger = {
 
       setTimeout(() => el.querySelector(".at-confirm-ok")?.focus(), 50);
       const onKey = (e) => {
-        if (e.key === "Escape") finish(false);
-        else if (e.key === "Enter") finish(true);
+        if (e.key === "Escape") {
+          finish(false);
+          return;
+        }
+        if (e.key !== "Enter") return;
+        // Document-wide, so Enter typed into the search box (or any other field) while a delete prompt
+        // was up used to confirm the delete. Only Enter outside editable fields, or inside the prompt.
+        const target = e.target;
+        const editable = !!target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable);
+        if (editable && !el.contains(target)) return;
+        finish(true);
       };
       document.addEventListener("keydown", onKey, true);
+      _activeConfirmFinish = finish;
     });
   }
 

@@ -228,7 +228,13 @@ async function checkNewEpisodesOnce(disableGeneration) {
       }
       scheduleInfo = info;
       if (info?.latestEpisode) {
-        const previousLatest = Number(cached?.latestEpisode) || 0;
+        // The baseline is this job's own last observation, not the shared animeinfo_ cache. That cache
+        // is also rewritten by the library refresh, the popup, visiting an1me.to and the filler lookup,
+        // so if any of them saw episode 6 first, this check read 6 as "previous", scraped 6, and
+        // 6 > 6 was false - the episode never notified. Entries from before lastSeenLatest existed
+        // fall back to the cache, exactly as before, so an update cannot fire a burst of alerts.
+        const previousLatest =
+          Number(entry.lastSeenLatest) > 0 ? Number(entry.lastSeenLatest) : Number(cached?.latestEpisode) || 0;
         const latest = Number(info.latestEpisode) || 0;
         const highestWatched = highestWatchedEpisode(anime);
         const alreadyNotified = Number(entry.notifiedEpisode) || 0;
@@ -256,6 +262,7 @@ async function checkNewEpisodesOnce(disableGeneration) {
 
       }
 
+      if (Number(info?.latestEpisode) > 0) entry.lastSeenLatest = Number(info.latestEpisode);
       entry.lastCheckedAt = now;
       entry.consecutiveFailures = 0;
       delete entry.lastErrorAt;

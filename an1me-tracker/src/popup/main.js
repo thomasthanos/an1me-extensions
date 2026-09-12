@@ -2376,6 +2376,11 @@
     let cloudCacheInvalidateTimer = null;
     let pendingStatsRender = false;
     let pendingGoalsRender = false;
+    // Shared across events, like the two flags above. It used to be a per-event local captured by the
+    // debounce closure: an animeData commit followed within 600ms by the background's separate
+    // syncState write cancelled the first timer and scheduled one whose local flag was false, so the
+    // list never re-rendered after watching an episode.
+    let pendingListRender = false;
     chrome.storage.onChanged.addListener((changes, namespace) => {
       if (namespace !== "local") return;
       if (
@@ -2496,12 +2501,14 @@
         }, 1500);
       }
 
-      const hasDeferredRender = needsFullRender || pendingStatsRender || pendingGoalsRender;
+      if (needsFullRender) pendingListRender = true;
+      const hasDeferredRender = pendingListRender || pendingStatsRender || pendingGoalsRender;
       if (hasDeferredRender) {
         if (storageUpdateTimeout) clearTimeout(storageUpdateTimeout);
         storageUpdateTimeout = setTimeout(async () => {
           storageUpdateTimeout = null;
-          if (needsFullRender) {
+          if (pendingListRender) {
+            pendingListRender = false;
             scheduleDeferredListRefresh({ delayMs: 0 });
           }
           const appRoot = document.querySelector(".app");
@@ -2590,23 +2597,10 @@
           return;
         }
 
-        if (target.classList.contains("anime-edit-title") || target.closest(".anime-edit-title")) {
-          const btn = target.classList.contains("anime-edit-title") ? target : target.closest(".anime-edit-title");
-          if (btn.dataset.slug) editAnimeTitle(btn.dataset.slug);
-          return;
-        }
-
-        if (target.classList.contains("season-edit-btn") || target.closest(".season-edit-btn")) {
-          const btn = target.classList.contains("season-edit-btn") ? target : target.closest(".season-edit-btn");
-          if (btn.dataset.slug) editAnimeTitle(btn.dataset.slug);
-          return;
-        }
-
-        if (target.classList.contains("season-delete-btn") || target.closest(".season-delete-btn")) {
-          const btn = target.classList.contains("season-delete-btn") ? target : target.closest(".season-delete-btn");
-          if (btn.dataset.slug) deleteAnime(btn.dataset.slug);
-          return;
-        }
+        // .anime-edit-title, .season-edit-btn and .season-delete-btn are handled by the delegated
+        // listener in render-list.js, on this same element. Handling them here too ran every click
+        // twice (stopPropagation does not stop a second listener on the same element): the edit
+        // dialog opened twice and leaked a keydown trap per click.
 
         if (target.classList.contains("anime-fetch-filler") || target.closest(".anime-fetch-filler")) {
           const btn = target.classList.contains("anime-fetch-filler") ? target : target.closest(".anime-fetch-filler");
@@ -2879,8 +2873,20 @@
       const slug = card.dataset.slug;
       if (!slug) return;
 
+      // Must pick the episode the card was rendered with (progress-manager getInProgressAnime + anime-card
+      // createInProgressItem): skip episodes already tracked as watched, then take the most recently
+      // saved, higher episode number on a tie. Picking the highest episode number instead swapped a
+      // freshly rendered "Ep 4 · 50%" for an older ep 7 on the very next patch, while Resume and the
+      // delete button still acted on ep 4.
+      const tracked = new Set(
+        (Array.isArray(animeData?.[slug]?.episodes) ? animeData[slug].episodes : [])
+          .filter((ep) => ep?.durationSource !== "anilist")
+          .map((ep) => Number(ep?.number))
+          .filter((n) => Number.isFinite(n) && n > 0),
+      );
       let best = null;
       let bestNum = 0;
+      let bestSavedAt = -1;
       const prefix = slug + "__episode-";
       for (const key in vp) {
         if (!key.startsWith(prefix)) continue;
@@ -2888,7 +2894,10 @@
         if (!p || p.deleted) continue;
         if (p.percentage >= completedPct) continue;
         const num = parseInt(key.slice(prefix.length), 10);
-        if (num > bestNum) {
+        if (!Number.isFinite(num) || tracked.has(num)) continue;
+        const savedAt = p.savedAt ? new Date(p.savedAt).getTime() || 0 : 0;
+        if (savedAt > bestSavedAt || (savedAt === bestSavedAt && num > bestNum)) {
+          bestSavedAt = savedAt;
           bestNum = num;
           best = p;
         }

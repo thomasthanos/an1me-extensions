@@ -1043,6 +1043,20 @@ async function bgMutateFirebaseAuth(request = {}) {
 
 const PROGRESS_SYNC_ALARM = "progressSyncDebounce";
 
+// Arms the progress-sync alarm no later than `delayInMinutes` from now, and never pushes an armed
+// alarm further out. chrome.alarms.create with an existing name REPLACES the alarm, so calling it on
+// every progress write - the player writes about every 45s - turned the intended throttle into a
+// debounce that never fired while a video was playing: a 2h movie pushed no resume position until
+// 5 minutes after it stopped.
+async function armProgressSyncAlarmNoLater(delayInMinutes) {
+  try {
+    const target = Date.now() + delayInMinutes * 60 * 1000;
+    const existing = await chrome.alarms.get(PROGRESS_SYNC_ALARM);
+    if (existing && existing.scheduledTime <= target) return;
+    await chrome.alarms.create(PROGRESS_SYNC_ALARM, { when: target });
+  } catch {}
+}
+
 const FULL_SYNC_RETRY_ALARM = "fullSyncRetry";
 const PROGRESS_SYNC_RETRY_ALARM = "progressSyncRetry";
 
@@ -2653,7 +2667,15 @@ async function applyCloudPlaybackSettings(cloudPlayback) {
 
   try {
     const localKeys = Object.values(BG_PLAYBACK_FIELD_MAP).concat([BG_PLAYBACK_UPDATED_AT_KEY, BG_USER_PREFS_KEY]);
-    const outcome = await runBgLibraryTransaction(localKeys, async (stored) => {
+    const outcome = await runBgLibraryTransaction(localKeys, async (coordinated) => {
+      // The transaction snapshot only carries keys in LIBRARY_MUTATION_KEY_SET, which does not include
+      // adGuardEnabled, autoResumeEnabled or userPreferences. They used to read as undefined here -
+      // Ad Guard always "on", Auto-resume always "off", preferences always "changed" - so a cloud
+      // change to either flag was skipped for good once playbackSettingsUpdatedAt advanced. Read them
+      // directly: this still runs inside the serialized mutation queue, and the write below always
+      // carries playbackSettingsUpdatedAt, the coordinated key the transaction requires.
+      const uncoordinated = await bgStorageGet(localKeys.filter((key) => !LIBRARY_MUTATION_KEY_SET.has(key)));
+      const stored = { ...uncoordinated, ...coordinated };
       const localUpdatedAt = stored[BG_PLAYBACK_UPDATED_AT_KEY] || null;
       if (localUpdatedAt && Date.parse(localUpdatedAt) >= Date.parse(cloudUpdatedAt)) {
         return { result: { applied: false, changed: false, writes: null } };
@@ -3051,9 +3073,9 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
       syncToFirebase("onChanged:progress-during-full").catch(() => {});
     } else if (syncState.progressInProgress) {
       syncState.progressPending = true;
-      chrome.alarms.create(PROGRESS_SYNC_ALARM, { delayInMinutes: 0.5 });
+      void armProgressSyncAlarmNoLater(0.5);
     } else {
-      chrome.alarms.create(PROGRESS_SYNC_ALARM, { delayInMinutes: 5 });
+      void armProgressSyncAlarmNoLater(5);
     }
   }
 
@@ -3469,7 +3491,7 @@ const messageHandlers = {
       const sinceLast = Date.now() - _lastProgressSyncAt;
       if (!message.force && _lastProgressSyncAt && sinceLast < 4 * 60 * 1000) {
         markProgressSyncPending("msg:progress-throttled");
-        chrome.alarms.create(PROGRESS_SYNC_ALARM, { delayInMinutes: 5 });
+        await armProgressSyncAlarmNoLater(5);
         return { success: false, queued: true, state: "pending", kind: "progress" };
       }
       try {

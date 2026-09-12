@@ -273,7 +273,10 @@ const AnimeCardRenderer = {
             : UIHelpers.createIcon("watching");
     const statusBadge = `<span class="meta-badge ${statusBadgeClass}">${statusBadgeIcon}${statusTextCard}</span>`;
 
-    const anilistStatus = AnilistService?.getStatus(slug);
+    // The authoritative status this card already computed above (newer an1me releaseStatus wins over
+    // the cache). Reading the raw AniList status here showed an "Airing" badge - and kept the
+    // countdown eligible - on a card whose own status line said the show had finished.
+    const anilistStatus = anilistStatusForProgress;
     const airingBadge =
       anilistStatus === "RELEASING" && !isDropped && !isOnHold && !_isCaughtUpAiring
         ? `<span class="meta-badge meta-badge-airing" title="Currently airing">Airing</span>`
@@ -1334,7 +1337,14 @@ window.AnimeTracker.AnimeCardRenderer = AnimeCardRenderer;
         groupStatusView.status !== "airing" &&
         groupStatusView.status !== "dropped" &&
         groupStatusView.status !== "on_hold" &&
-        filteredSeasons.some(({ slug: memberSlug }) => AnilistService?.getStatus?.(memberSlug) === "RELEASING")
+        filteredSeasons.some(({ slug: memberSlug, anime: memberAnime }) => {
+          // Same precedence as the entry card: authoritative site info first, raw AniList status last.
+          const memberInfo = window.AnimeTracker?.StatusService?.getAuthoritativeSiteInfo?.(memberSlug, memberAnime);
+          const memberStatus = memberInfo
+            ? memberInfo.status || memberAnime?.releaseStatus || null
+            : memberAnime?.releaseStatus || AnilistService?.getStatus?.(memberSlug);
+          return memberStatus === "RELEASING";
+        })
           ? `<span class="meta-badge meta-badge-airing" title="Currently airing">Airing</span>`
           : "";
       const metaRowHtmlGroup = `<div class="grp-meta-row">${groupProgressBadge}${groupStatusBadge}${groupAiringBadge}</div><span class="meta-time">${lastWatchedText}</span>`;

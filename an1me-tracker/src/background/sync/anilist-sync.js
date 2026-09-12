@@ -260,9 +260,17 @@
     const connected = !!(auth && auth.accessToken && (!auth.expiresAt || auth.expiresAt > Date.now()));
 
     if (connected) {
-      try {
-        chrome.alarms.create(PUSH_ALARM_PERIODIC, { delayInMinutes: 5, periodInMinutes: 30 });
-      } catch {}
+      // Only arm it if it is not already armed with this period. This block runs on EVERY worker
+      // start, and a signed-in user's worker is woken at least every 4 minutes by the periodic full
+      // sync - re-creating the alarm each time pushed its 5-minute first fire back again, so the
+      // periodic push almost never ran.
+      chrome.alarms
+        .get(PUSH_ALARM_PERIODIC)
+        .then((existing) => {
+          if (existing && Number(existing.periodInMinutes) === 30) return;
+          return chrome.alarms.create(PUSH_ALARM_PERIODIC, { delayInMinutes: 5, periodInMinutes: 30 });
+        })
+        .catch(() => {});
     } else {
       try {
         chrome.alarms.clear(PUSH_ALARM_PERIODIC);

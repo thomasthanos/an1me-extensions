@@ -23,14 +23,24 @@ async function syncWatchlistToSite(animeId, type, animeSlug = null) {
           animeSlug,
         },
         (response) => {
-          if (chrome.runtime.lastError) {
+          const lastError = chrome.runtime.lastError;
+          if (lastError || !response) {
             console.warn(
               `%c WatchlistSync %c tab forward failed`,
               "background:#ef4444;color:#fff;border-radius:3px 0 0 3px;padding:2px 6px;font-weight:700",
               "color:#fca5a5",
-              chrome.runtime.lastError.message,
+              lastError?.message || "no reply",
             );
             directWatchlistFetch(animeId, type).catch((e) => console.warn("[BG] WatchlistSync direct fallback failed:", e.message));
+          } else if (response.success !== true) {
+            // The tab answered and the site refused (not logged in, auth_failed, bad_request). This used
+            // to be logged as a success because only lastError was checked. No fallback: the direct path
+            // sends the same site cookies, so it would only repeat the refusal.
+            console.warn(
+              `%c WatchlistSync %c tab refused: ${response.error || "not applied"}`,
+              "background:#ef4444;color:#fff;border-radius:3px 0 0 3px;padding:2px 6px;font-weight:700",
+              "color:#fca5a5",
+            );
           } else {
             dlog(
               `%c WatchlistSync %c ✓ forwarded to tab`,
