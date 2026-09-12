@@ -315,89 +315,9 @@ const SeasonGrouping = {
     return fallbackTitle;
   },
 
-  getSeasonNumber(slug) {
-    if (slug.startsWith("one-piece")) {
-      if (slug.includes("new-world")) return 2;
-      return 1;
-    }
-
-    if (slug.startsWith("one-punch-man")) {
-      if (slug.includes("season-3") || slug.endsWith("-3")) return 3;
-      if (slug.includes("season-2") || slug.includes("2nd-season")) return 2;
-      return 1;
-    }
-
-    if (slug.startsWith("jujutsu-kaisen")) {
-      if (
-        slug.includes("culling-game") ||
-        slug.includes("season-3") ||
-        slug.includes("dead-culling-game") ||
-        slug.includes("shimetsu-kaiyuu")
-      ) {
-        if (slug.includes("koupen") || slug.includes("part-2") || slug.includes("part2")) return 3.2;
-        if (slug.includes("zenpen") || slug.includes("part-1") || slug.includes("part1")) return 3.1;
-        return 3;
-      }
-      if (
-        slug.includes("season-2") ||
-        slug.includes("2nd-season") ||
-        slug.includes("shibuya-incident") ||
-        slug.includes("kaigyoku-gyokusetsu")
-      )
-        return 2;
-      if (slug.includes("0") || slug.includes("movie")) return 0;
-      return 1;
-    }
-
-    if (slug.startsWith("naruto") || slug.startsWith("boruto")) {
-      const slugLower = slug.toLowerCase();
-      if (slugLower.includes("boruto") || slugLower.includes("-3") || slugLower.includes("season-3")) return 3;
-      if (slugLower.includes("shippuden") || slugLower.includes("shippuuden") || slugLower.includes("-2") || slugLower.includes("season-2"))
-        return 2;
-      return 1;
-    }
-
-    if (slug.startsWith("kimetsu-no-yaiba")) {
-      if (slug.includes("hashira-geiko-hen")) return 5;
-      if (slug.includes("katanakaji-no-sato-hen")) return 4;
-      if (slug.includes("yuukaku-hen")) return 3;
-      if (slug.includes("mugen-ressha-hen")) return 2;
-      return 1;
-    }
-
-    if (slug.startsWith("shingeki-no-kyojin")) {
-      if (slug.includes("final-season-kanketsu-hen")) return 7;
-      if (slug.includes("final-season-part-2")) return 6;
-      if (slug.includes("final-season")) return 5;
-      if (slug.includes("season-3-part-2")) return 4;
-      if (slug.includes("season-3")) return 3;
-      if (slug.includes("season-2")) return 2;
-      return 1;
-    }
-
-    if (slug.startsWith("initial-d")) {
-      if (slug.includes("final-stage") || slug.includes("sixth-stage") || slug.includes("6th-stage")) return 6;
-      if (slug.includes("fifth-stage") || slug.includes("5th-stage")) return 5;
-      if (slug.includes("fourth-stage") || slug.includes("4th-stage")) return 4;
-      if (slug.includes("third-stage") || slug.includes("3rd-stage")) return 3;
-      if (slug.includes("second-stage") || slug.includes("2nd-stage")) return 2;
-      return 1;
-    }
-
-    if (slug.startsWith("blue-lock")) {
-      if (slug.includes("season-3") || slug.includes("3rd-season") || slug.includes("-3")) return 3;
-      if (
-        slug.includes("vs-u-20") ||
-        slug.includes("vs-u20") ||
-        slug.includes("u-20-japan") ||
-        slug.includes("season-2") ||
-        slug.includes("2nd-season") ||
-        slug.includes("-2")
-      )
-        return 2;
-      return 1;
-    }
-
+  // Pure slug parsing, no franchise knowledge: the ordinal/season/part/roman forms.
+  // Returns a number or null. Its POSITION in resolveSeasonInfo is load-bearing.
+  parseGenericSeasonNumber(slug) {
     // "part"/"cour" suffixes become a fraction so e.g. season-2-part-2 sorts after season 2
     const partMatch = slug.match(/-(?:part|cour)-?(\d+)/i);
     const partOffset = partMatch ? parseInt(partMatch[1], 10) / 10 : 0;
@@ -419,25 +339,37 @@ const SeasonGrouping = {
       return romanMatch[1].toLowerCase() in romanMap ? romanMap[romanMatch[1].toLowerCase()] : 1;
     }
 
-    if (slug.startsWith("bleach")) {
-      if (slug.includes("sennen-kessen-hen")) return 2;
-      return 1;
-    }
+    // A part/cour with no season number of its own belongs to season 1. Without this
+    // "<show>-part-2" fell through to the default 1 - the same number as "<show>" itself - so the
+    // two sorted identically and both rendered as "Season 1".
+    if (partOffset > 0) return 1 + partOffset;
 
-    if (slug.startsWith("mashle")) {
-      // S2 on an1me.to is the arc-named slug mashle-shinkakusha-kouho-senbatsu-shiken-hen
-      if (slug.includes("shinkakusha")) return 2;
-      return 1;
-    }
+    return null;
+  },
 
-    if (slug === "trinity-seven-nanatsu-no-taizai-to-nana-madoushi") return 2;
+  // THE single ordering for "which season is this?", used by both the number and the label so the
+  // two can no longer disagree. Franchise layouts are declared once in
+  // src/common/data/franchise-seasons.js; a franchise marked "after-generic" is only consulted if
+  // the generic rules above found nothing, which is what makes "mashle-season-2" read as 2.
+  //
+  // A null label means "no franchise-specific name" - the caller formats "Season N" from number.
+  resolveSeasonInfo(slug, title = "") {
+    const Seasons = window.AnimeTracker.FranchiseSeasons;
 
-    if (slug.startsWith("hunter-x-hunter") || slug.startsWith("hunterhunter")) {
-      if (slug.includes("2011")) return 2;
-      return 1;
-    }
+    const before = Seasons.resolveSeason(slug, title, "before-generic");
+    if (before) return before;
 
-    return 1;
+    const generic = this.parseGenericSeasonNumber(slug);
+    if (generic !== null) return { number: generic, label: null };
+
+    const after = Seasons.resolveSeason(slug, title, "after-generic");
+    if (after) return after;
+
+    return { number: 1, label: null };
+  },
+
+  getSeasonNumber(slug, title = "") {
+    return this.resolveSeasonInfo(slug, title).number;
   },
 
   getSeasonLabel(slug, title, anime = null) {
@@ -445,106 +377,10 @@ const SeasonGrouping = {
     const typeLabel = globalThis.AnimeTrackerMediaType?.getLabel(displayType);
     if (typeLabel && !["TV", "TV Short"].includes(typeLabel)) return typeLabel;
 
-    if (slug.startsWith("one-piece")) {
-      if (slug.includes("new-world")) return "New World";
-      return "East Blue & Grandline";
-    }
+    const resolved = this.resolveSeasonInfo(slug, title);
+    if (resolved.label) return resolved.label;
 
-    if (slug.startsWith("one-punch-man")) {
-      if (slug.includes("season-3") || slug.endsWith("-3")) return "Season 3";
-      if (slug.includes("season-2") || slug.includes("2nd-season")) return "Season 2";
-      return "Season 1";
-    }
-
-    if (slug.startsWith("naruto") || slug.startsWith("boruto")) {
-      const slugLower = slug.toLowerCase();
-      const titleLower = title ? title.toLowerCase() : "";
-
-      if (slugLower.includes("boruto") || slugLower.endsWith("-3") || slugLower.includes("season-3")) return "Naruto Boruto";
-      if (titleLower.includes("boruto")) return "Naruto Boruto";
-      if (slugLower.includes("shippuden") || slugLower.includes("shippuuden")) return "Naruto Shippuden";
-      if (slugLower.endsWith("-2") || slugLower.includes("season-2")) return "Naruto Shippuden";
-      if (titleLower.includes("shippuden") || titleLower.includes("shippuuden")) return "Naruto Shippuden";
-      return "Naruto";
-    }
-
-    if (slug.startsWith("jujutsu-kaisen")) {
-      if (
-        slug.includes("culling-game") ||
-        slug.includes("season-3") ||
-        slug.includes("dead-culling-game") ||
-        slug.includes("shimetsu-kaiyuu")
-      ) {
-        if (slug.includes("koupen") || slug.includes("part-2") || slug.includes("part2")) return "Season 3 Part 2";
-        if (slug.includes("zenpen") || slug.includes("part-1") || slug.includes("part1")) return "Season 3 Part 1";
-        return "Season 3";
-      }
-      if (
-        slug.includes("season-2") ||
-        slug.includes("2nd-season") ||
-        slug.includes("shibuya-incident") ||
-        slug.includes("kaigyoku-gyokusetsu")
-      )
-        return "Season 2";
-      if (slug.includes("0") || slug.includes("movie")) return "Movie 0";
-      return "Season 1";
-    }
-
-    if (slug.startsWith("kimetsu-no-yaiba")) {
-      if (slug.includes("hashira-geiko-hen")) return "Hashira Training Arc";
-      if (slug.includes("katanakaji-no-sato-hen")) return "Swordsmith Village Arc";
-      if (slug.includes("yuukaku-hen")) return "Entertainment District Arc";
-      if (slug.includes("mugen-ressha-hen")) return "Mugen Train Arc";
-      return "Season 1";
-    }
-
-    if (slug.startsWith("shingeki-no-kyojin")) {
-      if (slug.includes("final-season-kanketsu-hen")) return "Final Season Part 3";
-      if (slug.includes("final-season-part-2")) return "Final Season Part 2";
-      if (slug.includes("final-season")) return "Final Season Part 1";
-      if (slug.includes("season-3-part-2")) return "Season 3 Part 2";
-      if (slug.includes("season-3")) return "Season 3 Part 1";
-      if (slug.includes("season-2")) return "Season 2";
-      return "Season 1";
-    }
-
-    if (slug.startsWith("initial-d")) {
-      if (slug.includes("final-stage") || slug.includes("sixth-stage") || slug.includes("6th-stage")) return "Final Stage";
-      if (slug.includes("fifth-stage") || slug.includes("5th-stage")) return "Fifth Stage";
-      if (slug.includes("fourth-stage") || slug.includes("4th-stage")) return "Fourth Stage";
-      if (slug.includes("third-stage") || slug.includes("3rd-stage")) return "Third Stage (Movie)";
-      if (slug.includes("second-stage") || slug.includes("2nd-stage")) return "Second Stage";
-      return "First Stage";
-    }
-
-    if (slug.startsWith("blue-lock")) {
-      if (slug.includes("season-3") || slug.includes("3rd-season") || slug.includes("-3")) return "Season 3";
-      if (
-        slug.includes("vs-u-20") ||
-        slug.includes("vs-u20") ||
-        slug.includes("u-20-japan") ||
-        slug.includes("season-2") ||
-        slug.includes("2nd-season") ||
-        slug.includes("-2")
-      )
-        return "Season 2: vs. U-20 Japan";
-      return "Season 1";
-    }
-
-    if (slug.includes("bleach-sennen-kessen-hen")) {
-      if (slug.includes("soukoku-tan")) return "TYBW Part 3";
-      if (slug.includes("ketsubetsu-tan")) return "TYBW Part 2";
-      return "Thousand-Year Blood War";
-    }
-
-    if (slug === "trinity-seven-nanatsu-no-taizai-to-nana-madoushi") return "Movie: Nanatsu no Taizai to Nana Madoushi";
-
-    if (slug.startsWith("hunter-x-hunter") || slug.startsWith("hunterhunter")) {
-      if (slug.includes("2011")) return "2011 Version";
-      return "1999 Version";
-    }
-
-    const seasonNum = this.getSeasonNumber(slug);
+    const seasonNum = resolved.number;
     if (Number.isInteger(seasonNum)) return `Season ${seasonNum}`;
     const whole = Math.floor(seasonNum);
     const part = Math.round((seasonNum - whole) * 10);

@@ -1,0 +1,2947 @@
+{
+  "one-piece": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "one-piece",
+    "movieBase": "one-piece",
+    "seasonNumber": 1,
+    "seasonLabel": "East Blue & Grandline",
+    "movieNumber": 1,
+    "movieLabel": "One Piece",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "One Piece",
+    "onePieceMovie": null
+  },
+  "one-piece-new-world": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "one-piece",
+    "movieBase": "one-piece",
+    "seasonNumber": 2,
+    "seasonLabel": "New World",
+    "movieNumber": 1,
+    "movieLabel": "New World",
+    "movieReleaseTs": 0,
+    "entryOrder": 2,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "One Piece New World",
+    "onePieceMovie": null
+  },
+  "one-piece-movie-01": {
+    "isMovie": true,
+    "isMovieDisplay": true,
+    "seriesBase": "one-piece",
+    "movieBase": "one-piece",
+    "seasonNumber": 1,
+    "seasonLabel": "Movie",
+    "movieNumber": 1,
+    "movieLabel": "The Movie",
+    "movieReleaseTs": 952128000000,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "One Piece Movie 01",
+    "onePieceMovie": {
+      "number": 1,
+      "slug": "one-piece-movie-01",
+      "label": "The Movie",
+      "releasedAt": "2000-03-04"
+    }
+  },
+  "one-piece-film-red": {
+    "isMovie": true,
+    "isMovieDisplay": true,
+    "seriesBase": "one-piece",
+    "movieBase": "one-piece",
+    "seasonNumber": 1,
+    "seasonLabel": "Movie",
+    "movieNumber": 15,
+    "movieLabel": "Film: Red",
+    "movieReleaseTs": 1659744000000,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "One Piece Film: Red",
+    "onePieceMovie": {
+      "number": 15,
+      "slug": "one-piece-film-red",
+      "label": "Film: Red",
+      "releasedAt": "2022-08-06"
+    }
+  },
+  "one-piece-film-z": {
+    "isMovie": true,
+    "isMovieDisplay": true,
+    "seriesBase": "one-piece",
+    "movieBase": "one-piece",
+    "seasonNumber": 1,
+    "seasonLabel": "Movie",
+    "movieNumber": 12,
+    "movieLabel": "Film: Z",
+    "movieReleaseTs": 1355529600000,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "One Piece Film Z",
+    "onePieceMovie": {
+      "number": 12,
+      "slug": "one-piece-film-z",
+      "label": "Film: Z",
+      "releasedAt": "2012-12-15"
+    }
+  },
+  "one-piece-film-gold": {
+    "isMovie": true,
+    "isMovieDisplay": true,
+    "seriesBase": "one-piece",
+    "movieBase": "one-piece",
+    "seasonNumber": 1,
+    "seasonLabel": "Movie",
+    "movieNumber": 13,
+    "movieLabel": "Film: Gold",
+    "movieReleaseTs": 1469232000000,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "One Piece Film Gold",
+    "onePieceMovie": {
+      "number": 13,
+      "slug": "one-piece-film-gold",
+      "label": "Film: Gold",
+      "releasedAt": "2016-07-23"
+    }
+  },
+  "one-piece-film-strong-world": {
+    "isMovie": true,
+    "isMovieDisplay": true,
+    "seriesBase": "one-piece",
+    "movieBase": "one-piece",
+    "seasonNumber": 1,
+    "seasonLabel": "Movie",
+    "movieNumber": 10,
+    "movieLabel": "Film: Strong World",
+    "movieReleaseTs": 1260576000000,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "One Piece Film Strong World",
+    "onePieceMovie": {
+      "number": 10,
+      "slug": "one-piece-film-strong-world",
+      "label": "Film: Strong World",
+      "releasedAt": "2009-12-12"
+    }
+  },
+  "one-piece-3d-mugiwara-chase": {
+    "isMovie": true,
+    "isMovieDisplay": true,
+    "seriesBase": "one-piece",
+    "movieBase": "one-piece",
+    "seasonNumber": 1,
+    "seasonLabel": "East Blue & Grandline",
+    "movieNumber": 11,
+    "movieLabel": "3D: Straw Hat Chase",
+    "movieReleaseTs": 1300492800000,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "One Piece 3d Mugiwara Chase",
+    "onePieceMovie": {
+      "number": 11,
+      "slug": "one-piece-3d-mugiwara-chase",
+      "label": "3D: Straw Hat Chase",
+      "releasedAt": "2011-03-19"
+    }
+  },
+  "one-piece-movie-14-stampede": {
+    "isMovie": true,
+    "isMovieDisplay": true,
+    "seriesBase": "one-piece",
+    "movieBase": "one-piece",
+    "seasonNumber": 1,
+    "seasonLabel": "Movie",
+    "movieNumber": 14,
+    "movieLabel": "Stampede",
+    "movieReleaseTs": 1565308800000,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "One Piece Movie 14 Stampede",
+    "onePieceMovie": {
+      "number": 14,
+      "slug": "one-piece-movie-14-stampede",
+      "label": "Stampede",
+      "releasedAt": "2019-08-09"
+    }
+  },
+  "one-piece-movie-08-episode-of-alabasta-sabaku-no-oujo-to-kaizoku-tachi": {
+    "isMovie": true,
+    "isMovieDisplay": true,
+    "seriesBase": "one-piece",
+    "movieBase": "one-piece",
+    "seasonNumber": 1,
+    "seasonLabel": "Movie",
+    "movieNumber": 8,
+    "movieLabel": "Episode of Alabasta - The Desert Princess and the Pirates",
+    "movieReleaseTs": 1172880000000,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "One Piece Movie 08 Episode Of Alabasta Sabaku No Oujo To Kaizoku Tachi",
+    "onePieceMovie": {
+      "number": 8,
+      "slug": "one-piece-movie-08-episode-of-alabasta-sabaku-no-oujo-to-kaizoku-tachi",
+      "label": "Episode of Alabasta - The Desert Princess and the Pirates",
+      "releasedAt": "2007-03-03"
+    }
+  },
+  "one-piece-heroines": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "one-piece",
+    "movieBase": "one-piece",
+    "seasonNumber": 1,
+    "seasonLabel": "East Blue & Grandline",
+    "movieNumber": 1,
+    "movieLabel": "Heroines",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "One Piece Heroines",
+    "onePieceMovie": null
+  },
+  "one-piece-episode-of-luffy": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "one-piece",
+    "movieBase": "one-piece",
+    "seasonNumber": 1,
+    "seasonLabel": "East Blue & Grandline",
+    "movieNumber": 1,
+    "movieLabel": "Episode Of Luffy",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "One Piece Episode Of Luffy",
+    "onePieceMovie": null
+  },
+  "one-punch-man": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "one-punch-man",
+    "movieBase": "one-punch-man",
+    "seasonNumber": 1,
+    "seasonLabel": "Season 1",
+    "movieNumber": 1,
+    "movieLabel": "One Punch Man",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "One Punch Man",
+    "onePieceMovie": null
+  },
+  "one-punch-man-season-2": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "one-punch-man",
+    "movieBase": "one-punch-man-season-2",
+    "seasonNumber": 2,
+    "seasonLabel": "Season 2",
+    "movieNumber": 1,
+    "movieLabel": "One Punch Man Season 2",
+    "movieReleaseTs": 0,
+    "entryOrder": 2,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "One Punch Man Season 2",
+    "onePieceMovie": null
+  },
+  "one-punch-man-2nd-season": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "one-punch-man",
+    "movieBase": "one-punch-man-2nd-season",
+    "seasonNumber": 2,
+    "seasonLabel": "Season 2",
+    "movieNumber": 1,
+    "movieLabel": "One Punch Man 2nd Season",
+    "movieReleaseTs": 0,
+    "entryOrder": 2,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "One Punch Man 2nd Season",
+    "onePieceMovie": null
+  },
+  "one-punch-man-season-3": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "one-punch-man",
+    "movieBase": "one-punch-man-season-3",
+    "seasonNumber": 3,
+    "seasonLabel": "Season 3",
+    "movieNumber": 1,
+    "movieLabel": "One Punch Man Season 3",
+    "movieReleaseTs": 0,
+    "entryOrder": 3,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "One Punch Man Season 3",
+    "onePieceMovie": null
+  },
+  "one-punch-man-3": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "one-punch-man",
+    "movieBase": "one-punch-man-3",
+    "seasonNumber": 3,
+    "seasonLabel": "Season 3",
+    "movieNumber": 1,
+    "movieLabel": "One Punch Man 3",
+    "movieReleaseTs": 0,
+    "entryOrder": 3,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "One Punch Man 3",
+    "onePieceMovie": null
+  },
+  "jujutsu-kaisen": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "jujutsu-kaisen",
+    "movieBase": "jujutsu-kaisen",
+    "seasonNumber": 1,
+    "seasonLabel": "Season 1",
+    "movieNumber": 1,
+    "movieLabel": "Jujutsu Kaisen",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Jujutsu Kaisen",
+    "onePieceMovie": null
+  },
+  "jujutsu-kaisen-0": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "jujutsu-kaisen",
+    "movieBase": "jujutsu-kaisen-0",
+    "seasonNumber": 0,
+    "seasonLabel": "Movie 0",
+    "movieNumber": 1,
+    "movieLabel": "Jujutsu Kaisen 0",
+    "movieReleaseTs": 0,
+    "entryOrder": 0,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Jujutsu Kaisen 0",
+    "onePieceMovie": null
+  },
+  "jujutsu-kaisen-0-movie": {
+    "isMovie": true,
+    "isMovieDisplay": true,
+    "seriesBase": "jujutsu-kaisen-0",
+    "movieBase": "jujutsu-kaisen-0",
+    "seasonNumber": 0,
+    "seasonLabel": "Movie",
+    "movieNumber": 1,
+    "movieLabel": "Movie 0",
+    "movieReleaseTs": 0,
+    "entryOrder": 0,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Jujutsu Kaisen 0 Movie",
+    "onePieceMovie": null
+  },
+  "jujutsu-kaisen-season-2": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "jujutsu-kaisen",
+    "movieBase": "jujutsu-kaisen-season-2",
+    "seasonNumber": 2,
+    "seasonLabel": "Season 2",
+    "movieNumber": 1,
+    "movieLabel": "Jujutsu Kaisen Season 2",
+    "movieReleaseTs": 0,
+    "entryOrder": 2,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Jujutsu Kaisen Season 2",
+    "onePieceMovie": null
+  },
+  "jujutsu-kaisen-2nd-season": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "jujutsu-kaisen",
+    "movieBase": "jujutsu-kaisen-2nd-season",
+    "seasonNumber": 2,
+    "seasonLabel": "Season 2",
+    "movieNumber": 1,
+    "movieLabel": "Jujutsu Kaisen 2nd Season",
+    "movieReleaseTs": 0,
+    "entryOrder": 2,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Jujutsu Kaisen 2nd Season",
+    "onePieceMovie": null
+  },
+  "jujutsu-kaisen-shibuya-incident": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "jujutsu-kaisen",
+    "movieBase": "jujutsu-kaisen-shibuya-incident",
+    "seasonNumber": 2,
+    "seasonLabel": "Season 2",
+    "movieNumber": 1,
+    "movieLabel": "Jujutsu Kaisen Shibuya Incident",
+    "movieReleaseTs": 0,
+    "entryOrder": 2,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Jujutsu Kaisen Shibuya Incident",
+    "onePieceMovie": null
+  },
+  "jujutsu-kaisen-kaigyoku-gyokusetsu": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "jujutsu-kaisen",
+    "movieBase": "jujutsu-kaisen-kaigyoku-gyokusetsu",
+    "seasonNumber": 2,
+    "seasonLabel": "Season 2",
+    "movieNumber": 1,
+    "movieLabel": "Jujutsu Kaisen Kaigyoku Gyokusetsu",
+    "movieReleaseTs": 0,
+    "entryOrder": 2,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Jujutsu Kaisen Kaigyoku Gyokusetsu",
+    "onePieceMovie": null
+  },
+  "jujutsu-kaisen-season-3": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "jujutsu-kaisen",
+    "movieBase": "jujutsu-kaisen-season-3",
+    "seasonNumber": 3,
+    "seasonLabel": "Season 3",
+    "movieNumber": 1,
+    "movieLabel": "Jujutsu Kaisen Season 3",
+    "movieReleaseTs": 0,
+    "entryOrder": 3,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Jujutsu Kaisen Season 3",
+    "onePieceMovie": null
+  },
+  "jujutsu-kaisen-culling-game": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "jujutsu-kaisen",
+    "movieBase": "jujutsu-kaisen-culling-game",
+    "seasonNumber": 3,
+    "seasonLabel": "Season 3",
+    "movieNumber": 1,
+    "movieLabel": "Jujutsu Kaisen Culling Game",
+    "movieReleaseTs": 0,
+    "entryOrder": 3,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Jujutsu Kaisen Culling Game",
+    "onePieceMovie": null
+  },
+  "jujutsu-kaisen-shimetsu-kaiyuu": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "jujutsu-kaisen",
+    "movieBase": "jujutsu-kaisen-shimetsu-kaiyuu",
+    "seasonNumber": 3,
+    "seasonLabel": "Season 3",
+    "movieNumber": 1,
+    "movieLabel": "Jujutsu Kaisen Shimetsu Kaiyuu",
+    "movieReleaseTs": 0,
+    "entryOrder": 3,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Jujutsu Kaisen Shimetsu Kaiyuu",
+    "onePieceMovie": null
+  },
+  "jujutsu-kaisen-shimetsu-kaiyuu-zenpen": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "jujutsu-kaisen",
+    "movieBase": "jujutsu-kaisen-shimetsu-kaiyuu-zenpen",
+    "seasonNumber": 3.1,
+    "seasonLabel": "Season 3 Part 1",
+    "movieNumber": 1,
+    "movieLabel": "Jujutsu Kaisen Shimetsu Kaiyuu Zenpen",
+    "movieReleaseTs": 0,
+    "entryOrder": 3.1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Jujutsu Kaisen Shimetsu Kaiyuu Zenpen",
+    "onePieceMovie": null
+  },
+  "jujutsu-kaisen-shimetsu-kaiyuu-koupen": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "jujutsu-kaisen",
+    "movieBase": "jujutsu-kaisen-shimetsu-kaiyuu-koupen",
+    "seasonNumber": 3.2,
+    "seasonLabel": "Season 3 Part 2",
+    "movieNumber": 1,
+    "movieLabel": "Jujutsu Kaisen Shimetsu Kaiyuu Koupen",
+    "movieReleaseTs": 0,
+    "entryOrder": 3.2,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Jujutsu Kaisen Shimetsu Kaiyuu Koupen",
+    "onePieceMovie": null
+  },
+  "jujutsu-kaisen-culling-game-part-1": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "jujutsu-kaisen",
+    "movieBase": "jujutsu-kaisen-culling-game-part-1",
+    "seasonNumber": 3.1,
+    "seasonLabel": "Season 3 Part 1",
+    "movieNumber": 1,
+    "movieLabel": "Jujutsu Kaisen Culling Game Part 1",
+    "movieReleaseTs": 0,
+    "entryOrder": 3.1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Jujutsu Kaisen Culling Game Part 1",
+    "onePieceMovie": null
+  },
+  "jujutsu-kaisen-culling-game-part-2": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "jujutsu-kaisen",
+    "movieBase": "jujutsu-kaisen-culling-game-part-2",
+    "seasonNumber": 3.2,
+    "seasonLabel": "Season 3 Part 2",
+    "movieNumber": 1,
+    "movieLabel": "Jujutsu Kaisen Culling Game Part 2",
+    "movieReleaseTs": 0,
+    "entryOrder": 3.2,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Jujutsu Kaisen Culling Game Part 2",
+    "onePieceMovie": null
+  },
+  "naruto": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "naruto",
+    "movieBase": "naruto",
+    "seasonNumber": 1,
+    "seasonLabel": "Naruto",
+    "movieNumber": 1,
+    "movieLabel": "Naruto",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Naruto",
+    "onePieceMovie": null
+  },
+  "naruto-shippuuden": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "naruto",
+    "movieBase": "naruto",
+    "seasonNumber": 2,
+    "seasonLabel": "Naruto Shippuden",
+    "movieNumber": 1,
+    "movieLabel": "Shippuuden",
+    "movieReleaseTs": 0,
+    "entryOrder": 2,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Naruto Shippuuden",
+    "onePieceMovie": null
+  },
+  "naruto-shippuden": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "naruto",
+    "movieBase": "naruto",
+    "seasonNumber": 2,
+    "seasonLabel": "Naruto Shippuden",
+    "movieNumber": 1,
+    "movieLabel": "Shippuden",
+    "movieReleaseTs": 0,
+    "entryOrder": 2,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Naruto Shippuden",
+    "onePieceMovie": null
+  },
+  "naruto-2": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "naruto",
+    "movieBase": "naruto",
+    "seasonNumber": 2,
+    "seasonLabel": "Naruto Shippuden",
+    "movieNumber": 1,
+    "movieLabel": "Shippuden",
+    "movieReleaseTs": 0,
+    "entryOrder": 2,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Naruto Shippuden",
+    "onePieceMovie": null
+  },
+  "naruto-season-2": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "naruto",
+    "movieBase": "naruto",
+    "seasonNumber": 2,
+    "seasonLabel": "Naruto Shippuden",
+    "movieNumber": 1,
+    "movieLabel": "Season 2",
+    "movieReleaseTs": 0,
+    "entryOrder": 2,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Naruto Season 2",
+    "onePieceMovie": null
+  },
+  "boruto-naruto-next-generations": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "boruto-naruto-next-generations",
+    "movieBase": "boruto-naruto-next-generations",
+    "seasonNumber": 3,
+    "seasonLabel": "Naruto Boruto",
+    "movieNumber": 1,
+    "movieLabel": "Boruto Naruto Next Generations",
+    "movieReleaseTs": 0,
+    "entryOrder": 3,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Boruto Naruto Next Generations",
+    "onePieceMovie": null
+  },
+  "naruto-3": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "naruto",
+    "movieBase": "naruto",
+    "seasonNumber": 3,
+    "seasonLabel": "Naruto Boruto",
+    "movieNumber": 1,
+    "movieLabel": "Boruto: Naruto Next Generations",
+    "movieReleaseTs": 0,
+    "entryOrder": 3,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Boruto: Naruto Next Generations",
+    "onePieceMovie": null
+  },
+  "naruto-movie-1": {
+    "isMovie": true,
+    "isMovieDisplay": true,
+    "seriesBase": "naruto",
+    "movieBase": "naruto",
+    "seasonNumber": 1,
+    "seasonLabel": "Movie",
+    "movieNumber": 1,
+    "movieLabel": "Movie 1",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Naruto Movie 1",
+    "onePieceMovie": null
+  },
+  "naruto-shippuuden-movie-6-road-to-ninja": {
+    "isMovie": true,
+    "isMovieDisplay": true,
+    "seriesBase": "naruto",
+    "movieBase": "naruto",
+    "seasonNumber": 2,
+    "seasonLabel": "Movie",
+    "movieNumber": 6,
+    "movieLabel": "Movie 6",
+    "movieReleaseTs": 0,
+    "entryOrder": 2,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Naruto Shippuuden Movie 6 Road To Ninja",
+    "onePieceMovie": null
+  },
+  "kimetsu-no-yaiba": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "kimetsu-no-yaiba",
+    "movieBase": "kimetsu-no-yaiba",
+    "seasonNumber": 1,
+    "seasonLabel": "Season 1",
+    "movieNumber": 1,
+    "movieLabel": "Kimetsu No Yaiba",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Kimetsu No Yaiba",
+    "onePieceMovie": null
+  },
+  "kimetsu-no-yaiba-mugen-ressha-hen": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "kimetsu-no-yaiba",
+    "movieBase": "kimetsu-no-yaiba",
+    "seasonNumber": 2,
+    "seasonLabel": "Mugen Train Arc",
+    "movieNumber": 1,
+    "movieLabel": "Mugen Ressha Hen",
+    "movieReleaseTs": 0,
+    "entryOrder": 2,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Kimetsu No Yaiba Mugen Ressha Hen",
+    "onePieceMovie": null
+  },
+  "kimetsu-no-yaiba-yuukaku-hen": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "kimetsu-no-yaiba",
+    "movieBase": "kimetsu-no-yaiba",
+    "seasonNumber": 3,
+    "seasonLabel": "Entertainment District Arc",
+    "movieNumber": 1,
+    "movieLabel": "Yuukaku Hen",
+    "movieReleaseTs": 0,
+    "entryOrder": 3,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Kimetsu No Yaiba Yuukaku Hen",
+    "onePieceMovie": null
+  },
+  "kimetsu-no-yaiba-katanakaji-no-sato-hen": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "kimetsu-no-yaiba",
+    "movieBase": "kimetsu-no-yaiba",
+    "seasonNumber": 4,
+    "seasonLabel": "Swordsmith Village Arc",
+    "movieNumber": 1,
+    "movieLabel": "Katanakaji No Sato Hen",
+    "movieReleaseTs": 0,
+    "entryOrder": 4,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Kimetsu No Yaiba Katanakaji No Sato Hen",
+    "onePieceMovie": null
+  },
+  "kimetsu-no-yaiba-hashira-geiko-hen": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "kimetsu-no-yaiba",
+    "movieBase": "kimetsu-no-yaiba",
+    "seasonNumber": 5,
+    "seasonLabel": "Hashira Training Arc",
+    "movieNumber": 1,
+    "movieLabel": "Hashira Geiko Hen",
+    "movieReleaseTs": 0,
+    "entryOrder": 5,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Kimetsu No Yaiba Hashira Geiko Hen",
+    "onePieceMovie": null
+  },
+  "kimetsu-no-yaiba-mugen-train-movie": {
+    "isMovie": true,
+    "isMovieDisplay": true,
+    "seriesBase": "kimetsu-no-yaiba",
+    "movieBase": "kimetsu-no-yaiba",
+    "seasonNumber": 1,
+    "seasonLabel": "Movie",
+    "movieNumber": 1,
+    "movieLabel": "Mugen Train Movie",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Kimetsu No Yaiba Mugen Train Movie",
+    "onePieceMovie": null
+  },
+  "shingeki-no-kyojin": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "shingeki-no-kyojin",
+    "movieBase": "shingeki-no-kyojin",
+    "seasonNumber": 1,
+    "seasonLabel": "Season 1",
+    "movieNumber": 1,
+    "movieLabel": "Shingeki No Kyojin",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Shingeki No Kyojin",
+    "onePieceMovie": null
+  },
+  "shingeki-no-kyojin-season-2": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "shingeki-no-kyojin",
+    "movieBase": "shingeki-no-kyojin-season-2",
+    "seasonNumber": 2,
+    "seasonLabel": "Season 2",
+    "movieNumber": 1,
+    "movieLabel": "Shingeki No Kyojin Season 2",
+    "movieReleaseTs": 0,
+    "entryOrder": 2,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Shingeki No Kyojin Season 2",
+    "onePieceMovie": null
+  },
+  "shingeki-no-kyojin-season-3": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "shingeki-no-kyojin",
+    "movieBase": "shingeki-no-kyojin-season-3",
+    "seasonNumber": 3,
+    "seasonLabel": "Season 3 Part 1",
+    "movieNumber": 1,
+    "movieLabel": "Shingeki No Kyojin Season 3",
+    "movieReleaseTs": 0,
+    "entryOrder": 3,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Shingeki No Kyojin Season 3",
+    "onePieceMovie": null
+  },
+  "shingeki-no-kyojin-season-3-part-2": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "shingeki-no-kyojin",
+    "movieBase": "shingeki-no-kyojin-season-3-part-2",
+    "seasonNumber": 4,
+    "seasonLabel": "Season 3 Part 2",
+    "movieNumber": 1,
+    "movieLabel": "Shingeki No Kyojin Season 3 Part 2",
+    "movieReleaseTs": 0,
+    "entryOrder": 4,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Shingeki No Kyojin Season 3 Part 2",
+    "onePieceMovie": null
+  },
+  "shingeki-no-kyojin-final-season": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "shingeki-no-kyojin",
+    "movieBase": "shingeki-no-kyojin-final-season",
+    "seasonNumber": 5,
+    "seasonLabel": "Final Season Part 1",
+    "movieNumber": 1,
+    "movieLabel": "Shingeki No Kyojin Final Season",
+    "movieReleaseTs": 0,
+    "entryOrder": 5,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Shingeki No Kyojin Final Season",
+    "onePieceMovie": null
+  },
+  "shingeki-no-kyojin-final-season-part-2": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "shingeki-no-kyojin",
+    "movieBase": "shingeki-no-kyojin-final-season-part-2",
+    "seasonNumber": 6,
+    "seasonLabel": "Final Season Part 2",
+    "movieNumber": 1,
+    "movieLabel": "Shingeki No Kyojin Final Season Part 2",
+    "movieReleaseTs": 0,
+    "entryOrder": 6,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Shingeki No Kyojin Final Season Part 2",
+    "onePieceMovie": null
+  },
+  "shingeki-no-kyojin-final-season-kanketsu-hen": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "shingeki-no-kyojin",
+    "movieBase": "shingeki-no-kyojin-final-season-kanketsu-hen",
+    "seasonNumber": 7,
+    "seasonLabel": "Final Season Part 3",
+    "movieNumber": 1,
+    "movieLabel": "Shingeki No Kyojin Final Season Kanketsu Hen",
+    "movieReleaseTs": 0,
+    "entryOrder": 7,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Shingeki No Kyojin Final Season Kanketsu Hen",
+    "onePieceMovie": null
+  },
+  "initial-d": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "initial-d",
+    "movieBase": "initial-d",
+    "seasonNumber": 1,
+    "seasonLabel": "First Stage",
+    "movieNumber": 1,
+    "movieLabel": "Initial D",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Initial D",
+    "onePieceMovie": null
+  },
+  "initial-d-second-stage": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "initial-d",
+    "movieBase": "initial-d",
+    "seasonNumber": 2,
+    "seasonLabel": "Second Stage",
+    "movieNumber": 1,
+    "movieLabel": "Second Stage",
+    "movieReleaseTs": 0,
+    "entryOrder": 2,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Initial D Second Stage",
+    "onePieceMovie": null
+  },
+  "initial-d-third-stage": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "initial-d",
+    "movieBase": "initial-d",
+    "seasonNumber": 3,
+    "seasonLabel": "Third Stage (Movie)",
+    "movieNumber": 1,
+    "movieLabel": "Third Stage",
+    "movieReleaseTs": 0,
+    "entryOrder": 3,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Initial D Third Stage",
+    "onePieceMovie": null
+  },
+  "initial-d-fourth-stage": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "initial-d",
+    "movieBase": "initial-d",
+    "seasonNumber": 4,
+    "seasonLabel": "Fourth Stage",
+    "movieNumber": 1,
+    "movieLabel": "Fourth Stage",
+    "movieReleaseTs": 0,
+    "entryOrder": 4,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Initial D Fourth Stage",
+    "onePieceMovie": null
+  },
+  "initial-d-fifth-stage": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "initial-d",
+    "movieBase": "initial-d",
+    "seasonNumber": 5,
+    "seasonLabel": "Fifth Stage",
+    "movieNumber": 1,
+    "movieLabel": "Fifth Stage",
+    "movieReleaseTs": 0,
+    "entryOrder": 5,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Initial D Fifth Stage",
+    "onePieceMovie": null
+  },
+  "initial-d-final-stage": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "initial-d",
+    "movieBase": "initial-d",
+    "seasonNumber": 6,
+    "seasonLabel": "Final Stage",
+    "movieNumber": 1,
+    "movieLabel": "Final Stage",
+    "movieReleaseTs": 0,
+    "entryOrder": 6,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Initial D Final Stage",
+    "onePieceMovie": null
+  },
+  "initial-d-final-stage-255": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "initial-d",
+    "movieBase": "initial-d",
+    "seasonNumber": 6,
+    "seasonLabel": "Final Stage",
+    "movieNumber": 1,
+    "movieLabel": "Final Stage 255",
+    "movieReleaseTs": 0,
+    "entryOrder": 6,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Initial D Final Stage 255",
+    "onePieceMovie": null
+  },
+  "initial-d-6th-stage": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "initial-d",
+    "movieBase": "initial-d",
+    "seasonNumber": 6,
+    "seasonLabel": "Final Stage",
+    "movieNumber": 1,
+    "movieLabel": "6th Stage",
+    "movieReleaseTs": 0,
+    "entryOrder": 6,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Initial D 6th Stage",
+    "onePieceMovie": null
+  },
+  "blue-lock": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "blue-lock",
+    "movieBase": "blue-lock",
+    "seasonNumber": 1,
+    "seasonLabel": "Season 1",
+    "movieNumber": 1,
+    "movieLabel": "Blue Lock",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Blue Lock",
+    "onePieceMovie": null
+  },
+  "blue-lock-season-2": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "blue-lock",
+    "movieBase": "blue-lock-season-2",
+    "seasonNumber": 2,
+    "seasonLabel": "Season 2: vs. U-20 Japan",
+    "movieNumber": 1,
+    "movieLabel": "Blue Lock Season 2",
+    "movieReleaseTs": 0,
+    "entryOrder": 2,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Blue Lock Season 2",
+    "onePieceMovie": null
+  },
+  "blue-lock-vs-u-20-japan": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "blue-lock",
+    "movieBase": "blue-lock-vs-u-20-japan",
+    "seasonNumber": 2,
+    "seasonLabel": "Season 2: vs. U-20 Japan",
+    "movieNumber": 1,
+    "movieLabel": "Blue Lock Vs U 20 Japan",
+    "movieReleaseTs": 0,
+    "entryOrder": 2,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Blue Lock Vs U 20 Japan",
+    "onePieceMovie": null
+  },
+  "blue-lock-vs-u20": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "blue-lock",
+    "movieBase": "blue-lock-vs-u20",
+    "seasonNumber": 2,
+    "seasonLabel": "Season 2: vs. U-20 Japan",
+    "movieNumber": 1,
+    "movieLabel": "Blue Lock Vs U20",
+    "movieReleaseTs": 0,
+    "entryOrder": 2,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Blue Lock Vs U20",
+    "onePieceMovie": null
+  },
+  "blue-lock-season-3": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "blue-lock",
+    "movieBase": "blue-lock-season-3",
+    "seasonNumber": 3,
+    "seasonLabel": "Season 3",
+    "movieNumber": 1,
+    "movieLabel": "Blue Lock Season 3",
+    "movieReleaseTs": 0,
+    "entryOrder": 3,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Blue Lock Season 3",
+    "onePieceMovie": null
+  },
+  "blue-lock-3rd-season": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "blue-lock",
+    "movieBase": "blue-lock-3rd-season",
+    "seasonNumber": 3,
+    "seasonLabel": "Season 3",
+    "movieNumber": 1,
+    "movieLabel": "Blue Lock 3rd Season",
+    "movieReleaseTs": 0,
+    "entryOrder": 3,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Blue Lock 3rd Season",
+    "onePieceMovie": null
+  },
+  "blue-lock-2": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "blue-lock",
+    "movieBase": "blue-lock-2",
+    "seasonNumber": 2,
+    "seasonLabel": "Season 2: vs. U-20 Japan",
+    "movieNumber": 1,
+    "movieLabel": "Blue Lock 2",
+    "movieReleaseTs": 0,
+    "entryOrder": 2,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Blue Lock 2",
+    "onePieceMovie": null
+  },
+  "blue-lock-3": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "blue-lock",
+    "movieBase": "blue-lock-3",
+    "seasonNumber": 3,
+    "seasonLabel": "Season 3",
+    "movieNumber": 1,
+    "movieLabel": "Blue Lock 3",
+    "movieReleaseTs": 0,
+    "entryOrder": 3,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Blue Lock 3",
+    "onePieceMovie": null
+  },
+  "bleach": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "bleach",
+    "movieBase": "bleach",
+    "seasonNumber": 1,
+    "seasonLabel": "Season 1",
+    "movieNumber": 1,
+    "movieLabel": "Bleach",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Bleach",
+    "onePieceMovie": null
+  },
+  "bleach-sennen-kessen-hen": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "bleach",
+    "movieBase": "bleach-sennen-kessen-hen",
+    "seasonNumber": 2.1,
+    "seasonLabel": "Thousand-Year Blood War",
+    "movieNumber": 1,
+    "movieLabel": "Bleach Sennen Kessen Hen",
+    "movieReleaseTs": 0,
+    "entryOrder": 2.1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Bleach Sennen Kessen Hen",
+    "onePieceMovie": null
+  },
+  "bleach-sennen-kessen-hen-ketsubetsu-tan": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "bleach",
+    "movieBase": "bleach-sennen-kessen-hen-ketsubetsu-tan",
+    "seasonNumber": 2.2,
+    "seasonLabel": "TYBW Part 2",
+    "movieNumber": 1,
+    "movieLabel": "Bleach Sennen Kessen Hen Ketsubetsu Tan",
+    "movieReleaseTs": 0,
+    "entryOrder": 2.2,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Bleach Sennen Kessen Hen Ketsubetsu Tan",
+    "onePieceMovie": null
+  },
+  "bleach-sennen-kessen-hen-soukoku-tan": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "bleach",
+    "movieBase": "bleach-sennen-kessen-hen-soukoku-tan",
+    "seasonNumber": 2.3,
+    "seasonLabel": "TYBW Part 3",
+    "movieNumber": 1,
+    "movieLabel": "Bleach Sennen Kessen Hen Soukoku Tan",
+    "movieReleaseTs": 0,
+    "entryOrder": 2.3,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Bleach Sennen Kessen Hen Soukoku Tan",
+    "onePieceMovie": null
+  },
+  "bleach-movie-1-memories-of-nobody": {
+    "isMovie": true,
+    "isMovieDisplay": true,
+    "seriesBase": "bleach",
+    "movieBase": "bleach",
+    "seasonNumber": 1,
+    "seasonLabel": "Movie",
+    "movieNumber": 1,
+    "movieLabel": "Movie 1",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Bleach Movie 1 Memories Of Nobody",
+    "onePieceMovie": null
+  },
+  "mashle": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "mashle",
+    "movieBase": "mashle",
+    "seasonNumber": 1,
+    "seasonLabel": "Season 1",
+    "movieNumber": 1,
+    "movieLabel": "Mashle",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Mashle",
+    "onePieceMovie": null
+  },
+  "mashle-shinkakusha-kouho-senbatsu-shiken-hen": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "mashle",
+    "movieBase": "mashle-shinkakusha-kouho-senbatsu-shiken-hen",
+    "seasonNumber": 2,
+    "seasonLabel": "Season 2",
+    "movieNumber": 1,
+    "movieLabel": "Mashle Shinkakusha Kouho Senbatsu Shiken Hen",
+    "movieReleaseTs": 0,
+    "entryOrder": 2,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Mashle Shinkakusha Kouho Senbatsu Shiken Hen",
+    "onePieceMovie": null
+  },
+  "mashle-season-2": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "mashle",
+    "movieBase": "mashle-season-2",
+    "seasonNumber": 2,
+    "seasonLabel": "Season 2",
+    "movieNumber": 1,
+    "movieLabel": "Mashle Season 2",
+    "movieReleaseTs": 0,
+    "entryOrder": 2,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Mashle Season 2",
+    "onePieceMovie": null
+  },
+  "hunter-x-hunter": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "hunter-x-hunter",
+    "movieBase": "hunter-x-hunter",
+    "seasonNumber": 1,
+    "seasonLabel": "1999 Version",
+    "movieNumber": 1,
+    "movieLabel": "Hunter X Hunter",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Hunter X Hunter",
+    "onePieceMovie": null
+  },
+  "hunter-x-hunter-2011": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "hunter-x-hunter",
+    "movieBase": "hunter-x-hunter",
+    "seasonNumber": 2,
+    "seasonLabel": "2011 Version",
+    "movieNumber": 1,
+    "movieLabel": "2011",
+    "movieReleaseTs": 0,
+    "entryOrder": 2,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Hunter X Hunter 2011",
+    "onePieceMovie": null
+  },
+  "hunterhunter": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "hunter-x-hunter",
+    "movieBase": "hunter-x-hunter",
+    "seasonNumber": 1,
+    "seasonLabel": "1999 Version",
+    "movieNumber": 1,
+    "movieLabel": "Hunterhunter",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Hunterhunter",
+    "onePieceMovie": null
+  },
+  "hunter-x-hunter-movie-1-phantom-rouge": {
+    "isMovie": true,
+    "isMovieDisplay": true,
+    "seriesBase": "hunter-x-hunter",
+    "movieBase": "hunter-x-hunter",
+    "seasonNumber": 1,
+    "seasonLabel": "Movie",
+    "movieNumber": 1,
+    "movieLabel": "Movie 1",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Hunter X Hunter Movie 1 Phantom Rouge",
+    "onePieceMovie": null
+  },
+  "hunter-x-hunter-movie-2-the-last-mission": {
+    "isMovie": true,
+    "isMovieDisplay": true,
+    "seriesBase": "hunter-x-hunter",
+    "movieBase": "hunter-x-hunter",
+    "seasonNumber": 1,
+    "seasonLabel": "Movie",
+    "movieNumber": 2,
+    "movieLabel": "Movie 2",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Hunter X Hunter Movie 2 The Last Mission",
+    "onePieceMovie": null
+  },
+  "fate-zero": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "fate",
+    "movieBase": "fate",
+    "seasonNumber": 1,
+    "seasonLabel": "Season 1",
+    "movieNumber": 1,
+    "movieLabel": "Zero",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": {
+      "order": 10,
+      "separatorLabel": "1994",
+      "itemLabel": "Fate/Zero"
+    },
+    "chronologyMovie": {
+      "order": 10,
+      "separatorLabel": "1994",
+      "itemLabel": "Fate/Zero"
+    },
+    "groupDisplayTitle": "Fate",
+    "onePieceMovie": null
+  },
+  "fate-zero-season-2": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "fate",
+    "movieBase": "fate",
+    "seasonNumber": 2,
+    "seasonLabel": "Season 2",
+    "movieNumber": 1,
+    "movieLabel": "/Zero Season 2",
+    "movieReleaseTs": 0,
+    "entryOrder": 2,
+    "chronologySeries": {
+      "order": 10,
+      "separatorLabel": "1994",
+      "itemLabel": "Fate/Zero"
+    },
+    "chronologyMovie": {
+      "order": 10,
+      "separatorLabel": "1994",
+      "itemLabel": "Fate/Zero"
+    },
+    "groupDisplayTitle": "Fate",
+    "onePieceMovie": null
+  },
+  "fate-zero-2nd-season": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "fate",
+    "movieBase": "fate",
+    "seasonNumber": 2,
+    "seasonLabel": "Season 2",
+    "movieNumber": 1,
+    "movieLabel": "Zero 2nd Season",
+    "movieReleaseTs": 0,
+    "entryOrder": 2,
+    "chronologySeries": {
+      "order": 10,
+      "separatorLabel": "1994",
+      "itemLabel": "Fate/Zero"
+    },
+    "chronologyMovie": {
+      "order": 10,
+      "separatorLabel": "1994",
+      "itemLabel": "Fate/Zero"
+    },
+    "groupDisplayTitle": "Fate",
+    "onePieceMovie": null
+  },
+  "fate-stay-night": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "fate",
+    "movieBase": "fate",
+    "seasonNumber": 1,
+    "seasonLabel": "Season 1",
+    "movieNumber": 1,
+    "movieLabel": "Stay Night",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": {
+      "order": 20,
+      "separatorLabel": "2004",
+      "itemLabel": "Fate/stay night"
+    },
+    "chronologyMovie": {
+      "order": 20,
+      "separatorLabel": "2004",
+      "itemLabel": "Fate/stay night"
+    },
+    "groupDisplayTitle": "Fate",
+    "onePieceMovie": null
+  },
+  "fate-stay-night-unlimited-blade-works": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "fate",
+    "movieBase": "fate",
+    "seasonNumber": 1,
+    "seasonLabel": "Season 1",
+    "movieNumber": 1,
+    "movieLabel": "Stay Night Unlimited Blade Works",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": {
+      "order": 35,
+      "separatorLabel": "2004",
+      "itemLabel": "Unlimited Blade Works"
+    },
+    "chronologyMovie": {
+      "order": 35,
+      "separatorLabel": "2004",
+      "itemLabel": "Unlimited Blade Works"
+    },
+    "groupDisplayTitle": "Fate",
+    "onePieceMovie": null
+  },
+  "fate-stay-night-unlimited-blade-works-prologue": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "fate",
+    "movieBase": "fate",
+    "seasonNumber": 1,
+    "seasonLabel": "Season 1",
+    "movieNumber": 1,
+    "movieLabel": "Stay Night Unlimited Blade Works Prologue",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": {
+      "order": 30,
+      "separatorLabel": "2004",
+      "itemLabel": "Unlimited Blade Works - Prologue"
+    },
+    "chronologyMovie": {
+      "order": 30,
+      "separatorLabel": "2004",
+      "itemLabel": "Unlimited Blade Works - Prologue"
+    },
+    "groupDisplayTitle": "Fate",
+    "onePieceMovie": null
+  },
+  "fate-stay-night-unlimited-blade-works-season-2": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "fate",
+    "movieBase": "fate",
+    "seasonNumber": 2,
+    "seasonLabel": "Season 2",
+    "movieNumber": 1,
+    "movieLabel": "Stay Night Unlimited Blade Works Season 2",
+    "movieReleaseTs": 0,
+    "entryOrder": 2,
+    "chronologySeries": {
+      "order": 40,
+      "separatorLabel": "2004",
+      "itemLabel": "Unlimited Blade Works Season 2"
+    },
+    "chronologyMovie": {
+      "order": 40,
+      "separatorLabel": "2004",
+      "itemLabel": "Unlimited Blade Works Season 2"
+    },
+    "groupDisplayTitle": "Fate",
+    "onePieceMovie": null
+  },
+  "fate-stay-night-unlimited-blade-works-2nd-season": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "fate",
+    "movieBase": "fate",
+    "seasonNumber": 2,
+    "seasonLabel": "Season 2",
+    "movieNumber": 1,
+    "movieLabel": "Stay Night Unlimited Blade Works 2nd Season",
+    "movieReleaseTs": 0,
+    "entryOrder": 2,
+    "chronologySeries": {
+      "order": 40,
+      "separatorLabel": "2004",
+      "itemLabel": "Unlimited Blade Works Season 2"
+    },
+    "chronologyMovie": {
+      "order": 40,
+      "separatorLabel": "2004",
+      "itemLabel": "Unlimited Blade Works Season 2"
+    },
+    "groupDisplayTitle": "Fate",
+    "onePieceMovie": null
+  },
+  "fate-stay-night-movie-heavens-feel-i-presage-flower": {
+    "isMovie": true,
+    "isMovieDisplay": true,
+    "seriesBase": "fate",
+    "movieBase": "fate",
+    "seasonNumber": 1,
+    "seasonLabel": "Movie",
+    "movieNumber": 1,
+    "movieLabel": "Stay Night Movie Heavens Feel I Presage Flower",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": {
+      "order": 50,
+      "separatorLabel": "2004",
+      "itemLabel": "Heaven's Feel I: Presage Flower"
+    },
+    "chronologyMovie": {
+      "order": 50,
+      "separatorLabel": "2004",
+      "itemLabel": "Heaven's Feel I: Presage Flower"
+    },
+    "groupDisplayTitle": "Fate",
+    "onePieceMovie": null
+  },
+  "fate-stay-night-movie-heavens-feel-ii-lost-butterfly": {
+    "isMovie": true,
+    "isMovieDisplay": true,
+    "seriesBase": "fate",
+    "movieBase": "fate",
+    "seasonNumber": 1,
+    "seasonLabel": "Movie",
+    "movieNumber": 2,
+    "movieLabel": "Stay Night Movie Heavens Feel Ii Lost Butterfly",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": {
+      "order": 51,
+      "separatorLabel": "2004",
+      "itemLabel": "Heaven's Feel II: Lost Butterfly"
+    },
+    "chronologyMovie": {
+      "order": 51,
+      "separatorLabel": "2004",
+      "itemLabel": "Heaven's Feel II: Lost Butterfly"
+    },
+    "groupDisplayTitle": "Fate",
+    "onePieceMovie": null
+  },
+  "fate-stay-night-movie-heavens-feel-iii-spring-song": {
+    "isMovie": true,
+    "isMovieDisplay": true,
+    "seriesBase": "fate",
+    "movieBase": "fate",
+    "seasonNumber": 1,
+    "seasonLabel": "Movie",
+    "movieNumber": 3,
+    "movieLabel": "Stay Night Movie Heavens Feel Iii Spring Song",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": {
+      "order": 52,
+      "separatorLabel": "2004",
+      "itemLabel": "Heaven's Feel III: Spring Song"
+    },
+    "chronologyMovie": {
+      "order": 52,
+      "separatorLabel": "2004",
+      "itemLabel": "Heaven's Feel III: Spring Song"
+    },
+    "groupDisplayTitle": "Fate",
+    "onePieceMovie": null
+  },
+  "fate-apocrypha": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "fate-apocrypha",
+    "movieBase": "fate-apocrypha",
+    "seasonNumber": 1,
+    "seasonLabel": "Season 1",
+    "movieNumber": 1,
+    "movieLabel": "Fate Apocrypha",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Fate Apocrypha",
+    "onePieceMovie": null
+  },
+  "fate-grand-order": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "fate-grand-order",
+    "movieBase": "fate-grand-order",
+    "seasonNumber": 1,
+    "seasonLabel": "Season 1",
+    "movieNumber": 1,
+    "movieLabel": "Fate Grand Order",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Fate Grand Order",
+    "onePieceMovie": null
+  },
+  "trinity-seven": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "trinity-seven",
+    "movieBase": "trinity-seven",
+    "seasonNumber": 1,
+    "seasonLabel": "Season 1",
+    "movieNumber": 1,
+    "movieLabel": "Trinity Seven",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Trinity Seven",
+    "onePieceMovie": null
+  },
+  "trinity-seven-nanatsu-no-taizai-to-nana-madoushi": {
+    "isMovie": true,
+    "isMovieDisplay": true,
+    "seriesBase": "trinity-seven",
+    "movieBase": "trinity-seven",
+    "seasonNumber": 2,
+    "seasonLabel": "Movie: Nanatsu no Taizai to Nana Madoushi",
+    "movieNumber": 1,
+    "movieLabel": "Nanatsu No Taizai To Nana Madoushi",
+    "movieReleaseTs": 0,
+    "entryOrder": 2,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Trinity Seven Nanatsu No Taizai To Nana Madoushi",
+    "onePieceMovie": null
+  },
+  "higashi-no-eden": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "higashi-no-eden",
+    "movieBase": "higashi-no-eden",
+    "seasonNumber": 1,
+    "seasonLabel": "Season 1",
+    "movieNumber": 1,
+    "movieLabel": "Higashi No Eden",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Higashi No Eden",
+    "onePieceMovie": null
+  },
+  "higashi-no-eden-movie-i-king-of-eden": {
+    "isMovie": true,
+    "isMovieDisplay": true,
+    "seriesBase": "higashi-no-eden",
+    "movieBase": "higashi-no-eden",
+    "seasonNumber": 1,
+    "seasonLabel": "Movie",
+    "movieNumber": 1,
+    "movieLabel": "Movie I: King of Eden",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Higashi no Eden Movie I: King of Eden",
+    "onePieceMovie": null
+  },
+  "higashi-no-eden-movie-ii-paradise-lost": {
+    "isMovie": true,
+    "isMovieDisplay": true,
+    "seriesBase": "higashi-no-eden",
+    "movieBase": "higashi-no-eden",
+    "seasonNumber": 1,
+    "seasonLabel": "Movie",
+    "movieNumber": 2,
+    "movieLabel": "Movie II: Paradise Lost",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Higashi no Eden Movie II: Paradise Lost",
+    "onePieceMovie": null
+  },
+  "dragon-ball": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "dragon-ball",
+    "movieBase": "dragon-ball",
+    "seasonNumber": 1,
+    "seasonLabel": "Season 1",
+    "movieNumber": 1,
+    "movieLabel": "Dragon Ball",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Dragon Ball",
+    "onePieceMovie": null
+  },
+  "dragon-ball-z": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "dragon-ball-z",
+    "movieBase": "dragon-ball",
+    "seasonNumber": 1,
+    "seasonLabel": "Season 1",
+    "movieNumber": 1,
+    "movieLabel": "Z",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Dragon Ball Z",
+    "onePieceMovie": null
+  },
+  "dragon-ball-super": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "dragon-ball-super",
+    "movieBase": "dragon-ball",
+    "seasonNumber": 1,
+    "seasonLabel": "Season 1",
+    "movieNumber": 1,
+    "movieLabel": "Super",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Dragon Ball Super",
+    "onePieceMovie": null
+  },
+  "dragon-ball-super-broly": {
+    "isMovie": true,
+    "isMovieDisplay": true,
+    "seriesBase": "dragon-ball",
+    "movieBase": "dragon-ball",
+    "seasonNumber": 1,
+    "seasonLabel": "Season 1",
+    "movieNumber": 1,
+    "movieLabel": "Super: Broly",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Dragon Ball Super: Broly",
+    "onePieceMovie": null
+  },
+  "dragon-ball-daima": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "dragon-ball-daima",
+    "movieBase": "dragon-ball",
+    "seasonNumber": 1,
+    "seasonLabel": "Season 1",
+    "movieNumber": 1,
+    "movieLabel": "Daima",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Dragon Ball Daima",
+    "onePieceMovie": null
+  },
+  "spy-x-family": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "spy-x-family",
+    "movieBase": "spy-x-family",
+    "seasonNumber": 1,
+    "seasonLabel": "Season 1",
+    "movieNumber": 1,
+    "movieLabel": "Spy X Family",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Spy X Family",
+    "onePieceMovie": null
+  },
+  "spy-x-family-season-2": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "spy-x-family",
+    "movieBase": "spy-x-family-season-2",
+    "seasonNumber": 2,
+    "seasonLabel": "Season 2",
+    "movieNumber": 1,
+    "movieLabel": "Spy X Family Season 2",
+    "movieReleaseTs": 0,
+    "entryOrder": 2,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Spy X Family Season 2",
+    "onePieceMovie": null
+  },
+  "spy-x-family-part-2": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "spy-x-family",
+    "movieBase": "spy-x-family-part-2",
+    "seasonNumber": 1.2,
+    "seasonLabel": "Season 1 Part 2",
+    "movieNumber": 1,
+    "movieLabel": "Spy X Family Part 2",
+    "movieReleaseTs": 0,
+    "entryOrder": 1.2,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Spy X Family Part 2",
+    "onePieceMovie": null
+  },
+  "spy-x-family-cour-2": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "spy-x-family",
+    "movieBase": "spy-x-family-cour-2",
+    "seasonNumber": 1.2,
+    "seasonLabel": "Season 1 Part 2",
+    "movieNumber": 1,
+    "movieLabel": "Spy X Family Cour 2",
+    "movieReleaseTs": 0,
+    "entryOrder": 1.2,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Spy X Family Cour 2",
+    "onePieceMovie": null
+  },
+  "chainsaw-man": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "chainsaw-man",
+    "movieBase": "chainsaw-man",
+    "seasonNumber": 1,
+    "seasonLabel": "Season 1",
+    "movieNumber": 1,
+    "movieLabel": "Chainsaw Man",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Chainsaw Man",
+    "onePieceMovie": null
+  },
+  "chainsaw-man-movie-reze-hen": {
+    "isMovie": true,
+    "isMovieDisplay": true,
+    "seriesBase": "chainsaw-man",
+    "movieBase": "chainsaw-man",
+    "seasonNumber": 1,
+    "seasonLabel": "Movie",
+    "movieNumber": 1,
+    "movieLabel": "Movie Reze Hen",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Chainsaw Man Movie Reze Hen",
+    "onePieceMovie": null
+  },
+  "sousou-no-frieren": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "sousou-no-frieren",
+    "movieBase": "sousou-no-frieren",
+    "seasonNumber": 1,
+    "seasonLabel": "Season 1",
+    "movieNumber": 1,
+    "movieLabel": "Sousou No Frieren",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Sousou No Frieren",
+    "onePieceMovie": null
+  },
+  "sousou-no-frieren-season-2": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "sousou-no-frieren",
+    "movieBase": "sousou-no-frieren-season-2",
+    "seasonNumber": 2,
+    "seasonLabel": "Season 2",
+    "movieNumber": 1,
+    "movieLabel": "Sousou No Frieren Season 2",
+    "movieReleaseTs": 0,
+    "entryOrder": 2,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Sousou No Frieren Season 2",
+    "onePieceMovie": null
+  },
+  "some-anime-s2": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "some-anime",
+    "movieBase": "some-anime-s2",
+    "seasonNumber": 2,
+    "seasonLabel": "Season 2",
+    "movieNumber": 1,
+    "movieLabel": "Some Anime S2",
+    "movieReleaseTs": 0,
+    "entryOrder": 2,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Some Anime S2",
+    "onePieceMovie": null
+  },
+  "some-anime-ii": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "some-anime",
+    "movieBase": "some-anime-ii",
+    "seasonNumber": 2,
+    "seasonLabel": "Season 2",
+    "movieNumber": 2,
+    "movieLabel": "Some Anime Ii",
+    "movieReleaseTs": 0,
+    "entryOrder": 2,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Some Anime Ii",
+    "onePieceMovie": null
+  },
+  "some-anime-iii": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "some-anime",
+    "movieBase": "some-anime-iii",
+    "seasonNumber": 3,
+    "seasonLabel": "Season 3",
+    "movieNumber": 3,
+    "movieLabel": "Some Anime Iii",
+    "movieReleaseTs": 0,
+    "entryOrder": 3,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Some Anime Iii",
+    "onePieceMovie": null
+  },
+  "some-anime-4th-season": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "some-anime",
+    "movieBase": "some-anime-4th-season",
+    "seasonNumber": 4,
+    "seasonLabel": "Season 4",
+    "movieNumber": 1,
+    "movieLabel": "Some Anime 4th Season",
+    "movieReleaseTs": 0,
+    "entryOrder": 4,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Some Anime 4th Season",
+    "onePieceMovie": null
+  },
+  "some-anime-4th-season-2-nensei-hen-1-gakki": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "some-anime",
+    "movieBase": "some-anime-4th-season-2-nensei-hen-1-gakki",
+    "seasonNumber": 4,
+    "seasonLabel": "Season 4",
+    "movieNumber": 1,
+    "movieLabel": "Some Anime 4th Season 2 Nensei Hen 1 Gakki",
+    "movieReleaseTs": 0,
+    "entryOrder": 4,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Some Anime 4th Season 2 Nensei Hen 1 Gakki",
+    "onePieceMovie": null
+  },
+  "some-anime-season-2-part-2": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "some-anime-season-2",
+    "movieBase": "some-anime-season-2-part-2",
+    "seasonNumber": 2.2,
+    "seasonLabel": "Season 2 Part 2",
+    "movieNumber": 1,
+    "movieLabel": "Some Anime Season 2 Part 2",
+    "movieReleaseTs": 0,
+    "entryOrder": 2.2,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Some Anime Season 2 Part 2",
+    "onePieceMovie": null
+  },
+  "some-anime-2nd-season": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "some-anime",
+    "movieBase": "some-anime-2nd-season",
+    "seasonNumber": 2,
+    "seasonLabel": "Season 2",
+    "movieNumber": 1,
+    "movieLabel": "Some Anime 2nd Season",
+    "movieReleaseTs": 0,
+    "entryOrder": 2,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Some Anime 2nd Season",
+    "onePieceMovie": null
+  },
+  "some-anime-2020": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "some-anime",
+    "movieBase": "some-anime-2020",
+    "seasonNumber": 1,
+    "seasonLabel": "Season 1",
+    "movieNumber": 1,
+    "movieLabel": "Some Anime 2020",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Some Anime 2020",
+    "onePieceMovie": null
+  },
+  "some-anime-arc-hen": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "some-anime",
+    "movieBase": "some-anime-arc-hen",
+    "seasonNumber": 1,
+    "seasonLabel": "Season 1",
+    "movieNumber": 1,
+    "movieLabel": "Some Anime Arc Hen",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Some Anime Arc Hen",
+    "onePieceMovie": null
+  },
+  "generic-show-movie": {
+    "isMovie": true,
+    "isMovieDisplay": true,
+    "seriesBase": "generic-show",
+    "movieBase": "generic-show",
+    "seasonNumber": 1,
+    "seasonLabel": "Movie",
+    "movieNumber": 1,
+    "movieLabel": "Movie",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Generic Show Movie",
+    "onePieceMovie": null
+  },
+  "generic-show-film-something": {
+    "isMovie": true,
+    "isMovieDisplay": true,
+    "seriesBase": "generic-show",
+    "movieBase": "generic-show",
+    "seasonNumber": 1,
+    "seasonLabel": "Movie",
+    "movieNumber": 1,
+    "movieLabel": "Film: Something",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Generic Show Film Something",
+    "onePieceMovie": null
+  },
+  "generic-show-the-movie": {
+    "isMovie": true,
+    "isMovieDisplay": true,
+    "seriesBase": "generic-show-the",
+    "movieBase": "generic-show-the",
+    "seasonNumber": 1,
+    "seasonLabel": "Movie",
+    "movieNumber": 1,
+    "movieLabel": "Movie",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Generic Show The Movie",
+    "onePieceMovie": null
+  },
+  "generic-show-gekijouban": {
+    "isMovie": true,
+    "isMovieDisplay": true,
+    "seriesBase": "generic-show",
+    "movieBase": "generic-show",
+    "seasonNumber": 1,
+    "seasonLabel": "Movie",
+    "movieNumber": 1,
+    "movieLabel": "Gekijouban",
+    "movieReleaseTs": 0,
+    "entryOrder": 1,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Generic Show Gekijouban",
+    "onePieceMovie": null
+  },
+  "generic-show-ova": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "generic-show-ova",
+    "movieBase": "generic-show-ova",
+    "seasonNumber": 1,
+    "seasonLabel": "OVA",
+    "movieNumber": 1,
+    "movieLabel": "Generic Show Ova",
+    "movieReleaseTs": 0,
+    "entryOrder": 710,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Generic Show Ova",
+    "onePieceMovie": null
+  },
+  "generic-show-ona": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "generic-show-ona",
+    "movieBase": "generic-show-ona",
+    "seasonNumber": 1,
+    "seasonLabel": "ONA",
+    "movieNumber": 1,
+    "movieLabel": "Generic Show Ona",
+    "movieReleaseTs": 0,
+    "entryOrder": 720,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Generic Show Ona",
+    "onePieceMovie": null
+  },
+  "generic-show-special": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "generic-show-special",
+    "movieBase": "generic-show-special",
+    "seasonNumber": 1,
+    "seasonLabel": "Special",
+    "movieNumber": 1,
+    "movieLabel": "Generic Show Special",
+    "movieReleaseTs": 0,
+    "entryOrder": 700,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Generic Show Special",
+    "onePieceMovie": null
+  },
+  "mushoku-tensei-2nd-season-part-2": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "mushoku-tensei",
+    "movieBase": "mushoku-tensei-2nd-season-part-2",
+    "seasonNumber": 2.2,
+    "seasonLabel": "Season 2 Part 2",
+    "movieNumber": 1,
+    "movieLabel": "Mushoku Tensei 2nd Season Part 2",
+    "movieReleaseTs": 0,
+    "entryOrder": 2.2,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Mushoku Tensei 2nd Season Part 2",
+    "onePieceMovie": null
+  },
+  "re-zero-kara-hajimeru-isekai-seikatsu-season-3": {
+    "isMovie": false,
+    "isMovieDisplay": false,
+    "seriesBase": "re-zero-kara-hajimeru-isekai-seikatsu",
+    "movieBase": "re-zero-kara-hajimeru-isekai-seikatsu-season-3",
+    "seasonNumber": 3,
+    "seasonLabel": "Season 3",
+    "movieNumber": 1,
+    "movieLabel": "Re Zero Kara Hajimeru Isekai Seikatsu Season 3",
+    "movieReleaseTs": 0,
+    "entryOrder": 3,
+    "chronologySeries": null,
+    "chronologyMovie": null,
+    "groupDisplayTitle": "Re Zero Kara Hajimeru Isekai Seikatsu Season 3",
+    "onePieceMovie": null
+  },
+  "__groups__": {
+    "one-piece": [
+      {
+        "slug": "one-piece",
+        "seasonNum": 1,
+        "isMovie": false
+      },
+      {
+        "slug": "one-piece-episode-of-luffy",
+        "seasonNum": 1,
+        "isMovie": false
+      },
+      {
+        "slug": "one-piece-heroines",
+        "seasonNum": 1,
+        "isMovie": false
+      },
+      {
+        "slug": "one-piece-new-world",
+        "seasonNum": 2,
+        "isMovie": false
+      },
+      {
+        "slug": "one-piece-movie-01",
+        "seasonNum": 3,
+        "isMovie": true
+      },
+      {
+        "slug": "one-piece-movie-08-episode-of-alabasta-sabaku-no-oujo-to-kaizoku-tachi",
+        "seasonNum": 4,
+        "isMovie": true
+      },
+      {
+        "slug": "one-piece-film-strong-world",
+        "seasonNum": 5,
+        "isMovie": true
+      },
+      {
+        "slug": "one-piece-3d-mugiwara-chase",
+        "seasonNum": 6,
+        "isMovie": true
+      },
+      {
+        "slug": "one-piece-film-z",
+        "seasonNum": 7,
+        "isMovie": true
+      },
+      {
+        "slug": "one-piece-film-gold",
+        "seasonNum": 8,
+        "isMovie": true
+      },
+      {
+        "slug": "one-piece-movie-14-stampede",
+        "seasonNum": 9,
+        "isMovie": true
+      },
+      {
+        "slug": "one-piece-film-red",
+        "seasonNum": 10,
+        "isMovie": true
+      }
+    ],
+    "one-punch-man": [
+      {
+        "slug": "one-punch-man",
+        "seasonNum": 1,
+        "isMovie": false
+      },
+      {
+        "slug": "one-punch-man-2nd-season",
+        "seasonNum": 2,
+        "isMovie": false
+      },
+      {
+        "slug": "one-punch-man-season-2",
+        "seasonNum": 2,
+        "isMovie": false
+      },
+      {
+        "slug": "one-punch-man-3",
+        "seasonNum": 3,
+        "isMovie": false
+      },
+      {
+        "slug": "one-punch-man-season-3",
+        "seasonNum": 3,
+        "isMovie": false
+      }
+    ],
+    "jujutsu-kaisen": [
+      {
+        "slug": "jujutsu-kaisen-0",
+        "seasonNum": 0,
+        "isMovie": false
+      },
+      {
+        "slug": "jujutsu-kaisen",
+        "seasonNum": 1,
+        "isMovie": false
+      },
+      {
+        "slug": "jujutsu-kaisen-2nd-season",
+        "seasonNum": 2,
+        "isMovie": false
+      },
+      {
+        "slug": "jujutsu-kaisen-kaigyoku-gyokusetsu",
+        "seasonNum": 2,
+        "isMovie": false
+      },
+      {
+        "slug": "jujutsu-kaisen-season-2",
+        "seasonNum": 2,
+        "isMovie": false
+      },
+      {
+        "slug": "jujutsu-kaisen-shibuya-incident",
+        "seasonNum": 2,
+        "isMovie": false
+      },
+      {
+        "slug": "jujutsu-kaisen-culling-game",
+        "seasonNum": 3,
+        "isMovie": false
+      },
+      {
+        "slug": "jujutsu-kaisen-season-3",
+        "seasonNum": 3,
+        "isMovie": false
+      },
+      {
+        "slug": "jujutsu-kaisen-shimetsu-kaiyuu",
+        "seasonNum": 3,
+        "isMovie": false
+      },
+      {
+        "slug": "jujutsu-kaisen-culling-game-part-1",
+        "seasonNum": 3.1,
+        "isMovie": false
+      },
+      {
+        "slug": "jujutsu-kaisen-shimetsu-kaiyuu-zenpen",
+        "seasonNum": 3.1,
+        "isMovie": false
+      },
+      {
+        "slug": "jujutsu-kaisen-culling-game-part-2",
+        "seasonNum": 3.2,
+        "isMovie": false
+      },
+      {
+        "slug": "jujutsu-kaisen-shimetsu-kaiyuu-koupen",
+        "seasonNum": 3.2,
+        "isMovie": false
+      },
+      {
+        "slug": "jujutsu-kaisen-0-movie",
+        "seasonNum": 4.2,
+        "isMovie": true
+      }
+    ],
+    "naruto": [
+      {
+        "slug": "naruto",
+        "seasonNum": 1,
+        "isMovie": false
+      },
+      {
+        "slug": "naruto-season-2",
+        "seasonNum": 2,
+        "isMovie": false
+      },
+      {
+        "slug": "naruto-shippuden",
+        "seasonNum": 2,
+        "isMovie": false
+      },
+      {
+        "slug": "naruto-2",
+        "seasonNum": 2,
+        "isMovie": false
+      },
+      {
+        "slug": "naruto-shippuuden",
+        "seasonNum": 2,
+        "isMovie": false
+      },
+      {
+        "slug": "naruto-3",
+        "seasonNum": 3,
+        "isMovie": false
+      },
+      {
+        "slug": "naruto-movie-1",
+        "seasonNum": 4,
+        "isMovie": true
+      },
+      {
+        "slug": "naruto-shippuuden-movie-6-road-to-ninja",
+        "seasonNum": 5,
+        "isMovie": true
+      }
+    ],
+    "boruto-naruto-next-generations": [
+      {
+        "slug": "boruto-naruto-next-generations",
+        "seasonNum": 3,
+        "isMovie": false
+      }
+    ],
+    "kimetsu-no-yaiba": [
+      {
+        "slug": "kimetsu-no-yaiba",
+        "seasonNum": 1,
+        "isMovie": false
+      },
+      {
+        "slug": "kimetsu-no-yaiba-mugen-ressha-hen",
+        "seasonNum": 2,
+        "isMovie": false
+      },
+      {
+        "slug": "kimetsu-no-yaiba-yuukaku-hen",
+        "seasonNum": 3,
+        "isMovie": false
+      },
+      {
+        "slug": "kimetsu-no-yaiba-katanakaji-no-sato-hen",
+        "seasonNum": 4,
+        "isMovie": false
+      },
+      {
+        "slug": "kimetsu-no-yaiba-hashira-geiko-hen",
+        "seasonNum": 5,
+        "isMovie": false
+      },
+      {
+        "slug": "kimetsu-no-yaiba-mugen-train-movie",
+        "seasonNum": 6,
+        "isMovie": true
+      }
+    ],
+    "shingeki-no-kyojin": [
+      {
+        "slug": "shingeki-no-kyojin",
+        "seasonNum": 1,
+        "isMovie": false
+      },
+      {
+        "slug": "shingeki-no-kyojin-season-2",
+        "seasonNum": 2,
+        "isMovie": false
+      },
+      {
+        "slug": "shingeki-no-kyojin-season-3",
+        "seasonNum": 3,
+        "isMovie": false
+      },
+      {
+        "slug": "shingeki-no-kyojin-season-3-part-2",
+        "seasonNum": 4,
+        "isMovie": false
+      },
+      {
+        "slug": "shingeki-no-kyojin-final-season",
+        "seasonNum": 5,
+        "isMovie": false
+      },
+      {
+        "slug": "shingeki-no-kyojin-final-season-part-2",
+        "seasonNum": 6,
+        "isMovie": false
+      },
+      {
+        "slug": "shingeki-no-kyojin-final-season-kanketsu-hen",
+        "seasonNum": 7,
+        "isMovie": false
+      }
+    ],
+    "initial-d": [
+      {
+        "slug": "initial-d",
+        "seasonNum": 1,
+        "isMovie": false
+      },
+      {
+        "slug": "initial-d-second-stage",
+        "seasonNum": 2,
+        "isMovie": false
+      },
+      {
+        "slug": "initial-d-third-stage",
+        "seasonNum": 3,
+        "isMovie": false
+      },
+      {
+        "slug": "initial-d-fourth-stage",
+        "seasonNum": 4,
+        "isMovie": false
+      },
+      {
+        "slug": "initial-d-fifth-stage",
+        "seasonNum": 5,
+        "isMovie": false
+      },
+      {
+        "slug": "initial-d-6th-stage",
+        "seasonNum": 6,
+        "isMovie": false
+      },
+      {
+        "slug": "initial-d-final-stage",
+        "seasonNum": 6,
+        "isMovie": false
+      },
+      {
+        "slug": "initial-d-final-stage-255",
+        "seasonNum": 6,
+        "isMovie": false
+      }
+    ],
+    "blue-lock": [
+      {
+        "slug": "blue-lock",
+        "seasonNum": 1,
+        "isMovie": false
+      },
+      {
+        "slug": "blue-lock-2",
+        "seasonNum": 2,
+        "isMovie": false
+      },
+      {
+        "slug": "blue-lock-season-2",
+        "seasonNum": 2,
+        "isMovie": false
+      },
+      {
+        "slug": "blue-lock-vs-u-20-japan",
+        "seasonNum": 2,
+        "isMovie": false
+      },
+      {
+        "slug": "blue-lock-vs-u20",
+        "seasonNum": 2,
+        "isMovie": false
+      },
+      {
+        "slug": "blue-lock-3",
+        "seasonNum": 3,
+        "isMovie": false
+      },
+      {
+        "slug": "blue-lock-3rd-season",
+        "seasonNum": 3,
+        "isMovie": false
+      },
+      {
+        "slug": "blue-lock-season-3",
+        "seasonNum": 3,
+        "isMovie": false
+      }
+    ],
+    "bleach": [
+      {
+        "slug": "bleach",
+        "seasonNum": 1,
+        "isMovie": false
+      },
+      {
+        "slug": "bleach-sennen-kessen-hen",
+        "seasonNum": 2.1,
+        "isMovie": false
+      },
+      {
+        "slug": "bleach-sennen-kessen-hen-ketsubetsu-tan",
+        "seasonNum": 2.2,
+        "isMovie": false
+      },
+      {
+        "slug": "bleach-sennen-kessen-hen-soukoku-tan",
+        "seasonNum": 2.3,
+        "isMovie": false
+      },
+      {
+        "slug": "bleach-movie-1-memories-of-nobody",
+        "seasonNum": 3.3,
+        "isMovie": true
+      }
+    ],
+    "mashle": [
+      {
+        "slug": "mashle",
+        "seasonNum": 1,
+        "isMovie": false
+      },
+      {
+        "slug": "mashle-season-2",
+        "seasonNum": 2,
+        "isMovie": false
+      },
+      {
+        "slug": "mashle-shinkakusha-kouho-senbatsu-shiken-hen",
+        "seasonNum": 2,
+        "isMovie": false
+      }
+    ],
+    "hunter-x-hunter": [
+      {
+        "slug": "hunter-x-hunter",
+        "seasonNum": 1,
+        "isMovie": false
+      },
+      {
+        "slug": "hunterhunter",
+        "seasonNum": 1,
+        "isMovie": false
+      },
+      {
+        "slug": "hunter-x-hunter-2011",
+        "seasonNum": 2,
+        "isMovie": false
+      },
+      {
+        "slug": "hunter-x-hunter-movie-1-phantom-rouge",
+        "seasonNum": 3,
+        "isMovie": true
+      },
+      {
+        "slug": "hunter-x-hunter-movie-2-the-last-mission",
+        "seasonNum": 4,
+        "isMovie": true
+      }
+    ],
+    "fate": [
+      {
+        "slug": "fate-zero",
+        "seasonNum": 10,
+        "isMovie": false
+      },
+      {
+        "slug": "fate-zero-2nd-season",
+        "seasonNum": 10,
+        "isMovie": false
+      },
+      {
+        "slug": "fate-zero-season-2",
+        "seasonNum": 10,
+        "isMovie": false
+      },
+      {
+        "slug": "fate-stay-night",
+        "seasonNum": 20,
+        "isMovie": false
+      },
+      {
+        "slug": "fate-stay-night-unlimited-blade-works-prologue",
+        "seasonNum": 30,
+        "isMovie": false
+      },
+      {
+        "slug": "fate-stay-night-unlimited-blade-works",
+        "seasonNum": 35,
+        "isMovie": false
+      },
+      {
+        "slug": "fate-stay-night-unlimited-blade-works-2nd-season",
+        "seasonNum": 40,
+        "isMovie": false
+      },
+      {
+        "slug": "fate-stay-night-unlimited-blade-works-season-2",
+        "seasonNum": 40,
+        "isMovie": false
+      },
+      {
+        "slug": "fate-stay-night-movie-heavens-feel-i-presage-flower",
+        "seasonNum": 50,
+        "isMovie": true
+      },
+      {
+        "slug": "fate-stay-night-movie-heavens-feel-ii-lost-butterfly",
+        "seasonNum": 51,
+        "isMovie": true
+      },
+      {
+        "slug": "fate-stay-night-movie-heavens-feel-iii-spring-song",
+        "seasonNum": 52,
+        "isMovie": true
+      }
+    ],
+    "fate-apocrypha": [
+      {
+        "slug": "fate-apocrypha",
+        "seasonNum": 1,
+        "isMovie": false
+      }
+    ],
+    "fate-grand-order": [
+      {
+        "slug": "fate-grand-order",
+        "seasonNum": 1,
+        "isMovie": false
+      }
+    ],
+    "trinity-seven": [
+      {
+        "slug": "trinity-seven",
+        "seasonNum": 1,
+        "isMovie": false
+      },
+      {
+        "slug": "trinity-seven-nanatsu-no-taizai-to-nana-madoushi",
+        "seasonNum": 2,
+        "isMovie": true
+      }
+    ],
+    "higashi-no-eden": [
+      {
+        "slug": "higashi-no-eden",
+        "seasonNum": 1,
+        "isMovie": false
+      },
+      {
+        "slug": "higashi-no-eden-movie-i-king-of-eden",
+        "seasonNum": 2,
+        "isMovie": true
+      },
+      {
+        "slug": "higashi-no-eden-movie-ii-paradise-lost",
+        "seasonNum": 3,
+        "isMovie": true
+      }
+    ],
+    "dragon-ball": [
+      {
+        "slug": "dragon-ball",
+        "seasonNum": 1,
+        "isMovie": false
+      },
+      {
+        "slug": "dragon-ball-super-broly",
+        "seasonNum": 2,
+        "isMovie": true
+      }
+    ],
+    "dragon-ball-z": [
+      {
+        "slug": "dragon-ball-z",
+        "seasonNum": 1,
+        "isMovie": false
+      }
+    ],
+    "dragon-ball-super": [
+      {
+        "slug": "dragon-ball-super",
+        "seasonNum": 1,
+        "isMovie": false
+      }
+    ],
+    "dragon-ball-daima": [
+      {
+        "slug": "dragon-ball-daima",
+        "seasonNum": 1,
+        "isMovie": false
+      }
+    ],
+    "spy-x-family": [
+      {
+        "slug": "spy-x-family",
+        "seasonNum": 1,
+        "isMovie": false
+      },
+      {
+        "slug": "spy-x-family-cour-2",
+        "seasonNum": 1.2,
+        "isMovie": false
+      },
+      {
+        "slug": "spy-x-family-part-2",
+        "seasonNum": 1.2,
+        "isMovie": false
+      },
+      {
+        "slug": "spy-x-family-season-2",
+        "seasonNum": 2,
+        "isMovie": false
+      }
+    ],
+    "chainsaw-man": [
+      {
+        "slug": "chainsaw-man",
+        "seasonNum": 1,
+        "isMovie": false
+      },
+      {
+        "slug": "chainsaw-man-movie-reze-hen",
+        "seasonNum": 2,
+        "isMovie": true
+      }
+    ],
+    "sousou-no-frieren": [
+      {
+        "slug": "sousou-no-frieren",
+        "seasonNum": 1,
+        "isMovie": false
+      },
+      {
+        "slug": "sousou-no-frieren-season-2",
+        "seasonNum": 2,
+        "isMovie": false
+      }
+    ],
+    "some-anime": [
+      {
+        "slug": "some-anime-2020",
+        "seasonNum": 1,
+        "isMovie": false
+      },
+      {
+        "slug": "some-anime-arc-hen",
+        "seasonNum": 1,
+        "isMovie": false
+      },
+      {
+        "slug": "some-anime-2nd-season",
+        "seasonNum": 2,
+        "isMovie": false
+      },
+      {
+        "slug": "some-anime-ii",
+        "seasonNum": 2,
+        "isMovie": false
+      },
+      {
+        "slug": "some-anime-s2",
+        "seasonNum": 2,
+        "isMovie": false
+      },
+      {
+        "slug": "some-anime-season-2-part-2",
+        "seasonNum": 2.2,
+        "isMovie": false
+      },
+      {
+        "slug": "some-anime-iii",
+        "seasonNum": 3,
+        "isMovie": false
+      },
+      {
+        "slug": "some-anime-4th-season",
+        "seasonNum": 4,
+        "isMovie": false
+      },
+      {
+        "slug": "some-anime-4th-season-2-nensei-hen-1-gakki",
+        "seasonNum": 4,
+        "isMovie": false
+      }
+    ],
+    "generic-show-ova": [
+      {
+        "slug": "generic-show-ova",
+        "seasonNum": 710,
+        "isMovie": false
+      }
+    ],
+    "generic-show-ona": [
+      {
+        "slug": "generic-show-ona",
+        "seasonNum": 720,
+        "isMovie": false
+      }
+    ],
+    "generic-show-special": [
+      {
+        "slug": "generic-show-special",
+        "seasonNum": 700,
+        "isMovie": false
+      }
+    ],
+    "mushoku-tensei": [
+      {
+        "slug": "mushoku-tensei-2nd-season-part-2",
+        "seasonNum": 2.2,
+        "isMovie": false
+      }
+    ],
+    "re-zero-kara-hajimeru-isekai-seikatsu": [
+      {
+        "slug": "re-zero-kara-hajimeru-isekai-seikatsu-season-3",
+        "seasonNum": 3,
+        "isMovie": false
+      }
+    ],
+    "generic-show__movies": [
+      {
+        "slug": "generic-show-film-something",
+        "seasonNum": 1,
+        "isMovie": true
+      },
+      {
+        "slug": "generic-show-gekijouban",
+        "seasonNum": 1,
+        "isMovie": true
+      },
+      {
+        "slug": "generic-show-movie",
+        "seasonNum": 1,
+        "isMovie": true
+      }
+    ],
+    "generic-show-the__movies": [
+      {
+        "slug": "generic-show-the-movie",
+        "seasonNum": 1,
+        "isMovie": true
+      }
+    ]
+  }
+}
