@@ -34,10 +34,18 @@
     return typeof url === "string" && /^https:\/\//i.test(url) ? url : null;
   }
 
+  // Stored slug + continuous episode number -> the page an1me.to actually serves. Later parts of a split
+  // show live under their own slug and restart at episode 1, so linking the stored numbering sent
+  // Fate/Zero S2 episode 6 to fate-zero-episode-19 instead of fate-zero-2nd-season-episode-6.
+  function sitePagePath(slug, episode) {
+    const page = globalThis.AnimeTrackerMultipartMappings?.toSitePage?.(slug, episode);
+    return page ? `${page.slug}-episode-${page.episode}` : `${slug}-episode-${episode}`;
+  }
+
   function resumeUrl(slug, episode, entry) {
     const pagePath = entry && typeof entry.pagePath === "string" ? entry.pagePath.trim() : "";
     if (pagePath) return WATCH_BASE + pagePath;
-    return `${WATCH_BASE}${slug}-episode-${episode}`;
+    return WATCH_BASE + sitePagePath(slug, episode);
   }
 
   function isHardInactive(anime) {
@@ -54,7 +62,9 @@
     const next = episode + 1;
     const latestEp = Number(animeInfo && animeInfo.latestEpisode) || Number(anime.latestEpisode) || 0;
     const totalEp = Number(animeInfo && animeInfo.totalEpisodes) || Number(anime.totalEpisodes) || 0;
-    const status = String((animeInfo && animeInfo.status) || anime.status || "").toUpperCase();
+    // Library entries store releaseStatus; nothing ever writes entry.status, so without an info cache
+    // the FINISHED check below never applied. status stays as a last fallback only.
+    const status = String((animeInfo && animeInfo.status) || anime.releaseStatus || anime.status || "").toUpperCase();
     const hasFutureRelease = !!((animeInfo && animeInfo.nextEpisodeAt) || anime.nextEpisodeAt);
 
     let available = false;
@@ -65,13 +75,15 @@
     }
     if (!available) return null;
 
-    return `${WATCH_BASE}${slug}-episode-${next}`;
+    return WATCH_BASE + sitePagePath(slug, next);
   }
 
   function isNewEpisodeStart(anime, animeInfo, highestWatched, maxGap = 3) {
     const latestEp = Number((animeInfo && animeInfo.latestEpisode) || (anime && anime.latestEpisode)) || 0;
     const totalEp = Number((animeInfo && animeInfo.totalEpisodes) || (anime && anime.totalEpisodes)) || 0;
-    const status = String((animeInfo && animeInfo.status) || (anime && anime.status) || "").toUpperCase();
+    // releaseStatus, not status: see computeNextEpisodeUrl. Reading the unwritten field meant
+    // "New Episode" was never shown for an entry without an info cache.
+    const status = String((animeInfo && animeInfo.status) || (anime && (anime.releaseStatus || anime.status)) || "").toUpperCase();
     const partiallyUploaded = status === "RELEASING" && totalEp > 0 && latestEp > 0 && latestEp < totalEp;
     if (latestEp <= 0 || (status !== "RELEASING" && !partiallyUploaded)) return false;
     const freshGap = latestEp - Number(highestWatched || 0);

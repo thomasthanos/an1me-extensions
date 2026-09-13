@@ -11,6 +11,18 @@
   const TrackingState = { IDLE: "idle", TRACKING: "tracking", COMPLETED: "completed" };
   let trackingState = TrackingState.IDLE;
   let animeInfo = null;
+  // Bumped by every init(). Async work started on one episode checks it before touching shared state.
+  let navigationGeneration = 0;
+
+  // Stored slug + continuous episode number -> the URL an1me.to actually serves. Later parts of a split
+  // show live under their own slug and restart at episode 1, so the filler auto-skip used to redirect
+  // Fate/Zero S2 and Bleach TYBW parts 2-3 to pages that do not exist.
+  function siteWatchUrl(slug, episode) {
+    const page = window.AnimeTrackerMultipartMappings?.toSitePage?.(slug, episode);
+    return page
+      ? `https://an1me.to/watch/${page.slug}-episode-${page.episode}`
+      : `https://an1me.to/watch/${slug}-episode-${episode}`;
+  }
   let currentEpisodeId = null;
   let durationRefreshAttempted = false;
   let durationRefreshAttempts = 0;
@@ -346,6 +358,15 @@
 
     if (!animeInfo || trackingState !== TrackingState.IDLE || !videoElement) return;
 
+    // This runs across several storage round trips, and navigating to the next episode re-runs init()
+    // about 1.2s later, replacing the current episode and resetting trackingState. The storage callbacks
+    // used to read those module globals whenever they finally ran, so a slow round trip wrote the NEW
+    // episode with the OLD video's duration, marked it COMPLETED so it was never tracked, and deleted its
+    // resume point. Capture the episode once, and touch shared state only while still on that page.
+    const info = animeInfo;
+    const generation = navigationGeneration;
+    const isCurrentPage = () => generation === navigationGeneration;
+
     const duration = videoElement.duration;
     const currentTime = videoElement.currentTime;
 
@@ -365,29 +386,35 @@
       const mutateResult = await Storage.mutate(["animeData", "deletedAnime"], (data) => {
         const ad = (data.animeData = data.animeData || {});
         const del = (data.deletedAnime = data.deletedAnime || {});
-        written = writeSyncEpisode(animeInfo, duration, ad, "Immediate");
-        if (written) delete del[animeInfo.animeSlug];
+        written = writeSyncEpisode(info, duration, ad, "Immediate");
+        if (written) delete del[info.animeSlug];
         animeData = ad;
         if (!written) return false;
       });
       if (Storage.isAbortResult(mutateResult)) {
         Logger.warn("Immediate track skipped: storage read unavailable");
-        trackingState = TrackingState.IDLE;
-        earlyTrackDone = false;
+        if (isCurrentPage()) {
+          trackingState = TrackingState.IDLE;
+          earlyTrackDone = false;
+        }
         return;
       }
 
       if (written) {
-        await clearStayedFillerEpisode(animeInfo.animeSlug, animeInfo.episodeNumber);
-        trackingState = TrackingState.COMPLETED;
-        Logger.success("✓ Immediate track successful");
-        showCompletionOnce();
+        await clearStayedFillerEpisode(info.animeSlug, info.episodeNumber);
+        if (isCurrentPage()) {
+          trackingState = TrackingState.COMPLETED;
+          Logger.success("✓ Immediate track successful");
+          showCompletionOnce();
+        } else {
+          Logger.success("✓ Immediate track successful (previous episode)");
+        }
 
         try {
           const { WatchlistSync } = AT;
-          const slug = animeInfo.animeSlug;
+          const slug = info.animeSlug;
           const entry = animeData[slug];
-          const siteId = entry?.siteAnimeId || animeInfo.siteAnimeId;
+          const siteId = entry?.siteAnimeId || info.siteAnimeId;
           if (WatchlistSync && siteId) {
             WatchlistSync.syncFromStorage(siteId, slug, {
               fallbackType: "watching",
@@ -399,17 +426,19 @@
         try {
           const progressResult = await Storage.mutate(["videoProgress"], (data) => {
             const videoProgress = (data.videoProgress = data.videoProgress || {});
-            if (!videoProgress[animeInfo.uniqueId]) return false;
-            delete videoProgress[animeInfo.uniqueId];
+            if (!videoProgress[info.uniqueId]) return false;
+            delete videoProgress[info.uniqueId];
           });
           if (Storage.isAbortResult(progressResult)) return;
         } catch {}
-      } else {
+      } else if (isCurrentPage()) {
         trackingState = TrackingState.COMPLETED;
       }
     } catch (e) {
-      trackingState = TrackingState.IDLE;
-      earlyTrackDone = false;
+      if (isCurrentPage()) {
+        trackingState = TrackingState.IDLE;
+        earlyTrackDone = false;
+      }
       if (e?.message?.includes("Extension context invalidated") || !Storage.isContextValid()) {
         Logger.debug("Immediate track aborted: extension context invalidated");
         return;
@@ -787,11 +816,13 @@
     const { Logger, AnimeParser, ProgressTracker, VideoMonitor, Notifications } = AT;
     Logger.debug("Init", window.location.pathname);
 
+    VideoMonitor.cleanupPage();
     VideoMonitor.cleanup();
     Notifications.cleanup();
     ProgressTracker.reset();
     clearHighlightStorageListener();
 
+    navigationGeneration += 1;
     trackingState = TrackingState.IDLE;
     currentEpisodeId = null;
     earlyTrackDone = false;
@@ -984,7 +1015,7 @@
                 });
                 skipBtn.addEventListener("click", () => {
                   cancelled = false;
-                  window.location.href = `https://an1me.to/watch/${animeInfo.animeSlug}-episode-${nextCanon}`;
+                  window.location.href = siteWatchUrl(animeInfo.animeSlug, nextCanon);
                 });
                 toast.appendChild(text);
                 actionWrap.appendChild(skipBtn);
@@ -1005,7 +1036,7 @@
                   Logger.info(`Filler skip cancelled for Ep ${animeInfo.episodeNumber}`);
                   return;
                 }
-                window.location.href = `https://an1me.to/watch/${animeInfo.animeSlug}-episode-${nextCanon}`;
+                window.location.href = siteWatchUrl(animeInfo.animeSlug, nextCanon);
               }, skipDelayMs);
               return;
             }
@@ -1022,7 +1053,12 @@
     injectEpisodeBadgeStyles();
     decorateCurrentEpisode();
 
-    const alreadyTracked = await ProgressTracker.isEpisodeTracked(animeInfo.uniqueId);
+    let alreadyTracked = await ProgressTracker.isEpisodeTracked(animeInfo.uniqueId);
+    // A double-episode page counts as tracked only when BOTH episodes are. Checking the first alone
+    // marked the page COMPLETED, so the writer never ran and the second episode was never recorded.
+    if (alreadyTracked && animeInfo.isDoubleEpisode && animeInfo.secondEpisodeNumber) {
+      alreadyTracked = await ProgressTracker.isEpisodeTracked(`${animeInfo.animeSlug}__episode-${animeInfo.secondEpisodeNumber}`);
+    }
     if (alreadyTracked) {
       trackingState = TrackingState.COMPLETED;
       Logger.debug("Already tracked (monitoring metadata for duration refresh)");
@@ -1071,7 +1107,7 @@
     }, 5000);
 
     const periodicCheckTimeout = setTimeout(() => clearInterval(periodicCheck), 30 * 60 * 1000);
-    VideoMonitor.addCleanup(() => {
+    VideoMonitor.addPageCleanup(() => {
       clearInterval(periodicCheck);
       clearTimeout(periodicCheckTimeout);
     });
@@ -1159,7 +1195,7 @@
     };
 
     document.addEventListener("click", handleServerClick, { capture: true, passive: true });
-    VideoMonitor.addCleanup(() => {
+    VideoMonitor.addPageCleanup(() => {
       document.removeEventListener("click", handleServerClick, { capture: true });
     });
   }
@@ -1230,7 +1266,7 @@
 
     killTimer = setTimeout(cleanup, CONFIG.DELAYS.SERVER_WATCH_KILL);
 
-    AT.VideoMonitor.addCleanup(cleanup);
+    AT.VideoMonitor.addPageCleanup(cleanup);
   }
 
   function maybeAutoSelect4kServer() {
@@ -1414,7 +1450,7 @@
       { capture: true, passive: true },
     );
 
-    VideoMonitor.addCleanup(() => {
+    VideoMonitor.addPageCleanup(() => {
       if (navigationDebounceTimeout) {
         clearTimeout(navigationDebounceTimeout);
         navigationDebounceTimeout = null;

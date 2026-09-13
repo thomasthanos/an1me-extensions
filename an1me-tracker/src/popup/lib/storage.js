@@ -270,6 +270,12 @@ const Storage = {
         const mergeByNewer = (current, candidate) => {
           if (!current) return candidate;
           if (!candidate) return current;
+          // Use the shared rule. This copy compared position and time but ignored tombstones, so while
+          // folding a split multi-part show together a fresh "deleted" marker lost to an older active
+          // entry and the deleted progress came back. The fallback below is only for a page that has
+          // not loaded merge-utils yet.
+          const shared = window.AnimeTracker?.MergeUtils?.selectProgressEntry;
+          if (typeof shared === "function") return shared(current, candidate);
 
           const currentTime = new Date(current.savedAt || current.deletedAt || 0).getTime();
           const candidateTime = new Date(candidate.savedAt || candidate.deletedAt || 0).getTime();

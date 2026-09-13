@@ -1021,6 +1021,9 @@
     pruneStaleDeletedAnime,
     applyDeletedAnime,
     removeDeletedProgress,
+    // The one rule for choosing between two progress entries for the same key (tombstones first, then
+    // position, then time). Exported so migrations stop reimplementing it without tombstone handling.
+    selectProgressEntry,
     mergeGroupCoverImages,
     mergeGoalSettings,
     mergeBadgeUnlocks,

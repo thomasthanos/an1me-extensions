@@ -5118,6 +5118,13 @@ body.is-suppressing-hover #animeList .airing-list-cards .anime-movie-group:hover
   --at-toast-shadow: 0 8px 24px -6px rgba(220, 50, 55, 0.45), 0 1px 0 rgba(var(--ink-rgb), 0.15) inset;
 }
 
+/* Deep amber: the toast text is white, and the brighter --warning amber would not keep it readable. */
+.at-toast--warn {
+  --at-toast-top: #c9851a;
+  --at-toast-bottom: #a86a0c;
+  --at-toast-shadow: 0 8px 24px -6px rgba(var(--warning-rgb), 0.4), 0 1px 0 rgba(var(--ink-rgb), 0.15) inset;
+}
+
 .at-toast--clickable{ cursor: pointer; }
 
 .at-toast--clickable.at-toast--visible:hover{ transform: translate(-50%, -2px); filter: brightness(1.08); }
@@ -6992,6 +6999,8 @@ body.is-suppressing-hover #animeList .airing-list-cards .anime-movie-group:hover
 .at-toast--success:not(:has(.at-toast-icon)){ border-color: rgba(54, 212, 116, 0.45); color: #d4f7e1; }
 
 .at-toast--error:not(:has(.at-toast-icon)){ border-color: rgba(var(--danger-rgb), 0.45); color: #ffd0d0; }
+
+.at-toast--warn:not(:has(.at-toast-icon)){ border-color: rgba(var(--warning-rgb), 0.45); color: #fdecc0; }
 
 #settingsView.settings-view{ padding: 0; }
 

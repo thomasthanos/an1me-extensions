@@ -74,5 +74,43 @@ for (const [base, franchise] of Object.entries(tables.FRANCHISE_PARTS)) {
   });
 }
 
+// Page <-> stored conversion. Slugs and per-part numbering were verified against the live site:
+// /watch/fate-zero-2nd-season-episode-1/ serves (fate-zero-season-2 is a 404), and part-2 pages list
+// their episodes from 1.
+const { toStoredEpisode, toSitePage, pageSlugFromPath } = tables;
+
+check("fate-zero S2 site slug is listed first", tables.FRANCHISE_PARTS["fate-zero"].parts[1].slugs[0], "fate-zero-2nd-season");
+
+check("toStoredEpisode fate-zero-2nd-season 6", toStoredEpisode("fate-zero-2nd-season", 6), { slug: "fate-zero", episode: 19 });
+check("toStoredEpisode fate-zero-season-2 alias 6", toStoredEpisode("fate-zero-season-2", 6), { slug: "fate-zero", episode: 19 });
+check("toStoredEpisode ketsubetsu-tan 3", toStoredEpisode("bleach-sennen-kessen-hen-ketsubetsu-tan", 3), { slug: "bleach-sennen-kessen-hen", episode: 16 });
+check("toStoredEpisode base part 5", toStoredEpisode("fate-zero", 5), { slug: "fate-zero", episode: 5 });
+check("toStoredEpisode unmapped passthrough", toStoredEpisode("spy-x-family", 4), { slug: "spy-x-family", episode: 4 });
+
+check("toSitePage fate-zero 19", toSitePage("fate-zero", 19), { slug: "fate-zero-2nd-season", episode: 6 });
+check("toSitePage fate-zero 13 stays S1", toSitePage("fate-zero", 13), { slug: "fate-zero", episode: 13 });
+check("toSitePage bleach 1", toSitePage("bleach-sennen-kessen-hen", 1), { slug: "bleach-sennen-kessen-hen", episode: 1 });
+check("toSitePage bleach 27", toSitePage("bleach-sennen-kessen-hen", 27), { slug: "bleach-sennen-kessen-hen-soukoku-tan", episode: 1 });
+check("toSitePage bleach 41 past last part", toSitePage("bleach-sennen-kessen-hen", 41), { slug: "bleach-sennen-kessen-hen-soukoku-tan", episode: 15 });
+check("toSitePage unmapped passthrough", toSitePage("spy-x-family", 4), { slug: "spy-x-family", episode: 4 });
+
+// Every declared episode must survive stored -> page -> stored unchanged.
+for (const base of Object.keys(tables.FRANCHISE_PARTS)) {
+  const ranges = tables.ANIME_PARTS_CONFIG[base];
+  const last = ranges[ranges.length - 1].end;
+  let roundTripFailures = 0;
+  for (let n = 1; n <= last; n++) {
+    const page = toSitePage(base, n);
+    const back = toStoredEpisode(page.slug, page.episode);
+    if (back.slug !== base || back.episode !== n) roundTripFailures++;
+  }
+  check(`${base} round trip for episodes 1..${last}`, roundTripFailures, 0);
+}
+
+check("pageSlugFromPath flat", pageSlugFromPath("/watch/fate-zero-2nd-season-episode-6/"), "fate-zero-2nd-season");
+check("pageSlugFromPath double episode", pageSlugFromPath("/watch/some-show-episode-5-6"), "some-show");
+check("pageSlugFromPath nested", pageSlugFromPath("/watch/fate-zero/episode-5/"), "fate-zero");
+check("pageSlugFromPath non-watch", pageSlugFromPath("/anime/fate-zero/"), null);
+
 console.log(failures === 0 ? "\nPASS" : `\nFAIL (${failures})`);
 process.exit(failures === 0 ? 0 : 1);

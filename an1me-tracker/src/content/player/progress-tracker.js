@@ -142,8 +142,8 @@ const ProgressTracker = {
     }
 
     const now = Date.now();
-    const maxAge = CONFIG.MAX_PROGRESS_AGE_DAYS * 24 * 60 * 60 * 1000;
     const entries = Object.entries(videoProgress);
+    const tracker = window.AnimeTrackerContent.ProgressTracker || this;
 
     const filtered = entries.filter(([id, progress]) => {
       if (id === currentUniqueId) return true;
@@ -159,20 +159,16 @@ const ProgressTracker = {
         return true;
       }
 
+      // "Complete" means what shouldMarkComplete says it means. This used to drop anything with 120s or
+      // less remaining regardless of progress, so 70s left of a 180s video (38% watched, not complete by
+      // shouldMarkComplete) lost its resume point. It also dropped every entry older than 7 days on
+      // every save; the background and popup never age out active progress, so that is gone too.
       if (
         progress.percentage >= CONFIG.COMPLETED_PERCENTAGE ||
-        (progress.duration && progress.duration - progress.currentTime <= CONFIG.REMAINING_TIME_THRESHOLD)
+        tracker.shouldMarkComplete(Number(progress.currentTime) || 0, Number(progress.duration) || 0)
       ) {
         Logger.debug("Removing completed progress:", id);
         return false;
-      }
-
-      if (progress.savedAt) {
-        const age = now - new Date(progress.savedAt).getTime();
-        if (age > maxAge) {
-          Logger.debug("Removing old progress:", id);
-          return false;
-        }
       }
 
       return true;

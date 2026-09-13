@@ -20,8 +20,32 @@ const VideoMonitor = {
     this.startWatching(animeInfo, eventHandlers);
   },
 
+  // Per-video cleanups: released by cleanup(), which runs on every video (re)bind.
   addCleanup(fn) {
     this.cleanupFunctions.push(fn);
+  },
+
+  // Page-lifetime cleanups: released only by cleanupPage(), which init() calls. These used to share the
+  // per-video list, so binding a late-loading video or rebinding after a server switch also removed the
+  // server-switch click listener, the periodic completion check and the server watchers. After the
+  // first switch nothing re-registered them, so the second switch never rebound the monitor and no
+  // progress was saved for the rest of the episode.
+  addPageCleanup(fn) {
+    if (!this.pageCleanupFunctions) this.pageCleanupFunctions = [];
+    this.pageCleanupFunctions.push(fn);
+  },
+
+  cleanupPage() {
+    const { Logger } = window.AnimeTrackerContent;
+    const fns = this.pageCleanupFunctions || [];
+    this.pageCleanupFunctions = [];
+    for (const fn of fns) {
+      try {
+        fn();
+      } catch (e) {
+        Logger.error("Page cleanup error:", e);
+      }
+    }
   },
 
   cleanup() {

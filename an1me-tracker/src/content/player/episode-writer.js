@@ -141,6 +141,9 @@ const EpisodeWriter = {
       const completionChanged = this._reconcileCompletionState(animeData[slug], info, this._compactNow());
       const existingEpisode = animeData[slug].episodes[existingIndex] || {};
       const currentDuration = Number(existingEpisode.duration) || 0;
+      // Before any early return below: a double-episode page whose first episode is already tracked used
+      // to end in "no change" and never record the second one (the background unload path did add it).
+      const addedSecond = this._addMissingSecondEpisode(animeData[slug], info, validDuration);
 
       if (existingEpisode.durationSource === "anilist") {
         const nowIso = this._compactNow();
@@ -181,7 +184,9 @@ const EpisodeWriter = {
         animeData[slug].lastWatched = this._compactNow();
         return { changed: true, changeType: "resumed-existing" };
       }
-      if (metadataChanged || completionChanged) return { changed: true, changeType: completionChanged ? "status" : "metadata" };
+      if (metadataChanged || completionChanged || addedSecond) {
+        return { changed: true, changeType: addedSecond ? "added-second-episode" : completionChanged ? "status" : "metadata" };
+      }
       return { changed: false, changeType: "none" };
     }
 
@@ -214,6 +219,19 @@ const EpisodeWriter = {
     this._reconcileCompletionState(animeData[slug], info, nowIso);
 
     return { changed: true, changeType: "added-episode" };
+  },
+
+  // Adds the second episode of a double-episode page if it is missing. Returns whether it added one.
+  _addMissingSecondEpisode(entry, info, validDuration) {
+    if (!info?.isDoubleEpisode || !info.secondEpisodeNumber) return false;
+    const secondNum = this._normalizeEpisodeNumber(info.secondEpisodeNumber);
+    if (entry.episodes.some((ep) => Number(ep?.number) === Number(secondNum))) return false;
+    const nowIso = this._compactNow();
+    entry.episodes.push({ number: secondNum, watchedAt: nowIso, duration: validDuration, durationSource: "video" });
+    entry.episodes.sort((a, b) => (Number(a?.number) || 0) - (Number(b?.number) || 0));
+    entry.totalWatchTime = entry.episodes.reduce((sum, ep) => sum + (Number(ep?.duration) || 0), 0);
+    entry.lastWatched = nowIso;
+    return true;
   },
 };
 

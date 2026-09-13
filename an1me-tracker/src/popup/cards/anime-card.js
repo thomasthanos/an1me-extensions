@@ -619,9 +619,15 @@ window.AnimeTracker.AnimeCardRenderer = AnimeCardRenderer;
         watchedDateStr = watchedDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
       }
 
+      // Without a recorded pagePath, map the stored slug + continuous number back to the page the site
+      // serves: later parts of a split show live under their own slug and restart at episode 1.
+      const sitePage = window.AnimeTrackerMultipartMappings?.toSitePage?.(anime.slug, latestEp.number) || {
+        slug: anime.slug,
+        episode: latestEp.number,
+      };
       const continuePathSlug = latestEp.pagePath
         ? UIHelpers.escapeHtml(latestEp.pagePath)
-        : `${UIHelpers.escapeHtml(anime.slug)}-episode-${latestEp.number}`;
+        : `${UIHelpers.escapeHtml(sitePage.slug)}-episode-${Number(sitePage.episode) || latestEp.number}`;
       const continueUrl = `https://an1me.to/watch/${continuePathSlug}`;
 
       return `

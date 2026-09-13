@@ -57,6 +57,51 @@ The version in `manifest.json` is the single source of truth.
 
 ### Fixed
 
+- **Progress could stop being saved after switching video server.** One cleanup list held both
+  per-video and page-level work, so binding a late-loading video or rebinding after the first server
+  switch also removed the server-switch listener itself. The second switch was then never noticed,
+  and nothing was tracked for the rest of the episode.
+- **Going to the next episode quickly could record the wrong episode.** Tracking the finished episode
+  spans several storage round trips; if the next page loaded meanwhile, the write used the new
+  episode with the old video's duration, marked it completed and deleted its resume point.
+- **Fate/Zero Season 2 and Bleach TYBW parts 2–3 mixed two numbering systems.** an1me.to serves each
+  later part under its own slug with episodes numbered from 1 — confirmed on the live site, where the
+  Season 2 slug is `fate-zero-2nd-season` — while the library numbers the franchise continuously.
+  Watched and filler badges landed on the wrong episodes, skip times captured on S2E5 were filed
+  under S1E5, and Continue Watching, the popup's Continue button and the filler auto-skip all linked
+  to pages that do not exist. Conversion now goes through one helper in both directions.
+- **Resume points were deleted in the background.** Every progress save pruned the shared map to the
+  20 most recent entries, dropped anything older than 7 days, and removed any entry with 2 minutes
+  or less left even when it was far from finished. It now keeps up to 200 entries, like the rest of
+  the extension, and uses the same definition of "finished".
+- **Deleted progress came back after a slug change.** Two migrations picked between old and new
+  progress by position or date alone and ignored deletion markers; they now use the shared rule.
+- **Double-episode pages dropped the second episode** when the first was already recorded.
+- **"New Episode" never showed on the home shelf** without cached show info — it read a field that
+  library entries never have.
+- **One Enter could delete two anime.** A replaced delete prompt kept listening for Enter, so the next
+  Enter confirmed both. Enter typed into the search box no longer confirms a prompt either.
+- **New-episode notifications were skipped** whenever the library refresh, the popup or a visit to
+  an1me.to saw the episode first. Notifications now keep their own record of what they last saw.
+- **Watch progress never synced while a video was playing.** Each progress write postponed the sync by
+  another 5 minutes, so it only ran after playback stopped.
+- **Ad Guard and Auto-resume never picked up changes from the cloud.**
+- **The library list did not refresh after watching an episode**, because a follow-up sync-status
+  write cancelled the pending re-render.
+- **The In Progress card switched to a different episode** a moment after appearing, and **Airing
+  badges could show on finished shows**.
+- **Edit and delete buttons ran twice per click**, and the edit dialog leaked a key listener each time.
+- **Skip Outro disappeared for a week after one rate limit**, and could use another show's timings: its
+  MAL lookup took the first search result without checking the title.
+- **The periodic AniList sync almost never ran**, **metadata retries never retried**, and **a Fetch
+  pressed during a background refresh could be reverted** by the refresh.
+- **Watchlist changes the site refused were logged as successes**, and a timed-out watchlist change
+  could be sent twice.
+- **Duplicate episodes were cleaned up on every load but never saved.**
+- **Grouping a large library was slow** — about 700 ms at 600 entries, twice per refresh — because an
+  expensive comparison ran for every pair before a cheap test that rules most pairs out.
+- **Warnings appeared as red error toasts.** They now have their own amber style.
+
 - **Opening the Completed list, and expanding or collapsing cards, dropped frames.** The list
   sections collapsed by animating `grid-template-rows` under a permanent `will-change`, which forced
   the entire section to be laid out again on every frame of the animation — and the Completed list

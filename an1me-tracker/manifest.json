@@ -159,6 +159,7 @@
         "https://*.an1me.to/"
       ],
       "js": [
+        "src/common/data/multipart-mappings.js",
         "src/content/page/continue-watching.js"
       ],
       "run_at": "document_idle",

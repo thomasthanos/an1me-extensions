@@ -26,7 +26,9 @@
       messageOrOpts && typeof messageOrOpts === "object" && !Array.isArray(messageOrOpts)
         ? messageOrOpts
         : { message: String(messageOrOpts ?? ""), type: typeArg };
-    const type = opts.type === "success" ? "success" : "error";
+    // "warn" is its own type. Every non-success type used to render as a red error alert, so the
+    // "Session expired" and "Reconnect to sync" warnings looked like failures.
+    const type = opts.type === "success" ? "success" : opts.type === "warn" || opts.type === "warning" ? "warn" : "error";
     const duration = Math.max(1500, Math.min(opts.duration || 4000, 10000));
 
     let title = (opts.title || "").trim();

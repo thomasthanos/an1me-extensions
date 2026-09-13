@@ -13,8 +13,10 @@ const ContentConfig = {
   HARD_MIN_WATCH_SECONDS: 30,
   COMPLETED_PERCENTAGE: 85,
   LOG_LEVEL: "INFO",
-  MAX_PROGRESS_ENTRIES: 20,
-  MAX_PROGRESS_AGE_DAYS: 7,
+  // Same cap as the background progress cleanup. 20 pruned the shared map on every save, so a signed-out
+  // user lost every in-progress resume point beyond the 20 most recent, and a signed-in one kept
+  // re-downloading and re-pruning the same entries on each sync.
+  MAX_PROGRESS_ENTRIES: 200,
   MAX_SAVE_QUEUE_SIZE: 10,
   MAX_SAVED_PROGRESS_ENTRIES: 10,
 

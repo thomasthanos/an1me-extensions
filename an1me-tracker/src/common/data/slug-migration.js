@@ -157,9 +157,17 @@
       if (!existing) {
         videoProgress[newKey] = incoming;
       } else {
-        const aTs = new Date(existing.savedAt || 0).getTime() || 0;
-        const bTs = new Date(incoming.savedAt || 0).getTime() || 0;
-        videoProgress[newKey] = bTs > aTs ? incoming : existing;
+        // The shared rule, which respects tombstones. Comparing savedAt alone treated a "deleted" marker
+        // (it has deletedAt, no savedAt) as the oldest entry, so renaming a slug brought deleted progress
+        // back - and it preferred a newer lower position where every other merge keeps the higher one.
+        const shared = globalThis.AnimeTrackerMergeUtils?.selectProgressEntry;
+        if (typeof shared === "function") {
+          videoProgress[newKey] = shared(existing, incoming);
+        } else {
+          const aTs = new Date(existing.savedAt || 0).getTime() || 0;
+          const bTs = new Date(incoming.savedAt || 0).getTime() || 0;
+          videoProgress[newKey] = bTs > aTs ? incoming : existing;
+        }
       }
       delete videoProgress[key];
     }

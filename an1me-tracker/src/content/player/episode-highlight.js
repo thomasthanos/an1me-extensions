@@ -7,6 +7,19 @@
 
   const AT = window.AnimeTrackerContent;
 
+  // The episode list numbers episodes the way the SITE does - per part, from 1 - while storage and the
+  // filler data use one continuous numbering. Convert before comparing, or on Fate/Zero S2 and Bleach
+  // TYBW parts 2-3 the badges land on the wrong items: Season 1 watches marked S2 episodes 1-12 as
+  // WATCHED while real S2 watches never showed, and filler marks shifted the same way. Unmapped shows
+  // pass through unchanged.
+  function toStoredListNumber(storedSlug, pageNumber) {
+    const mappings = window.AnimeTrackerMultipartMappings;
+    const pageSlug = mappings?.pageSlugFromPath?.(location.pathname);
+    if (!pageSlug) return pageNumber;
+    const stored = mappings.toStoredEpisode(pageSlug, pageNumber);
+    return stored.slug === storedSlug ? stored.episode : pageNumber;
+  }
+
   // Delegates to the shared resolver so the watch page groups exactly like the library does; this
   // value is also used as the groupCoverImages key, which the popup reads back. Callers pass
   // `options.isMovie` when the media type is known, because movies resolve through different base
@@ -38,7 +51,7 @@
       for (const item of items) {
         const epNum = parseInt(item.getAttribute("data-episode-search-query"), 10);
         if (isNaN(epNum)) continue;
-        if (watchedSet.has(epNum)) {
+        if (watchedSet.has(toStoredListNumber(slug, epNum))) {
           item.style.opacity = "";
           item.style.color = "";
           if (!item.classList.contains("at-watched-episode")) {
@@ -216,7 +229,7 @@
           for (const item of items) {
             const epNum = parseInt(item.getAttribute("data-episode-search-query"), 10);
             if (!Number.isFinite(epNum)) continue;
-            const isFiller = fillerSet.has(epNum);
+            const isFiller = fillerSet.has(toStoredListNumber(slug, epNum));
             if (isFiller && !item.classList.contains("at-filler-episode")) {
               item.classList.add("at-filler-episode");
               if (!item.querySelector(".at-filler-badge")) {
@@ -269,7 +282,10 @@
       if (grid) {
         const items = grid.querySelectorAll('a[data-search], a[href*="-episode-"]');
         for (const a of items) {
-          const ds = parseInt(a.getAttribute("data-search") || "", 10);
+          // data-search is the site's per-part number; convert it so it is comparable with the stored
+          // current episode it is max()ed against below. On a Bleach TYBW part-2 page the raw grid max
+          // (13) otherwise lost to - or under-reported - the real stored latest episode (26).
+          const ds = toStoredListNumber(animeSlug, parseInt(a.getAttribute("data-search") || "", 10));
           if (Number.isFinite(ds) && ds > pageMax) pageMax = ds;
           const m = (a.getAttribute("href") || "").match(hrefPattern);
           if (m) {

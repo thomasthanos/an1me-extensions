@@ -100,7 +100,16 @@
     try {
       const info = window.AnimeTrackerContent?.AnimeParser?.extractAnimeInfo?.({ silent: true });
       if (info?.animeSlug && domEpisodeNumber > 0) {
-        return `${info.animeSlug}__episode-${domEpisodeNumber}`;
+        // The DOM number is the SITE's per-part number, while info.animeSlug is the stored slug. For a
+        // split show those disagree: on /watch/fate-zero-2nd-season-episode-5 this built
+        // "fate-zero__episode-5" - Season 1 episode 5's key - so skip times captured on S2E5 appeared on
+        // S1E5, and main.js (which reads the stored number, 18) never found them. Convert first;
+        // unmapped shows pass through unchanged.
+        const mappings = window.AnimeTrackerMultipartMappings;
+        const pageSlug = mappings?.pageSlugFromPath?.(location.pathname);
+        const stored = pageSlug ? mappings.toStoredEpisode(pageSlug, domEpisodeNumber) : null;
+        const episode = stored && stored.slug === info.animeSlug ? stored.episode : domEpisodeNumber;
+        return `${info.animeSlug}__episode-${episode}`;
       }
       if (info?.animeSlug && Number.isFinite(Number(info.episodeNumber)) && Number(info.episodeNumber) > 0) {
         return `${info.animeSlug}__episode-${Number(info.episodeNumber)}`;
