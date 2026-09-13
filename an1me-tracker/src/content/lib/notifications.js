@@ -422,6 +422,15 @@ const Notifications = {
   },
 
   showCompletion(info) {
+    // One toast per completed episode, whichever path got there first. saveWatchedEpisode shows it
+    // directly while main.js shows it through its own once-flag on the "ended" event, so a single
+    // completion could produce two stacked toasts.
+    const completionKey = info?.uniqueId || String(info?.animeSlug || "") + ":" + String(info?.episodeNumber || "");
+    const shownAt = Date.now();
+    if (this._lastCompletionKey === completionKey && shownAt - (this._lastCompletionAt || 0) < 15000) return;
+    this._lastCompletionKey = completionKey;
+    this._lastCompletionAt = shownAt;
+
     this.ensureFont();
     this.injectRootStyles();
 

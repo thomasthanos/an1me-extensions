@@ -132,6 +132,12 @@ const ProgressTracker = {
     }
   },
 
+  // "Start over" is a deliberate rewind. The save path otherwise never lets the stored position go DOWN,
+  // so after starting over the resume point stayed at the old later time until playback passed it.
+  allowRewind(uniqueId) {
+    this._rewindAllowedFor = uniqueId || null;
+  },
+
   cleanVideoProgress(videoProgress, currentUniqueId) {
     const { CONFIG, Logger } = window.AnimeTrackerContent;
 
@@ -311,13 +317,16 @@ const ProgressTracker = {
       const newDuration = Math.floor(duration);
       const newPercentage = Math.floor((currentTime / duration) * 100);
 
-      if (existingProgress && existingProgress.currentTime > newCurrentTime) {
+      const rewinding = this._rewindAllowedFor === uniqueId;
+
+      if (existingProgress && !rewinding && existingProgress.currentTime > newCurrentTime) {
         return;
       }
 
       const MIN_ADVANCE_SECONDS = 3;
       if (
         existingProgress &&
+        !rewinding &&
         existingProgress.duration === newDuration &&
         newCurrentTime - existingProgress.currentTime < MIN_ADVANCE_SECONDS
       ) {
@@ -345,13 +354,14 @@ const ProgressTracker = {
         latestProgress = this.cleanVideoProgress(latestProgress, uniqueId);
 
         const latestExisting = latestProgress[uniqueId];
-        if (latestExisting && latestExisting.currentTime > newCurrentTime) {
+        if (latestExisting && !rewinding && latestExisting.currentTime > newCurrentTime) {
           videoProgress = latestProgress;
           data.videoProgress = latestProgress;
           return false;
         }
         if (
           latestExisting &&
+          !rewinding &&
           latestExisting.duration === newDuration &&
           newCurrentTime - latestExisting.currentTime < MIN_ADVANCE_SECONDS
         ) {
@@ -394,6 +404,8 @@ const ProgressTracker = {
         }
       }
       if (!progressSaved) return;
+      // The one deliberate rewind has been saved; normal forward-only saving resumes.
+      if (rewinding) this._rewindAllowedFor = null;
       this._vpCache = videoProgress;
       this._vpCacheTime = Date.now();
       Logger.debug(`Progress saved: ${uniqueId} → ${videoProgress[uniqueId].percentage}% (${newCurrentTime}s/${Math.floor(duration)}s)`);

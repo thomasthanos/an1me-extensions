@@ -193,6 +193,16 @@ const UIHelpers = {
 
   showToast(message, options = {}) {
     const { type = "info", duration = 2000 } = options;
+    // One toast system. This used to draw its own simpler toast after removing EVERY .at-toast on screen,
+    // including the richer toast from toasts.js - so a quick success toast wiped a "Session expired" or
+    // "Reconnect to sync" warning. The code below is only a fallback for a page that has not loaded toasts.js.
+    const shared = window.AnimeTracker?.showToast;
+    if (typeof shared === "function") {
+      try {
+        shared({ message: String(message ?? ""), type, duration });
+      } catch {}
+      return;
+    }
     try {
       document.querySelectorAll(".at-toast").forEach((n) => {
         const t1 = n.__atToastLeaveTimer;

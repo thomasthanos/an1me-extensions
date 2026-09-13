@@ -497,32 +497,7 @@
   }
 
   function sendRuntimeMessage(message, timeoutMs = 30000) {
-    return new Promise((resolve, reject) => {
-      let settled = false;
-      const timer = setTimeout(() => {
-        if (settled) return;
-        settled = true;
-        reject(new Error("Runtime message timeout"));
-      }, timeoutMs);
-      try {
-        chrome.runtime.sendMessage(message, (response) => {
-          if (settled) return;
-          settled = true;
-          clearTimeout(timer);
-          const runtimeError = chrome.runtime.lastError;
-          if (runtimeError) {
-            reject(new Error(runtimeError.message));
-            return;
-          }
-          resolve(response);
-        });
-      } catch (error) {
-        if (settled) return;
-        settled = true;
-        clearTimeout(timer);
-        reject(error);
-      }
-    });
+    return window.AnimeTracker.sendRuntimeRequest(message, { timeoutMs, timeoutMessage: "Runtime message timeout" });
   }
 
   function setTopStatValue(element, value) {
@@ -555,10 +530,6 @@
       storageKey: COPY_GUARD_STORAGE_KEY,
       defaultsTo: true,
       interpret: (raw) => raw !== false,
-      copy: {
-        on: "Block copy outside allowed text",
-        off: "Copy protection is turned off",
-      },
     },
     smartNotif: {
       btnId: "settingsSmartNotif",
@@ -566,10 +537,6 @@
       storageKey: SMART_NOTIF_STORAGE_KEY,
       defaultsTo: false,
       interpret: (raw) => raw === true,
-      copy: {
-        on: "You will be notified of new episodes",
-        off: "Notify when new episodes drop",
-      },
     },
     autoSkipFiller: {
       btnId: "settingsAutoSkipFiller",
@@ -577,10 +544,6 @@
       storageKey: AUTO_SKIP_FILLER_STORAGE_KEY,
       defaultsTo: false,
       interpret: (raw) => raw === true,
-      copy: {
-        on: "Filler episodes will be auto-skipped",
-        off: "Skip filler, jump to next canon ep",
-      },
     },
     skiptime: {
       btnId: "settingsSkiptime",
@@ -588,10 +551,6 @@
       storageKey: SKIPTIME_HELPER_KEY,
       defaultsTo: false,
       interpret: (raw) => raw === true,
-      copy: {
-        on: "Capture intro/outro on an1me.to/watch",
-        off: "Floating panel for intro/outro contributions",
-      },
     },
     auto4kServer: {
       btnId: "settingsAuto4kServer",
@@ -599,10 +558,6 @@
       storageKey: AUTO_4K_SERVER_KEY,
       defaultsTo: true,
       interpret: (raw) => raw !== false,
-      copy: {
-        on: "Auto-switch to 4K/Remaster server when available",
-        off: "Premium server auto-pick is off",
-      },
     },
     autoResume: {
       btnId: "settingsAutoResume",
@@ -610,10 +565,6 @@
       storageKey: AUTO_RESUME_KEY,
       defaultsTo: false,
       interpret: (raw) => raw === true,
-      copy: {
-        on: "Resume playback without asking",
-        off: "Ask before resuming where you left off",
-      },
     },
     adGuard: {
       btnId: "settingsAdGuard",
@@ -621,10 +572,6 @@
       storageKey: AD_GUARD_KEY,
       defaultsTo: true,
       interpret: (raw) => raw !== false,
-      copy: {
-        on: "Block pop-up ads on an1me.to",
-        off: "Pop-up ads are allowed",
-      },
     },
   };
 
@@ -636,7 +583,8 @@
     btn.dataset.enabled = enabled ? "true" : "false";
     btn.setAttribute("aria-pressed", enabled ? "true" : "false");
     const subtitle = document.getElementById(config.subtitleId);
-    if (subtitle) subtitle.textContent = enabled ? config.copy.on : config.copy.off;
+    // The wording lives in settings-view.js (TOGGLE_COPY) so the click path and the render path agree.
+    if (subtitle) subtitle.textContent = window.AnimeTracker.SettingsView?.toggleSubtitle?.(config.btnId, enabled) || subtitle.textContent;
   }
 
   async function loadToggleSetting(toggleId) {

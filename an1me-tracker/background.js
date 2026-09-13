@@ -510,66 +510,17 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 30000) {
 
 function cleanTrackedProgressBg(animeData, videoProgress, deletedAnime = {}) {
   if (!videoProgress || !animeData) return videoProgress;
-
-  const baseProgress = removeDeletedProgress(videoProgress, deletedAnime);
-
-  const trackedIds = new Set();
-  for (const [slug, anime] of Object.entries(animeData)) {
-    if (anime.episodes) {
-      for (const ep of anime.episodes) {
-        const listState = String(anime.listState || "").toLowerCase();
-        if (anime.onHoldAt || anime.droppedAt || listState === "on_hold" || listState === "dropped") continue;
-
-        if (ep?.durationSource === "anilist") continue;
-        trackedIds.add(`${slug}__episode-${ep.number}`);
-      }
-    }
-  }
-
-  const trackedSlugs = new Set(Object.keys(animeData));
-  const now = Date.now();
-  const cleaned = {};
-  for (const [id, progress] of Object.entries(baseProgress)) {
-    if (id === "__slugIndex") continue;
-    const isTracked = trackedIds.has(id);
-    const isCompleted = (progress.percentage || 0) >= COMPLETED_PERCENTAGE;
-
-    if (isTracked) continue;
-    if (isCompleted) continue;
-    if (progress.deleted) {
-      const deletedAt = progress.deletedAt ? new Date(progress.deletedAt).getTime() : 0;
-      if (deletedAt && now - deletedAt < PROGRESS_TOMBSTONE_KEEP_MS) {
-        cleaned[id] = progress;
-      }
-      continue;
-    }
-
-    if (progress.coverImage) {
-      const slugMatch = id.match(/^(.+)__episode-\d+$/);
-      if (slugMatch && trackedSlugs.has(slugMatch[1])) {
-        const { coverImage, ...rest } = progress;
-        cleaned[id] = rest;
-        continue;
-      }
-    }
-
-    cleaned[id] = progress;
-  }
-
-  const entries = Object.entries(cleaned);
-  if (entries.length > MAX_PROGRESS_ENTRIES) {
-    const getTs = (p) => {
-      const t = p?.savedAt || p?.lastPlayedAt || 0;
-      return t ? new Date(t).getTime() : 0;
-    };
-    entries.sort((a, b) => getTs(b[1]) - getTs(a[1]));
-    const capped = {};
-    for (let i = 0; i < MAX_PROGRESS_ENTRIES; i++) {
-      capped[entries[i][0]] = entries[i][1];
-    }
-    return capped;
-  }
-  return cleaned;
+  // The keep/remove rules live in merge-utils (cleanTrackedProgress), shared with the popup. The two
+  // used to be separate copies that disagreed about movies and dropped shows, so each context undid the
+  // other's cleanup on every sync.
+  const utils = self.AnimeTrackerMergeUtils;
+  return utils.cleanTrackedProgress(animeData, videoProgress, deletedAnime, {
+    isMovie: (slug, entry) =>
+      utils.isLikelyMovieSlug(slug, globalThis.AnimeTrackerMediaType?.resolve?.(slug, entry, null) || null),
+    completedPercentage: COMPLETED_PERCENTAGE,
+    tombstoneKeepMs: PROGRESS_TOMBSTONE_KEEP_MS,
+    maxEntries: MAX_PROGRESS_ENTRIES,
+  }).cleaned;
 }
 
 function pruneDeletedAnime(deletedAnime) {
@@ -634,18 +585,21 @@ async function bgIterativeQuotaRecovery(reason = "daily-alarm") {
           const bTs = new Date(b[1]?.savedAt || b[1]?.watchedAt || 0).getTime() || 0;
           return bTs - aTs;
         });
-        const nextCap = Math.min(2000, sorted.length);
+        const nextCap = sorted.length;
 
         const dCleaned = {};
-        const dCutoff = Date.now() - 10 * 24 * 60 * 60 * 1000;
+        // The normal tombstone retention. A shorter cutoff here was undone by the next full sync, which
+        // copied the pruned tombstones straight back from the cloud.
+        const dCutoff = Date.now() - DELETED_ANIME_MAX_AGE_MS;
         const dEntries = Object.entries(localDeleted).sort((a, b) => {
-          const aTs = new Date(a[1]?.deletedAt || 0).getTime() || 0;
-          const bTs = new Date(b[1]?.deletedAt || 0).getTime() || 0;
+          // Legacy tombstones are a bare date string rather than { deletedAt }.
+          const aTs = new Date(a[1]?.deletedAt || a[1] || 0).getTime() || 0;
+          const bTs = new Date(b[1]?.deletedAt || b[1] || 0).getTime() || 0;
           return bTs - aTs;
         });
         let dKept = 0;
         for (const [slug, info] of dEntries) {
-          const timestamp = new Date(info?.deletedAt || 0).getTime() || 0;
+          const timestamp = new Date(info?.deletedAt || info || 0).getTime() || 0;
           if (timestamp > 0 && timestamp < dCutoff) continue;
           dCleaned[slug] = info;
           dKept += 1;
@@ -664,9 +618,11 @@ async function bgIterativeQuotaRecovery(reason = "daily-alarm") {
     let bytesNow = await bgMeasureBytes();
     let pass = 1;
     const maxPasses = 3;
-    while (bytesNow > target && pass < maxPasses && cap > 250) {
+    // cleanTrackedProgressBg already caps progress at MAX_PROGRESS_ENTRIES (200), so the old `cap > 250`
+    // condition was never true and these extra passes never ran.
+    while (bytesNow > target && pass < maxPasses && cap > 25) {
       pass += 1;
-      cap = Math.max(250, Math.floor(cap / 2));
+      cap = Math.max(25, Math.floor(cap / 2));
       await runBgLibraryTransaction(["animeData", "videoProgress", "deletedAnime"], (latest) => {
         const cleaned = cleanTrackedProgressBg(
           latest.animeData || {},
@@ -1175,16 +1131,11 @@ async function handleSyncHttpError({ kind, status, errorBody, expectedIdToken = 
   const label = kind === "full" ? "Sync" : "Progress sync";
   if (status === 401) {
     if (s.getAuthAttempted()) {
-      const cl = self.AnimeTrackerAuthClassifier;
-      const cls = cl ? cl.classify(401, errorBody) : { permanent: false };
-      if (cls.permanent) {
-        console.error(`[BG] ${label} 401 with permanent code — signing out`);
-        await signOutDueToTokenFailure();
-        clearSyncRetry(kind);
-      } else {
-        console.warn(`[BG] ${label} still 401 after refresh — keeping session, alarm backoff`);
-        armSyncRetry(kind, "401-still-after-refresh");
-      }
+      // The classifier only recognises permanent codes on HTTP 400 (the token endpoint), so a Firestore
+      // 401 is never "permanent" and the sign-out branch that used to sit here could not run. A dead
+      // refresh token is caught where the refresh itself fails; here the session is kept and retried.
+      console.warn(`[BG] ${label} still 401 after refresh — keeping session, alarm backoff`);
+      armSyncRetry(kind, "401-still-after-refresh");
     } else {
       s.setAuthAttempted(true);
       await _invalidateCachedTokenExpiry(expectedIdToken);
@@ -1368,19 +1319,24 @@ function removeStreamConsumer(id) {
   }, IDLE_TEARDOWN_GRACE_MS);
 }
 
-async function signOutDueToTokenFailure() {
-  console.warn("[BG] Token refresh failed — signing user out to force re-auth");
+// A permanent refresh failure (revoked or expired refresh token, disabled account) is handled ONE way:
+// flag the session for re-authentication and stop retrying, keeping local tokens and data. Two paths used
+// to sign the user out on the spot while the post-update check set needsReauth instead, so the same
+// failure either dropped the user onto the sign-in screen or showed the popup's "Reconnect to sync"
+// prompt, depending only on which code path noticed it first.
+async function markSessionNeedsReauth(refreshToken, reason) {
+  console.warn(`[BG] Refresh token rejected (permanent: ${reason || "?"}) — session needs re-authentication`);
   try {
-    await bgMutateFirebaseAuth({ operation: "clear_session" });
+    const helper = self.AnimeTrackerAuthTokens;
+    if (helper?.setNeedsReauth) {
+      await helper.setNeedsReauth(true, refreshToken ? { expectedRefreshToken: refreshToken } : {});
+    }
   } catch (e) {
-    console.error("[BG] Failed to clear auth storage during sign-out:", e);
+    console.warn("[BG] Could not flag session for re-authentication:", e?.message || e);
   }
-
-  invalidateBgCloudDocCache();
-
-  Promise.all([clearAuthAndSyncAlarms(), clearPendingSidecarSyncs()]).catch((e) =>
-    console.warn("[BG] alarm cleanup on sign-out failed:", e?.message || e),
-  );
+  try {
+    chrome.alarms.clear(AUTH_REFRESH_RETRY_BG_ALARM).catch(() => {});
+  } catch {}
 }
 
 async function clearAuthAndSyncAlarms() {
@@ -1432,8 +1388,7 @@ async function getFirebaseToken() {
       const result = await refreshFirebaseToken(tokens.refreshToken);
       if (!result || !result.tokens) {
         if (result?.permanent) {
-          console.warn(`[BG] Refresh token rejected (permanent: ${result.error || "?"}) — signing out`);
-          await signOutDueToTokenFailure();
+          await markSessionNeedsReauth(tokens.refreshToken, result.error);
           return null;
         }
 
@@ -1649,7 +1604,7 @@ async function _bgAuthRefreshRetryTick() {
     }
     const result = await refreshFirebaseToken(tokens.refreshToken);
     if (result?.permanent) {
-      await signOutDueToTokenFailure();
+      await markSessionNeedsReauth(tokens.refreshToken, result.error);
     }
   } catch (e) {
     console.warn("[BG] Auth retry tick failed:", e?.message || e);
@@ -3261,8 +3216,15 @@ async function persistBeforeUnloadTrack(animeInfo, duration) {
     changed = true;
   }
 
-  if (Number.isFinite(animeInfo.totalEpisodes) && animeInfo.totalEpisodes > 0) {
-    const maxTracked = Math.max(0, ...(animeData[slug].episodes || []).map((ep) => Number(ep?.number) || 0));
+  if (Number.isFinite(animeInfo.totalEpisodes) && animeInfo.totalEpisodes > 0 && animeInfo.totalEpisodes < 10000) {
+    // Same rule as the content writer: count the episode(s) being tracked right now, so a scraped total
+    // below the current episode is not accepted, and ignore absurd totals.
+    const maxTracked = Math.max(
+      0,
+      ...(animeData[slug].episodes || []).map((ep) => Number(ep?.number) || 0),
+      Number(animeInfo.episodeNumber) || 0,
+      Number(animeInfo.secondEpisodeNumber) || 0,
+    );
     if (
       animeInfo.totalEpisodes >= maxTracked &&
       (animeData[slug].totalEpisodes !== animeInfo.totalEpisodes || animeData[slug].totalEpisodesSource !== "an1me")
@@ -3278,9 +3240,12 @@ async function persistBeforeUnloadTrack(animeInfo, duration) {
     animeData[slug].episodes = [];
   }
 
+  // Whether an episode was actually recorded. Only that moves lastWatched; see below.
+  let episodeChanged = false;
   const stateUpdatedAt = new Date().toISOString();
   if (globalThis.AnimeTrackerEntryState?.resumeInactiveState(animeData[slug], stateUpdatedAt)) {
     changed = true;
+    episodeChanged = true;
     dlog("[BG] Resumed inactive anime (new episode tracked):", slug);
   }
 
@@ -3301,11 +3266,26 @@ async function persistBeforeUnloadTrack(animeInfo, duration) {
         durationSource: "video",
       });
       changed = true;
+      episodeChanged = true;
       return;
     }
 
     const existing = episodes[existingIndex] || {};
     const existingDuration = Number(existing.duration) || 0;
+    // An AniList-imported episode is only a placeholder until it is really watched. The content writer
+    // promotes it; this path used to leave it as "anilist", so a watch saved on tab close still counted
+    // the episode as not watched on the site.
+    if (existing.durationSource === "anilist") {
+      episodes[existingIndex] = {
+        ...existing,
+        watchedAt,
+        duration: validDuration > 0 ? validDuration : existingDuration,
+        durationSource: "video",
+      };
+      changed = true;
+      episodeChanged = true;
+      return;
+    }
     if (isPlaceholderDuration(existingDuration) && validDuration > 0 && existingDuration !== validDuration) {
       episodes[existingIndex] = {
         ...existing,
@@ -3313,6 +3293,7 @@ async function persistBeforeUnloadTrack(animeInfo, duration) {
         durationSource: "video",
       };
       changed = true;
+      episodeChanged = true;
     }
   };
 
@@ -3328,7 +3309,9 @@ async function persistBeforeUnloadTrack(animeInfo, duration) {
   if (changed) {
     animeData[slug].episodes.sort((a, b) => a.number - b.number);
     animeData[slug].totalWatchTime = animeData[slug].episodes.reduce((sum, ep) => sum + (Number(ep?.duration) || 0), 0);
-    animeData[slug].lastWatched = new Date().toISOString();
+    // Only real watching moves lastWatched. A metadata-only refresh (cover, status, totals) used to bump it
+    // too, pushing a show nobody watched to the top of "recently watched".
+    if (episodeChanged) animeData[slug].lastWatched = new Date().toISOString();
   }
 
   let progressChanged = false;
@@ -3427,26 +3410,6 @@ const messageHandlers = {
     })()
       .then(sendResponse)
       .catch((error) => sendResponse({ success: false, tokens: null, permanent: false, error: error?.message || String(error) }));
-    return true;
-  },
-
-  GET_AUTH_STATE(message, _sender, sendResponse) {
-    (async () => {
-      try {
-        const user = await getFirebaseUser();
-        const tokens = await bgStorageGet(["firebase_tokens"]);
-        sendResponse({ success: true, user, tokens: tokens?.firebase_tokens || null });
-      } catch (e) {
-        sendResponse({ success: false, error: e.message });
-      }
-    })();
-    return true;
-  },
-
-  PUSH_PLAYBACK_SETTINGS(message, _sender, sendResponse) {
-    queueSidecarSync("playbackSettings", message.playbackSettings)
-      .then(sendResponse)
-      .catch((error) => sendResponse({ success: false, pending: false, error: error?.message || String(error) }));
     return true;
   },
 
@@ -3569,120 +3532,9 @@ const messageHandlers = {
     return true;
   },
 
-  GET_CLOUD_DOC(message, _sender, sendResponse) {
-    (async () => {
-      try {
-        const user = await getFirebaseUser();
-        const token = await getFirebaseToken();
-        if (!user || !token) {
-          sendResponse({ success: false, error: "not_authenticated" });
-          return;
-        }
-        const doc = await fetchCloudDataCached(user, token);
-        sendResponse({ success: true, doc: doc || null });
-      } catch (e) {
-        sendResponse({
-          success: false,
-          error: e?.message || String(e),
-          status: e?.status || null,
-        });
-      }
-    })();
-    return true;
-  },
-
   INVALIDATE_BG_CLOUD_DOC_CACHE(message, _sender, sendResponse) {
     invalidateBgCloudDocCache();
     sendResponse({ ok: true });
-    return true;
-  },
-
-  SIGNED_OUT(message, _sender, sendResponse) {
-    authState.signedOut = true;
-    invalidateBgCloudDocCache();
-    Promise.all([
-      bgMutateFirebaseAuth({ operation: "clear_session" }),
-      clearAuthAndSyncAlarms(),
-      clearPendingSidecarSyncs(),
-    ])
-      .then(() => sendResponse({ ok: true }))
-      .catch((e) => sendResponse({ ok: false, error: e?.message }));
-    return true;
-  },
-
-  UPDATE_BG_CLOUD_DOC_CACHE(message, _sender, sendResponse) {
-    (async () => {
-      try {
-        const senderUid = typeof message.uid === "string" ? message.uid : null;
-        const activeUser = await getFirebaseUser();
-        const activeUid = activeUser?.uid || null;
-        if (!senderUid || !activeUid || senderUid !== activeUid || !message.doc || typeof message.doc !== "object") {
-          invalidateBgCloudDocCache();
-          sendResponse({ ok: false, reason: "uid_mismatch_or_no_doc" });
-          return;
-        }
-        cloudCache.doc = message.doc;
-        cloudCache.time = Date.now();
-        cloudCache.uid = activeUid;
-        bgStorageSet({
-          [_BG_CLOUD_CACHE_KEY]: { uid: activeUid, doc: message.doc, cachedAt: cloudCache.time },
-        }).catch(() => {});
-        sendResponse({ ok: true });
-      } catch (e) {
-        sendResponse({ ok: false, error: e?.message || String(e) });
-      }
-    })();
-    return true;
-  },
-
-  UPDATE_BG_PLAYBACK_SETTINGS(message, _sender, sendResponse) {
-    if (message.playbackSettings && typeof message.playbackSettings === "object") {
-      if (cloudCache.doc && typeof cloudCache.doc === "object") {
-        cloudCache.doc = { ...cloudCache.doc, playbackSettings: message.playbackSettings };
-        cloudCache.time = Date.now();
-      }
-    }
-    sendResponse({ ok: true });
-    return true;
-  },
-
-  UPDATE_BG_ANILIST_AUTH(message, _sender, sendResponse) {
-    if (message.anilistAuth && typeof message.anilistAuth === "object") {
-      if (cloudCache.doc && typeof cloudCache.doc === "object") {
-        cloudCache.doc = { ...cloudCache.doc, anilistAuth: message.anilistAuth };
-        cloudCache.time = Date.now();
-      }
-    }
-    sendResponse({ ok: true });
-    return true;
-  },
-
-  UPDATE_BG_CLOUD_DOC_PARTIAL(message, _sender, sendResponse) {
-    (async () => {
-      try {
-        const senderUid = typeof message.uid === "string" ? message.uid : null;
-        const partial = message.partial && typeof message.partial === "object" ? message.partial : null;
-        const activeUser = await getFirebaseUser();
-        const activeUid = activeUser?.uid || null;
-        if (!senderUid || !activeUid || senderUid !== activeUid || !partial) {
-          invalidateBgCloudDocCache();
-          sendResponse({ ok: false, reason: "uid_mismatch_or_no_partial" });
-          return;
-        }
-        if (cloudCache.doc && cloudCache.uid === activeUid) {
-          cloudCache.doc = { ...cloudCache.doc, ...partial };
-          cloudCache.time = Date.now();
-          bgStorageSet({
-            [_BG_CLOUD_CACHE_KEY]: { uid: activeUid, doc: cloudCache.doc, cachedAt: cloudCache.time },
-          }).catch(() => {});
-          sendResponse({ ok: true, mode: "overlay" });
-        } else {
-          sendResponse({ ok: true, mode: "no-baseline-skip" });
-        }
-      } catch (e) {
-        sendResponse({ ok: false, error: e?.message || String(e) });
-      }
-    })();
     return true;
   },
 
@@ -3880,9 +3732,10 @@ chrome.runtime.onInstalled.addListener((details) => {
 
     bgStorageGet(["postUpdateFetchTriggeredAt"])
       .then((existing) => {
+        // pendingRepairSlugs is left alone: resetting it to [] here wiped slugs already queued for a
+        // targeted repair, and the full sweep this flag asks for is usually deferred by the 6h gate anyway.
         const payload = {
           pendingBackgroundMetadataRepair: true,
-          pendingRepairSlugs: [],
         };
         if (!existing.postUpdateFetchTriggeredAt) {
           payload.postUpdateFetchTriggeredAt = Date.now();

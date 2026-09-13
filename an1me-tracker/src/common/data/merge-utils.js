@@ -1011,6 +1011,97 @@
     return mapEpisodes(animeData, decodeEpisodeFromCloud);
   }
 
+  // ONE definition of which progress entries survive a cleanup, shared by the background sync and the
+  // popup. They used to be two copies that disagreed, and each context undid the other on every sync:
+  // the background deleted resume progress on tracked MOVIES (so a rewatch lost its position) while the
+  // popup kept it, and the popup deleted progress on a DROPPED show's watched episodes while the
+  // background kept it. Both disagreements now resolve to keeping the data.
+  //
+  // options: isMovie(slug, entry), completedPercentage, tombstoneKeepMs, maxEntries (0 = no cap), now.
+  // Returns { cleaned, removedCount }.
+  function cleanTrackedProgress(animeData, videoProgress, deletedAnime, options) {
+    const opts = options || {};
+    if (!videoProgress || typeof videoProgress !== "object") return { cleaned: videoProgress, removedCount: 0 };
+    const completedPercentage = Number(opts.completedPercentage) || 85;
+    const tombstoneKeepMs = Number(opts.tombstoneKeepMs) || 7 * 24 * 60 * 60 * 1000;
+    const maxEntries = Math.max(0, Number(opts.maxEntries) || 0);
+    const isMovie = typeof opts.isMovie === "function" ? opts.isMovie : () => false;
+    const now = Number(opts.now) || Date.now();
+    const library = animeData && typeof animeData === "object" ? animeData : {};
+
+    const baseProgress = removeDeletedProgress(videoProgress, deletedAnime || {});
+
+    // Watched episodes of on-hold and dropped shows are deliberately not "tracked" here, so their
+    // progress is kept - the behaviour both copies shared for on-hold, now applied to dropped as well.
+    const trackedIds = new Set();
+    for (const [slug, anime] of Object.entries(library)) {
+      if (!anime || !Array.isArray(anime.episodes)) continue;
+      const resolved = globalThis.AnimeTrackerEntryState?.getResolvedListState?.(anime);
+      const rawState = String(anime.listState || "").toLowerCase();
+      const inactive = resolved
+        ? resolved === "on_hold" || resolved === "dropped"
+        : !!(anime.onHoldAt || anime.droppedAt) || rawState === "on_hold" || rawState === "dropped";
+      if (inactive) continue;
+      for (const ep of anime.episodes) {
+        if (ep?.durationSource === "anilist") continue;
+        trackedIds.add(slug + "__episode-" + ep?.number);
+      }
+    }
+
+    const cleaned = {};
+    let removedCount = 0;
+    const keep = (id, progress, entry) => {
+      // The library entry already carries the cover, so a copy on the progress entry is dead weight.
+      if (entry && progress.coverImage) {
+        const { coverImage, ...rest } = progress;
+        cleaned[id] = rest;
+      } else {
+        cleaned[id] = progress;
+      }
+    };
+
+    for (const [id, progress] of Object.entries(baseProgress)) {
+      if (id === "__slugIndex" || !progress || typeof progress !== "object") continue;
+      const slugMatch = /^(.+)__episode-\d+$/.exec(id);
+      const slug = slugMatch ? slugMatch[1] : "";
+      const entry = slug ? library[slug] || null : null;
+      const isTracked = trackedIds.has(id);
+
+      if (isTracked && !progress.deleted && entry && isMovie(slug, entry)) {
+        keep(id, progress, entry);
+        continue;
+      }
+
+      const isCompleted = (Number(progress.percentage) || 0) >= completedPercentage;
+      if (isTracked || isCompleted) {
+        removedCount++;
+        continue;
+      }
+
+      if (progress.deleted) {
+        const deletedAt = toMillis(progress.deletedAt);
+        if (deletedAt && now - deletedAt < tombstoneKeepMs) cleaned[id] = progress;
+        else removedCount++;
+        continue;
+      }
+
+      keep(id, progress, entry);
+    }
+
+    let result = cleaned;
+    if (maxEntries > 0) {
+      const entries = Object.entries(cleaned);
+      if (entries.length > maxEntries) {
+        // Newest activity first, counting deletedAt, so a fresh tombstone is not the first thing evicted
+        // before it has propagated.
+        entries.sort((a, b) => getProgressActivityTimestamp(b[1]) - getProgressActivityTimestamp(a[1]));
+        result = Object.fromEntries(entries.slice(0, maxEntries));
+        removedCount += entries.length - maxEntries;
+      }
+    }
+    return { cleaned: result, removedCount };
+  }
+
   const root = typeof globalThis !== "undefined" ? globalThis : self;
   const exports = {
     mergeVideoProgress,
@@ -1024,6 +1115,7 @@
     // The one rule for choosing between two progress entries for the same key (tombstones first, then
     // position, then time). Exported so migrations stop reimplementing it without tombstone handling.
     selectProgressEntry,
+    cleanTrackedProgress,
     mergeGroupCoverImages,
     mergeGoalSettings,
     mergeBadgeUnlocks,

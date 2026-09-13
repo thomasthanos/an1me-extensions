@@ -2,33 +2,7 @@
 
 // Shared by both the FirebaseLib and FirebaseSync closures below — must stay at file scope.
 function sendAuthBackgroundRequest(message, timeoutMs = 45000) {
-  return new Promise((resolve, reject) => {
-    let settled = false;
-    const timer = setTimeout(() => {
-      if (settled) return;
-      settled = true;
-      reject(new Error("Firebase auth request timed out"));
-    }, timeoutMs);
-
-    try {
-      chrome.runtime.sendMessage(message, (response) => {
-        if (settled) return;
-        settled = true;
-        clearTimeout(timer);
-        const runtimeError = chrome.runtime.lastError;
-        if (runtimeError) {
-          reject(new Error(runtimeError.message));
-          return;
-        }
-        resolve(response || null);
-      });
-    } catch (error) {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      reject(error);
-    }
-  });
+  return window.AnimeTracker.sendRuntimeRequest(message, { timeoutMs, timeoutMessage: "Firebase auth request timed out" });
 }
 
 const FirebaseLib = (function () {
@@ -834,32 +808,9 @@ const FirebaseSync = (function () {
   }
 
   function sendBackgroundRequest(message, timeoutMs = 90000) {
-    return new Promise((resolve, reject) => {
-      let settled = false;
-      const timer = setTimeout(() => {
-        if (settled) return;
-        settled = true;
-        reject(new Error(`Cloud sync timed out after ${Math.round(timeoutMs / 1000)}s`));
-      }, timeoutMs);
-
-      try {
-        chrome.runtime.sendMessage(message, (response) => {
-          if (settled) return;
-          settled = true;
-          clearTimeout(timer);
-          const runtimeError = chrome.runtime.lastError;
-          if (runtimeError) {
-            reject(new Error(runtimeError.message));
-            return;
-          }
-          resolve(response || null);
-        });
-      } catch (error) {
-        if (settled) return;
-        settled = true;
-        clearTimeout(timer);
-        reject(error);
-      }
+    return window.AnimeTracker.sendRuntimeRequest(message, {
+      timeoutMs,
+      timeoutMessage: `Cloud sync timed out after ${Math.round(timeoutMs / 1000)}s`,
     });
   }
 

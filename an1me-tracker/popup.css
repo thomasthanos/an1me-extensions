@@ -5119,6 +5119,12 @@ body.is-suppressing-hover #animeList .airing-list-cards .anime-movie-group:hover
 }
 
 /* Deep amber: the toast text is white, and the brighter --warning amber would not keep it readable. */
+.at-toast--info {
+  --at-toast-top: #4b6aa3;
+  --at-toast-bottom: #3a5487;
+  --at-toast-shadow: 0 8px 24px -6px rgba(58, 84, 135, 0.45), 0 1px 0 rgba(var(--ink-rgb), 0.15) inset;
+}
+
 .at-toast--warn {
   --at-toast-top: #c9851a;
   --at-toast-bottom: #a86a0c;
@@ -7001,6 +7007,8 @@ body.is-suppressing-hover #animeList .airing-list-cards .anime-movie-group:hover
 .at-toast--error:not(:has(.at-toast-icon)){ border-color: rgba(var(--danger-rgb), 0.45); color: #ffd0d0; }
 
 .at-toast--warn:not(:has(.at-toast-icon)){ border-color: rgba(var(--warning-rgb), 0.45); color: #fdecc0; }
+
+.at-toast--info:not(:has(.at-toast-icon)){ border-color: rgba(var(--primary-rgb), 0.45); color: #dbe6ff; }
 
 #settingsView.settings-view{ padding: 0; }
 

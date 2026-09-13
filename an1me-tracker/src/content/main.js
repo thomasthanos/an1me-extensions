@@ -13,6 +13,8 @@
   let animeInfo = null;
   // Bumped by every init(). Async work started on one episode checks it before touching shared state.
   let navigationGeneration = 0;
+  // When the unload handler last ran; see handleBeforeUnload.
+  let lastUnloadHandledAt = 0;
 
   // Stored slug + continuous episode number -> the URL an1me.to actually serves. Later parts of a split
   // show live under their own slug and restart at episode 1, so the filler auto-skip used to redirect
@@ -738,6 +740,13 @@
     const videoElement = VideoMonitor.getVideoElement();
 
     if (!animeInfo || !videoElement || videoElement.currentTime <= 0) return;
+
+    // Registered for both beforeunload and pagehide, which fire back to back on a normal navigation, so
+    // every unload used to run two urgent saves and send TRACK_BEFORE_UNLOAD twice. A short window
+    // rather than a once-flag, so a navigation that was cancelled can still save on the real unload.
+    const unloadAt = Date.now();
+    if (unloadAt - lastUnloadHandledAt < 2000) return;
+    lastUnloadHandledAt = unloadAt;
 
     const duration = videoElement.duration;
     const currentTime = videoElement.currentTime;

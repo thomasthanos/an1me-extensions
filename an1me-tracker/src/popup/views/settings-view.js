@@ -2,6 +2,25 @@
 (function () {
   "use strict";
 
+  // One copy table for every preference toggle's subtitle, keyed by the toggle's element id. The subtitles
+  // used to be written twice - here and in main.js - with different wording for five of the seven toggles,
+  // so the text changed depending on whether you had just clicked a toggle or the view had re-rendered.
+  // main.js reads this table through SettingsView.toggleSubtitle.
+  const TOGGLE_COPY = Object.freeze({
+    settingsCopyGuard: { on: "Block copy outside allowed text", off: "Copy protection is turned off" },
+    settingsSmartNotif: { on: "You will be notified of new episodes", off: "Notify when new episodes drop" },
+    settingsAutoSkipFiller: { on: "Filler episodes will be auto-skipped", off: "Skip filler, jump to next canon ep" },
+    settingsSkiptime: { on: "Capture intro/outro on an1me.to/watch", off: "Floating panel for intro/outro contributions" },
+    settingsAuto4kServer: { on: "Auto-switch to 4K/Remaster server when available", off: "Premium server auto-pick is off" },
+    settingsAutoResume: { on: "Resume playback without asking", off: "Ask before resuming where you left off" },
+    settingsAdGuard: { on: "Block pop-up ads on an1me.to", off: "Pop-up ads are allowed" },
+  });
+
+  function toggleSubtitle(id, enabled) {
+    const copy = TOGGLE_COPY[id];
+    return copy ? (enabled ? copy.on : copy.off) : "";
+  }
+
   function escapeHtml(value) {
     return window.AnimeTracker.UIHelpers.escapeHtml(value);
   }
@@ -108,7 +127,7 @@
         subtitleId: "settingsCopyGuardSubtitle",
         iconKey: "copy",
         title: "Copy Guard",
-        subtitle: state.copyGuard ? "Prevent copying protected text" : "Copy protection is turned off",
+        subtitle: toggleSubtitle("settingsCopyGuard", state.copyGuard),
         enabled: state.copyGuard,
       }),
       renderToggleItem({
@@ -116,7 +135,7 @@
         subtitleId: "settingsSmartNotifSubtitle",
         iconKey: "bell",
         title: "New Episode Alerts",
-        subtitle: state.smartNotif ? "Notify when new episodes appear" : "Notify when new episodes drop",
+        subtitle: toggleSubtitle("settingsSmartNotif", state.smartNotif),
         enabled: state.smartNotif,
       }),
       renderToggleItem({
@@ -124,7 +143,7 @@
         subtitleId: "settingsAutoSkipFillerSubtitle",
         iconKey: "skipFwd",
         title: "Auto-Skip Fillers",
-        subtitle: state.autoSkipFiller ? "Skip known filler episodes" : "Skip filler, jump to next canon ep",
+        subtitle: toggleSubtitle("settingsAutoSkipFiller", state.autoSkipFiller),
         enabled: state.autoSkipFiller,
       }),
       renderToggleItem({
@@ -132,7 +151,7 @@
         subtitleId: "settingsSkiptimeSubtitle",
         iconKey: "skipMark",
         title: "Skiptime Contributor",
-        subtitle: state.skiptimeHelper ? "Show the floating skip panel" : "Floating panel for intro/outro contributions",
+        subtitle: toggleSubtitle("settingsSkiptime", state.skiptimeHelper),
         enabled: state.skiptimeHelper,
       }),
       renderToggleItem({
@@ -140,7 +159,7 @@
         subtitleId: "settingsAuto4kServerSubtitle",
         iconKey: "fourK",
         title: "Auto-Pick Premium",
-        subtitle: state.auto4kServer ? "Prefer 4K/Remaster servers" : "Premium server auto-pick is off",
+        subtitle: toggleSubtitle("settingsAuto4kServer", state.auto4kServer),
         enabled: state.auto4kServer,
       }),
       renderToggleItem({
@@ -148,7 +167,7 @@
         subtitleId: "settingsAutoResumeSubtitle",
         iconKey: "skipFwd",
         title: "Auto-Resume",
-        subtitle: state.autoResume ? "Resume playback without asking" : "Ask before resuming where you left off",
+        subtitle: toggleSubtitle("settingsAutoResume", state.autoResume),
         enabled: state.autoResume,
       }),
       renderToggleItem({
@@ -156,7 +175,7 @@
         subtitleId: "settingsAdGuardSubtitle",
         iconKey: "skipMark",
         title: "Ad Guard",
-        subtitle: state.adGuard ? "Block pop-up ads on an1me.to" : "Pop-up ads are allowed",
+        subtitle: toggleSubtitle("settingsAdGuard", state.adGuard),
         enabled: state.adGuard,
       }),
     ].join("");
@@ -373,37 +392,37 @@
     updateToggle(
       "settingsCopyGuard",
       state.copyGuard,
-      state.copyGuard ? "Prevent copying protected text" : "Copy protection is turned off",
+      toggleSubtitle("settingsCopyGuard", state.copyGuard),
     );
     updateToggle(
       "settingsSmartNotif",
       state.smartNotif,
-      state.smartNotif ? "Notify when new episodes appear" : "Notify when new episodes drop",
+      toggleSubtitle("settingsSmartNotif", state.smartNotif),
     );
     updateToggle(
       "settingsAutoSkipFiller",
       state.autoSkipFiller,
-      state.autoSkipFiller ? "Skip known filler episodes" : "Skip filler, jump to next canon ep",
+      toggleSubtitle("settingsAutoSkipFiller", state.autoSkipFiller),
     );
     updateToggle(
       "settingsSkiptime",
       state.skiptimeHelper,
-      state.skiptimeHelper ? "Show the floating skip panel" : "Floating panel for intro/outro contributions",
+      toggleSubtitle("settingsSkiptime", state.skiptimeHelper),
     );
     updateToggle(
       "settingsAuto4kServer",
       state.auto4kServer,
-      state.auto4kServer ? "Prefer 4K/Remaster servers" : "Premium server auto-pick is off",
+      toggleSubtitle("settingsAuto4kServer", state.auto4kServer),
     );
     updateToggle(
       "settingsAutoResume",
       state.autoResume,
-      state.autoResume ? "Resume playback without asking" : "Ask before resuming where you left off",
+      toggleSubtitle("settingsAutoResume", state.autoResume),
     );
     updateToggle(
       "settingsAdGuard",
       state.adGuard,
-      state.adGuard ? "Block pop-up ads on an1me.to" : "Pop-up ads are allowed",
+      toggleSubtitle("settingsAdGuard", state.adGuard),
     );
   }
 
@@ -447,7 +466,7 @@
   }
 
   window.AnimeTracker = window.AnimeTracker || {};
-  window.AnimeTracker.SettingsView = { render, updateToggle };
+  window.AnimeTracker.SettingsView = { render, updateToggle, toggleSubtitle };
 
   const initialContainer = document.getElementById("settingsView");
   if (initialContainer) {

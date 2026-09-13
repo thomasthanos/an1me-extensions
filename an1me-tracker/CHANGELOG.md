@@ -9,7 +9,7 @@ The version in `manifest.json` is the single source of truth.
 
 ## [Unreleased]
 
-`manifest.json` still reports **7.4.0** — nothing below has been given a version yet.
+`manifest.json` reports **7.4.2** — nothing below has been given a version yet.
 
 ### Added
 
@@ -56,6 +56,38 @@ The version in `manifest.json` is the single source of truth.
   additive — no existing key is removed or overwritten — and idempotent.
 
 ### Fixed
+
+- **An expired sign-in was handled two different ways.** When the refresh token was rejected for good,
+  two code paths signed you out on the spot while a third kept your session and showed *Reconnect to
+  sync*, so what you saw depended only on which one noticed first. All of them now keep your local
+  session and data and show the reconnect prompt. A "permanent 401" sign-out branch in the sync error
+  handler that could never run was removed.
+- **Storage-full recovery stopped after its first pass.** Its follow-up passes only ran while more than
+  250 progress entries were kept, but normal cleanup already caps progress at 200, so they never ran.
+  It also pruned deleted-anime records after 10 days instead of the usual 30, which the next full sync
+  undid by copying them back from the cloud, and it misread older records stored as a plain date.
+- **The popup and the background undid each other's progress cleanup.** They applied different rules
+  (movies, dropped shows, the 200-entry cap), so each sync removed what the other had just kept and
+  pushed the difference to the cloud. Both now call one shared function.
+- **Saving on tab close disagreed with saving during playback.** An episode imported from AniList stayed
+  a placeholder instead of counting as watched, a scraped episode total lower than the episode you were
+  on was accepted, and a metadata-only refresh moved the show to the top of *recently watched*.
+- **Clear all data left progress that came back.** Partly watched episodes of shows that were never in
+  the library had no deletion record, so the next sync restored them from the cloud. Each progress
+  entry is now marked deleted the same way removing a single entry does.
+- **Start over did not move the resume point back.** Progress saving never lets the stored position go
+  down, so after choosing *Start over* the next visit still offered to resume at the old, later time.
+- **Settings subtitles changed wording on their own.** The seven toggle subtitles were written in two
+  places with different text for five of them, so the wording depended on whether you had just clicked
+  the toggle or the page had re-rendered.
+- **A quick toast wiped a warning.** The popup had two toast systems, and the simpler one removed every
+  toast on screen - including a *Session expired* or *Reconnect to sync* warning - whenever it showed a
+  short confirmation. There is now one system, with an `info` style added.
+- **Closing a tab could save the same episode twice**, and the *episode completed* toast could appear
+  twice for one episode.
+- **A library update could drop queued metadata repairs.** The post-update handler emptied the list of
+  anime waiting for a targeted repair, and two repairs queued at the same moment could overwrite each
+  other's additions. The list is no longer cleared on update and is only read and written under a lock.
 
 - **Progress could stop being saved after switching video server.** One cleanup list held both
   per-video and page-level work, so binding a late-loading video or rebinding after the first server
@@ -224,6 +256,15 @@ The version in `manifest.json` is the single source of truth.
 - The group card's `data-base-slug` attribute is escaped, matching its sibling `data-slug`.
 
 ### Internal
+
+- Removed eight background message handlers that nothing sent, including `GET_AUTH_STATE`, which
+  returned the raw Firebase tokens to anything in the extension that asked.
+- The popup's seven copies of the "message the background and wait, with a timeout" helper are now one,
+  `src/popup/lib/runtime-request.js`. A reply that arrives after the timeout now has its
+  `chrome.runtime.lastError` read instead of being logged as unchecked.
+- Dropped two `catch` branches around toast calls that could never run, keeping their clearer message.
+- `test/progress-cleanup.test.js` pins the shared progress cleanup rules, run both with the fallback
+  list-state logic and with the real `EntryState` module.
 
 - **All anime identity rules now live in one module** (`src/common/data/anime-identity.js`): the
   grouping base slug, season detection, watch-to-info slug aliases, and the canonical slug/title

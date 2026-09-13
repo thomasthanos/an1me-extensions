@@ -35,33 +35,13 @@
     });
   }
 
-  function sendResolveMessage(payload, timeoutMs) {
-    return new Promise((resolve, reject) => {
-      let settled = false;
-      const finish = (callback, value) => {
-        if (settled) return;
-        settled = true;
-        clearTimeout(timer);
-        callback(value);
-      };
-      const timer = setTimeout(() => finish(reject, new Error(`Anime lookup timed out after ${Math.ceil(timeoutMs / 1000)}s`)), timeoutMs);
-      try {
-        chrome.runtime.sendMessage(payload, (response) => {
-          const runtimeError = chrome.runtime.lastError;
-          if (runtimeError) {
-            finish(reject, new Error(runtimeError.message));
-            return;
-          }
-          if (!response?.success) {
-            finish(reject, new Error(response?.error || "Anime lookup failed"));
-            return;
-          }
-          finish(resolve, response.result);
-        });
-      } catch (error) {
-        finish(reject, error);
-      }
+  async function sendResolveMessage(payload, timeoutMs) {
+    const response = await window.AnimeTracker.sendRuntimeRequest(payload, {
+      timeoutMs,
+      timeoutMessage: `Anime lookup timed out after ${Math.ceil(timeoutMs / 1000)}s`,
     });
+    if (!response?.success) throw new Error(response?.error || "Anime lookup failed");
+    return response.result;
   }
 
   function applyResolvedCaches(slug, result) {

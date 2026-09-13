@@ -79,33 +79,10 @@
   }
 
   function sendBadgeNotificationRequest(badges) {
-    return new Promise((resolve, reject) => {
-      let settled = false;
-      const timer = setTimeout(() => {
-        if (settled) return;
-        settled = true;
-        reject(new Error("Badge notification handoff timed out"));
-      }, BADGE_NOTIFICATION_TIMEOUT_MS);
-
-      try {
-        chrome.runtime.sendMessage({ type: "QUEUE_BADGE_NOTIFICATIONS", badges }, (response) => {
-          if (settled) return;
-          settled = true;
-          clearTimeout(timer);
-          const runtimeError = chrome.runtime.lastError;
-          if (runtimeError) {
-            reject(new Error(runtimeError.message));
-            return;
-          }
-          resolve(response || null);
-        });
-      } catch (error) {
-        if (settled) return;
-        settled = true;
-        clearTimeout(timer);
-        reject(error);
-      }
-    });
+    return window.AnimeTracker.sendRuntimeRequest(
+      { type: "QUEUE_BADGE_NOTIFICATIONS", badges },
+      { timeoutMs: BADGE_NOTIFICATION_TIMEOUT_MS, timeoutMessage: "Badge notification handoff timed out" },
+    );
   }
 
   function entriesEqual(left, right) {

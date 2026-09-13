@@ -163,67 +163,21 @@ const ProgressManager = {
     return { cleanedData, removedCount };
   },
 
+  // The keep/remove rules live in merge-utils (cleanTrackedProgress), shared with the background sync.
+  // The two used to be separate copies that disagreed about movies and dropped shows, so each context
+  // undid the other's cleanup on every sync.
   cleanTrackedProgress(animeData, videoProgress, deletedAnime = {}) {
-    const { UIHelpers } = window.AnimeTracker;
-    const { CONFIG } = window.AnimeTracker;
-    const { SeasonGrouping } = window.AnimeTracker;
-    const { removeDeletedProgress } = window.AnimeTracker.MergeUtils;
-
+    const { CONFIG, SeasonGrouping, MergeUtils } = window.AnimeTracker;
     if (!videoProgress || Object.keys(videoProgress).length === 0) {
       return { cleaned: videoProgress, removedCount: 0 };
     }
-
-    const baseProgress = removeDeletedProgress(videoProgress, deletedAnime);
-
-    const trackedIds = new Set();
-    for (const [animeSlug, anime] of Object.entries(animeData)) {
-      if (anime.episodes) {
-        anime.episodes.forEach((ep) => {
-          if (anime.onHoldAt || anime.listState === "on_hold") return;
-
-          if (ep?.durationSource === "anilist") return;
-          trackedIds.add(UIHelpers.getUniqueId(animeSlug, ep.number));
-        });
-      }
-    }
-
-    const cleaned = {};
-    let removedCount = 0;
-
-    for (const [id, progress] of Object.entries(baseProgress)) {
-      const isTracked = trackedIds.has(id);
-      const isCompleted = progress.percentage >= CONFIG.COMPLETED_PERCENTAGE;
-      const slugMatch = id.match(/^(.+)__episode-\d+$/);
-      const animeSlug = slugMatch ? slugMatch[1] : "";
-      const animeEntry = animeSlug ? animeData[animeSlug] : null;
-      const isMovieProgress = !!animeEntry && SeasonGrouping?.isMovie?.(animeSlug, animeEntry);
-
-      if (isTracked && isMovieProgress && !progress.deleted) {
-        cleaned[id] = progress;
-        continue;
-      }
-
-      if (isTracked || isCompleted) {
-        removedCount++;
-        continue;
-      }
-
-      if (progress.deleted) {
-        // Mirror the background's PROGRESS_TOMBSTONE_KEEP_MS: keep fresh deletion
-        // tombstones (so the delete still propagates to the cloud), expire after 7 days.
-        const deletedAt = progress.deletedAt ? new Date(progress.deletedAt).getTime() : 0;
-        if (deletedAt && Date.now() - deletedAt < 7 * 24 * 60 * 60 * 1000) {
-          cleaned[id] = progress;
-        } else {
-          removedCount++;
-        }
-        continue;
-      }
-
-      cleaned[id] = progress;
-    }
-
-    return { cleaned, removedCount };
+    return MergeUtils.cleanTrackedProgress(animeData || {}, videoProgress, deletedAnime, {
+      isMovie: (slug, entry) => !!SeasonGrouping?.isMovie?.(slug, entry),
+      completedPercentage: CONFIG.COMPLETED_PERCENTAGE,
+      tombstoneKeepMs: 7 * 24 * 60 * 60 * 1000,
+      // Same cap as the background sync and the content script.
+      maxEntries: 200,
+    });
   },
 
   getInProgressAnime(animeData, videoProgress) {

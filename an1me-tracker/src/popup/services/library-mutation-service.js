@@ -44,32 +44,9 @@
   }
 
   function sendCoordinatorRequest(message) {
-    return new Promise((resolve, reject) => {
-      let settled = false;
-      const timer = setTimeout(() => {
-        if (settled) return;
-        settled = true;
-        reject(new Error("Library mutation coordinator timed out"));
-      }, REQUEST_TIMEOUT_MS);
-
-      try {
-        chrome.runtime.sendMessage(message, (response) => {
-          if (settled) return;
-          settled = true;
-          clearTimeout(timer);
-          const runtimeError = chrome.runtime.lastError;
-          if (runtimeError) {
-            reject(new Error(runtimeError.message));
-            return;
-          }
-          resolve(response || null);
-        });
-      } catch (error) {
-        if (settled) return;
-        settled = true;
-        clearTimeout(timer);
-        reject(error);
-      }
+    return window.AnimeTracker.sendRuntimeRequest(message, {
+      timeoutMs: REQUEST_TIMEOUT_MS,
+      timeoutMessage: "Library mutation coordinator timed out",
     });
   }
 

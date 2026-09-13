@@ -120,11 +120,7 @@
       } catch {}
     } catch (e) {
       PopupLogger.error("Delete", "Error:", e);
-      try {
-        AT.UIHelpers?.showToast?.("Failed to delete anime", { type: "error", duration: 3500 });
-      } catch {
-        showToast("Failed to delete anime. Please try again.", "error");
-      }
+      AT.UIHelpers?.showToast?.("Failed to delete anime. Please try again.", { type: "error", duration: 3500 });
     } finally {
       _deletingSlugs.delete(slug);
     }
@@ -233,12 +229,37 @@
         }
         clearedSlugs = Object.keys(storedAnimeData);
 
+        // Progress needs tombstones of its own. An anime tombstone only covers episodes of shows that were
+        // in the library, so an empty map let the cloud copy put back every partly watched episode of a
+        // show that was never added. Each entry is marked the way a single "remove progress" marks it.
+        const storedProgress = result.videoProgress && typeof result.videoProgress === "object" ? result.videoProgress : {};
+        const GRACE_MS = 5000;
+        const clearedAt = Date.now();
+        const videoProgress = {};
+        for (const [uniqueId, progress] of Object.entries(storedProgress)) {
+          if (uniqueId === "__slugIndex" || !progress || typeof progress !== "object") continue;
+          if (progress.deleted) {
+            videoProgress[uniqueId] = progress;
+            continue;
+          }
+          const lastActivity = Math.max(
+            new Date(progress.savedAt || 0).getTime() || 0,
+            new Date(progress.watchedAt || 0).getTime() || 0,
+            new Date(progress.lastPlayedAt || 0).getTime() || 0,
+          );
+          videoProgress[uniqueId] = {
+            ...progress,
+            deleted: true,
+            deletedAt: new Date(Math.max(clearedAt, lastActivity + GRACE_MS + 1)).toISOString(),
+          };
+        }
+
         await commit(
-          { animeData: {}, videoProgress: {}, groupCoverImages: {}, deletedAnime },
+          { animeData: {}, videoProgress, groupCoverImages: {}, deletedAnime },
           { markInternalSave, immediate: true },
         );
         AT.PopupState.animeData = {};
-        AT.PopupState.videoProgress = {};
+        AT.PopupState.videoProgress = videoProgress;
       });
 
       // Without this, wiping the library leaves one metadata cache entry per anime behind.

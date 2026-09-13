@@ -28,7 +28,14 @@
         : { message: String(messageOrOpts ?? ""), type: typeArg };
     // "warn" is its own type. Every non-success type used to render as a red error alert, so the
     // "Session expired" and "Reconnect to sync" warnings looked like failures.
-    const type = opts.type === "success" ? "success" : opts.type === "warn" || opts.type === "warning" ? "warn" : "error";
+    const type =
+      opts.type === "success"
+        ? "success"
+        : opts.type === "warn" || opts.type === "warning"
+          ? "warn"
+          : opts.type === "info"
+            ? "info"
+            : "error";
     const duration = Math.max(1500, Math.min(opts.duration || 4000, 10000));
 
     let title = (opts.title || "").trim();
@@ -56,8 +63,16 @@
     toast.setAttribute("aria-live", type === "error" ? "assertive" : "polite");
     toast.style.setProperty("--at-toast-duration", `${duration}ms`);
 
+    const INFO_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="16" x2="12" y2="12"/>
+                  <line x1="12" y1="8" x2="12.01" y2="8"/>
+               </svg>`;
     const iconMarkup =
-      type === "success"
+      type === "info"
+        ? INFO_ICON
+        : type === "success"
         ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                      stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>

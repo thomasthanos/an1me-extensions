@@ -304,6 +304,7 @@ const VideoMonitor = {
                   Logger.success(`Resumed @ ${Math.round(target)}s`);
                 },
                 () => {
+                  window.AnimeTrackerContent.ProgressTracker?.allowRewind?.(savedProgress.uniqueId);
                   video.currentTime = 0;
                   video.play().catch(() => {});
                 },

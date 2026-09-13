@@ -887,17 +887,32 @@ async function startLibraryRepair(options = {}) {
   return state;
 }
 
+// Serializes every read-then-write of pendingRepairSlugs. They used to run unlocked: two library
+// changes in quick succession each read the same list and the second write dropped the first slug, and
+// consuming the list could race a concurrent add the same way.
+let _pendingRepairSlugsTail = Promise.resolve();
+function withPendingRepairSlugsLock(task) {
+  const run = _pendingRepairSlugsTail.then(task, task);
+  _pendingRepairSlugsTail = run.then(
+    () => undefined,
+    () => undefined,
+  );
+  return run;
+}
+
 async function queueTargetedMetadataRepair(slugs) {
   const list = (Array.isArray(slugs) ? slugs : []).filter(Boolean);
   if (list.length === 0) return;
 
-  const stored = await bgStorageGet([PENDING_REPAIR_SLUGS_KEY]);
-  const existing = Array.isArray(stored[PENDING_REPAIR_SLUGS_KEY]) ? stored[PENDING_REPAIR_SLUGS_KEY] : [];
-  const merged = Array.from(new Set([...existing, ...list]));
+  await withPendingRepairSlugsLock(async () => {
+    const stored = await bgStorageGet([PENDING_REPAIR_SLUGS_KEY]);
+    const existing = Array.isArray(stored[PENDING_REPAIR_SLUGS_KEY]) ? stored[PENDING_REPAIR_SLUGS_KEY] : [];
+    const merged = Array.from(new Set([...existing, ...list]));
 
-  await bgStorageSet({
-    [PENDING_REPAIR_SLUGS_KEY]: merged,
-    [PENDING_METADATA_REPAIR_KEY]: true,
+    await bgStorageSet({
+      [PENDING_REPAIR_SLUGS_KEY]: merged,
+      [PENDING_METADATA_REPAIR_KEY]: true,
+    });
   });
 }
 
@@ -937,14 +952,16 @@ async function maybeStartPendingMetadataRepair() {
       // Clear only the slugs this run consumed — a blind [] wipe would drop slugs queued
       // concurrently by queueTargetedMetadataRepair while the repair was starting.
       const consumed = new Set(targetedSlugs);
-      const latest = await bgStorageGet([PENDING_REPAIR_SLUGS_KEY]);
-      const remaining = (Array.isArray(latest[PENDING_REPAIR_SLUGS_KEY]) ? latest[PENDING_REPAIR_SLUGS_KEY] : []).filter(
-        (slug) => !consumed.has(slug),
-      );
-      const payload = { [PENDING_REPAIR_SLUGS_KEY]: remaining };
-      // Re-arm the pending flag so the running batch's finally-hook picks the leftovers up.
-      if (remaining.length > 0) payload[PENDING_METADATA_REPAIR_KEY] = true;
-      await bgStorageSet(payload);
+      await withPendingRepairSlugsLock(async () => {
+        const latest = await bgStorageGet([PENDING_REPAIR_SLUGS_KEY]);
+        const remaining = (Array.isArray(latest[PENDING_REPAIR_SLUGS_KEY]) ? latest[PENDING_REPAIR_SLUGS_KEY] : []).filter(
+          (slug) => !consumed.has(slug),
+        );
+        const payload = { [PENDING_REPAIR_SLUGS_KEY]: remaining };
+        // Re-arm the pending flag so the running batch's finally-hook picks the leftovers up.
+        if (remaining.length > 0) payload[PENDING_METADATA_REPAIR_KEY] = true;
+        await bgStorageSet(payload);
+      });
     } catch {}
   }
   return true;

@@ -903,11 +903,7 @@
       } catch {}
     } catch (error) {
       PopupLogger.error("EditTitle", "Error:", error);
-      try {
-        AT.UIHelpers?.showToast?.("Failed to update title", { type: "error", duration: 3500 });
-      } catch {
-        showToast("Failed to update title. Please try again.", "error");
-      }
+      AT.UIHelpers?.showToast?.("Failed to update title. Please try again.", { type: "error", duration: 3500 });
     }
   }
 
