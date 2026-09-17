@@ -121,17 +121,22 @@ const FirebaseLib = (function () {
           return null;
         }
 
-        if (!tokens.expiresAt || tokens.expiresAt < Date.now() + 300000) {
-          if (tokens.needsReauth) {
-            PopupLogger.warn("Firebase", "needsReauth is set — skipping auto-refresh, surfacing reconnect prompt");
-            currentUser = await loadStoredSessionUser();
-            notifyAuthStateListeners(currentUser);
-            return currentUser;
-          }
+        // needsReauth is also set after a run of transient refresh failures (flaky mobile network,
+        // a week without opening the browser), and nothing else ever retries once it is set, so
+        // cloud sync stayed off until a manual sign-out. Opening the popup retries once: a success
+        // stores fresh tokens, which clears the flag.
+        const needsReauth = tokens.needsReauth === true;
+        if (needsReauth || !tokens.expiresAt || tokens.expiresAt < Date.now() + 300000) {
           try {
             await refreshToken(tokens.refreshToken);
-            PopupLogger.log("Firebase", "Token refreshed successfully");
+            PopupLogger.log("Firebase", needsReauth ? "Token refreshed — reconnect no longer needed" : "Token refreshed successfully");
           } catch (e) {
+            if (needsReauth) {
+              PopupLogger.warn("Firebase", `Reconnect still required (${e?.message}) — keeping session, surfacing reconnect prompt`);
+              currentUser = await loadStoredSessionUser();
+              notifyAuthStateListeners(currentUser);
+              return currentUser;
+            }
             if (e?.permanent) {
               PopupLogger.warn("Firebase", `Refresh token rejected (permanent: ${e.message}) — signing out`);
               await signOut();

@@ -838,11 +838,13 @@
       if (userName) userName.textContent = "User";
       if (userEmail) userEmail.textContent = "";
     }
+    // Always resolve the cloud state. A running repair only layers its own activity on top of it
+    // (SyncStatusController ranks claims), and skipping this while a silent background sweep was
+    // "running" left the footer on "Checking cloud…" for good, hiding a sync error or a reconnect prompt.
+    void restoreDefaultSyncStatus({ immediate: true });
     const activeRepairState = AT.PopupState.lastMetadataRepairState;
     if (activeRepairState?.status === "running") {
       void applyMetadataRepairState(activeRepairState, { autoOpenRunning: true });
-    } else {
-      void restoreDefaultSyncStatus({ immediate: true });
     }
 
     if (!AT.PopupState.libraryLoaded) {
@@ -2332,13 +2334,12 @@
     chrome.storage.onChanged.addListener((changes, namespace) => {
       if (namespace !== "local") return;
       if (
-        (changes["syncState.pendingFlush"] ||
-          changes["syncState.pendingProgressFlush"] ||
-          changes["syncState.pendingSidecars"] ||
-          changes["syncState.cloudStatus"] ||
-          changes.firebase_tokens ||
-          changes.firebase_user) &&
-        AT.PopupState.lastMetadataRepairState?.status !== "running"
+        changes["syncState.pendingFlush"] ||
+        changes["syncState.pendingProgressFlush"] ||
+        changes["syncState.pendingSidecars"] ||
+        changes["syncState.cloudStatus"] ||
+        changes.firebase_tokens ||
+        changes.firebase_user
       ) {
         void restoreDefaultSyncStatus();
       }

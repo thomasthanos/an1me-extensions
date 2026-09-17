@@ -57,6 +57,15 @@ The version in `manifest.json` is the single source of truth.
 
 ### Fixed
 
+- **The footer could stay on *Checking cloud…* forever.** The cloud state was never read while a
+  background metadata sweep was marked as running, and on mobile, where the worker is stopped often,
+  that sweep can stay "running" for days. The footer hid any *Sync Error* or *Reconnect Required*
+  behind it. The cloud state is now always read; a running sweep still shows its own progress on top.
+- **Cloud sync never came back after *Reconnect required*.** The flag is also set after a run of
+  failed token refreshes (a flaky phone connection, or one failure after a week without opening the
+  browser), and once it was set nothing tried to refresh again, so the library stopped syncing until
+  you signed out and back in. Opening the popup now retries the refresh once, and a success clears the
+  flag and resumes syncing.
 - **An expired sign-in was handled two different ways.** When the refresh token was rejected for good,
   two code paths signed you out on the spot while a third kept your session and showed *Reconnect to
   sync*, so what you saw depended only on which one noticed first. All of them now keep your local
