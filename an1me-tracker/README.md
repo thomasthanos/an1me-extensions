@@ -2,7 +2,7 @@
 
 <img src=".github/assets/banner-tracker.svg" alt="An1me.to Tracker">
 
-[![Version 7.4.0](.github/assets/badge-v-tracker.svg)](manifest.json)
+[![Version 7.4.4](.github/assets/badge-v-tracker.svg)](manifest.json)
 [![Manifest V3](.github/assets/badge-manifest.svg)](manifest.json)
 [![Cloud sync optional](.github/assets/badge-cloud-sync.svg)](PRIVACY.md)
 <br>

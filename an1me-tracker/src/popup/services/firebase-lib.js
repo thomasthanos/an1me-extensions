@@ -121,30 +121,18 @@ const FirebaseLib = (function () {
           return null;
         }
 
-        // needsReauth is also set after a run of transient refresh failures (flaky mobile network,
-        // a week without opening the browser), and nothing else ever retries once it is set, so
-        // cloud sync stayed off until a manual sign-out. Opening the popup retries once: a success
-        // stores fresh tokens, which clears the flag.
-        const needsReauth = tokens.needsReauth === true;
-        if (needsReauth || !tokens.expiresAt || tokens.expiresAt < Date.now() + 300000) {
+        // The session is kept in every case below, local data included. A rejected refresh token
+        // shows the reconnect prompt; a transient failure is retried by the background worker.
+        if (tokens.needsReauth) {
+          PopupLogger.warn("Firebase", `Refresh token was rejected (${tokens.reauthReason || "unknown"}) — reconnect required`);
+        } else if (!tokens.expiresAt || tokens.expiresAt < Date.now() + 300000) {
           try {
             await refreshToken(tokens.refreshToken);
-            PopupLogger.log("Firebase", needsReauth ? "Token refreshed — reconnect no longer needed" : "Token refreshed successfully");
+            PopupLogger.log("Firebase", "Token refreshed successfully");
           } catch (e) {
-            if (needsReauth) {
-              PopupLogger.warn("Firebase", `Reconnect still required (${e?.message}) — keeping session, surfacing reconnect prompt`);
-              currentUser = await loadStoredSessionUser();
-              notifyAuthStateListeners(currentUser);
-              return currentUser;
-            }
             if (e?.permanent) {
-              PopupLogger.warn("Firebase", `Refresh token rejected (permanent: ${e.message}) — signing out`);
-              await signOut();
-              return null;
-            }
-
-            const stillValid = tokens.expiresAt && tokens.expiresAt > Date.now() + 30000;
-            if (stillValid) {
+              PopupLogger.warn("Firebase", `Refresh token rejected (${e.message}) — reconnect required`);
+            } else if (tokens.expiresAt && tokens.expiresAt > Date.now() + 30000) {
               PopupLogger.warn(
                 "Firebase",
                 `Token refresh transiently failed (${e.message}). Using existing token (expires ${new Date(tokens.expiresAt).toLocaleTimeString()}); will retry on next call.`,
@@ -154,9 +142,6 @@ const FirebaseLib = (function () {
                 "Firebase",
                 `Token refresh transiently failed (${e.message}) and existing token is expired. Keeping session for retry.`,
               );
-              currentUser = await loadStoredSessionUser();
-              notifyAuthStateListeners(currentUser);
-              return currentUser;
             }
           }
         }
@@ -276,8 +261,6 @@ const FirebaseLib = (function () {
 
   let _popupRefreshInflight = null;
 
-  const AUTH_REFRESH_RETRY_ALARM = "auth-refresh-retry";
-
   async function isReauthNeeded() {
     const helper = typeof window !== "undefined" ? window.AnimeTrackerAuthTokens : null;
     if (!helper) return false;
@@ -351,12 +334,10 @@ const FirebaseLib = (function () {
         const newTokens = await refreshToken(tokens.refreshToken);
         return newTokens.idToken;
       } catch (error) {
-        PopupLogger.error("Firebase", `Refresh failed (${error?.permanent ? "permanent" : "transient"}):`, error.message);
+        PopupLogger.error("Firebase", `Refresh failed (${error?.permanent ? "rejected" : "transient"}):`, error.message);
 
-        if (error?.permanent) {
-          await signOut();
-          return null;
-        }
+        // The background worker has flagged the session; the reconnect prompt takes it from here.
+        if (error?.permanent) return null;
 
         const latest = (await chrome.storage.local.get([STORAGE_KEYS.TOKENS]))[STORAGE_KEYS.TOKENS] || null;
         if (!latest || latest.refreshToken !== tokens.refreshToken) {
@@ -718,18 +699,6 @@ const FirebaseLib = (function () {
       throw err;
     }
   }
-
-  try {
-    chrome.alarms?.onAlarm?.addListener(async (alarm) => {
-      if (alarm?.name !== AUTH_REFRESH_RETRY_ALARM) return;
-      try {
-        const helper = window.AnimeTrackerAuthTokens;
-        const t = helper ? await helper.readTokens() : null;
-        if (!t || !t.refreshToken || t.needsReauth) return;
-        await refreshToken(t.refreshToken).catch((e) => window.__atSwallow("refreshToken", e));
-      } catch {}
-    });
-  } catch {}
 
   return {
     init,

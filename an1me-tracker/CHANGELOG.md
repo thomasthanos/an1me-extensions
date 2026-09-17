@@ -7,9 +7,9 @@ The version in `manifest.json` is the single source of truth.
 
 ---
 
-## [Unreleased]
+## [7.4.4] — 2026-09-17
 
-`manifest.json` reports **7.4.2** — nothing below has been given a version yet.
+Covers everything since 7.4.0. 7.4.1 to 7.4.3 went out as in-between builds without entries of their own.
 
 ### Added
 
@@ -57,20 +57,27 @@ The version in `manifest.json` is the single source of truth.
 
 ### Fixed
 
+- **Cloud sync stopped for good on mobile.** A run of failed token refreshes (five in a row, or a
+  single one once a week had passed without a successful request) marked the session *Reconnect
+  required*, and nothing ever retried a marked session, so a phone with a patchy connection kept its
+  old library until you signed out and back in. That mark now means only one thing: Firebase rejected
+  the sign-in. Network errors, timeouts and server errors are retried on a backoff capped at an hour,
+  and on demand whenever a sync needs a token. Sessions marked by an older version are checked again
+  once on update, and the mark returns only if Firebase really rejects the sign-in.
 - **The footer could stay on *Checking cloud…* forever.** The cloud state was never read while a
   background metadata sweep was marked as running, and on mobile, where the worker is stopped often,
-  that sweep can stay "running" for days. The footer hid any *Sync Error* or *Reconnect Required*
-  behind it. The cloud state is now always read; a running sweep still shows its own progress on top.
-- **Cloud sync never came back after *Reconnect required*.** The flag is also set after a run of
-  failed token refreshes (a flaky phone connection, or one failure after a week without opening the
-  browser), and once it was set nothing tried to refresh again, so the library stopped syncing until
-  you signed out and back in. Opening the popup now retries the refresh once, and a success clears the
-  flag and resumes syncing.
-- **An expired sign-in was handled two different ways.** When the refresh token was rejected for good,
-  two code paths signed you out on the spot while a third kept your session and showed *Reconnect to
-  sync*, so what you saw depended only on which one noticed first. All of them now keep your local
-  session and data and show the reconnect prompt. A "permanent 401" sign-out branch in the sync error
-  handler that could never run was removed.
+  that sweep can stay "running" for days. That hid the *Reconnect Required* above. The cloud state is
+  now always read, and a running sweep still shows its own progress on top. *Reconnect Required* now
+  shows as an error rather than as ongoing activity, and a sign-in that cannot be refreshed right now
+  reads *Cloud Unreachable* instead of *Cloud Connecting…*.
+- **An expired sign-in was handled several different ways.** When the refresh token was rejected for
+  good, some code paths (the popup among them) signed you out on the spot while others kept your
+  session and showed *Reconnect to sync*, so what you saw depended only on which one noticed first.
+  The rejection is now recorded in one place, the background worker's token refresh, and every path
+  keeps your local session and data and shows the reconnect prompt. A successful cloud request no
+  longer clears that prompt either: a working ID token says nothing about the sign-in behind it.
+  Removed along the way: a "permanent 401" sign-out branch in the sync error handler, a popup sign-out
+  on an error code the worker never sends, and a popup alarm listener for an alarm nothing creates.
 - **Storage-full recovery stopped after its first pass.** Its follow-up passes only ran while more than
   250 progress entries were kept, but normal cleanup already caps progress at 200, so they never ran.
   It also pruned deleted-anime records after 10 days instead of the usual 30, which the next full sync

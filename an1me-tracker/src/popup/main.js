@@ -1570,18 +1570,6 @@
     } catch (error) {
       PopupLogger.error(request.cloudMode === "none" ? "Storage" : "Sync", "Library load failed:", error);
 
-      if (error?.code === "AUTH_REJECTED") {
-        showToast({
-          title: "Session expired",
-          body: error.message || "Please sign in again to sync your library.",
-          type: "error",
-          duration: 7000,
-        });
-        try {
-          await AT.FirebaseSync.signOut();
-        } catch {}
-      }
-
       if (!AT.PopupState.libraryLoaded) {
         animeData = {};
         videoProgress = {};
@@ -2740,7 +2728,7 @@
           if (needs) {
             showToast({
               title: "Reconnect to sync",
-              body: "We could not reach Firebase recently. Click here to reconnect to sync.",
+              body: "Firebase no longer accepts this sign-in. Click here to sign in again; your local library stays.",
               type: "warn",
               duration: 9000,
               onClick: () => signOut(true),

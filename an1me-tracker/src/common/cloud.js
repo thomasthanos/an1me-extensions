@@ -53,12 +53,16 @@ const firebaseConfig = {
   if (root) root.AnimeTrackerAuthClassifier = api;
 })();
 
+// Auth token store. `needsReauth` means one thing: Firebase rejected the refresh token
+// (`reauthReason` holds the code), so only a new sign-in can resume cloud sync. Transient refresh
+// failures never set it; the background worker retries those on a backoff.
+// Schema v3 introduced that rule; v2 and older records also carried the flag after transient failures.
 (function () {
   "use strict";
 
   const STORAGE_KEY = "firebase_tokens";
   const FEATURE_FLAGS_KEY = "_featureFlags";
-  const CURRENT_SCHEMA_VERSION = 2;
+  const CURRENT_SCHEMA_VERSION = 3;
   const AUTH_MUTATION_TIMEOUT_MS = 20000;
 
   function _storageGet(keys) {
@@ -166,6 +170,8 @@ const firebaseConfig = {
     return result.tokens || null;
   }
 
+  // Records a successful Firestore request. It leaves needsReauth alone: an ID token that still works
+  // says nothing about whether Firebase will accept the refresh token once it expires.
   async function markAuthCheckOk(expected = null) {
     const options =
       expected && typeof expected === "object"
@@ -173,7 +179,6 @@ const firebaseConfig = {
         : { expectedRefreshToken: expected || null };
     return writeTokens({
       lastAuthCheck: Date.now(),
-      needsReauth: false,
       authRefreshAttempts: 0,
       authRefreshLastAttemptAt: 0,
     }, options);
@@ -187,8 +192,12 @@ const firebaseConfig = {
     return result.applied === false ? null : result.tokens || null;
   }
 
+  // options.reason is the rejection code Firebase returned for the refresh token.
   async function setNeedsReauth(value = true, options = {}) {
-    return writeTokens({ needsReauth: !!value }, options);
+    return writeTokens(
+      { needsReauth: !!value, reauthReason: value ? String(options.reason || "rejected") : null },
+      options,
+    );
   }
 
   const api = Object.freeze({

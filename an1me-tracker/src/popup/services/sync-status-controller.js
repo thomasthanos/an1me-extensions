@@ -140,10 +140,19 @@
       !!stored?.[CLOUD_PROGRESS_PENDING_KEY] ||
       !!stored?.[CLOUD_SIDECAR_PENDING_KEY];
 
+    // Nothing retries a rejected sign-in, so this is an error the user has to act on, not activity.
     if (!tokens?.idToken || !tokens?.refreshToken || tokens.needsReauth === true) {
-      return { label: "Reconnect Required", tone: "busy" };
+      return {
+        label: "Reconnect Required",
+        tone: "error",
+        title: "Firebase no longer accepts this sign-in. Open Settings and choose Reconnect.",
+      };
     }
     if (!Number(tokens.expiresAt) || Number(tokens.expiresAt) <= Date.now()) {
+      // Failed refreshes are retried by the background worker; say so instead of implying progress.
+      if (Number(tokens.authRefreshAttempts) > 0) {
+        return { label: "Cloud Unreachable", tone: "busy", title: "Could not refresh the sign-in. Retrying automatically." };
+      }
       return { label: "Cloud Connecting…", tone: "busy" };
     }
     if (statusMatchesUser && cloudStatus.state === "error") {

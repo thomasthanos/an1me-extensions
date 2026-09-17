@@ -899,14 +899,18 @@ function enqueueBgAuthMutation(task) {
   return next;
 }
 
+const AUTH_TOKEN_SCHEMA_VERSION = self.AnimeTrackerAuthTokens.CURRENT_SCHEMA_VERSION;
+
 function normalizeStoredAuthTokens(tokens, previous = null) {
   const now = Date.now();
+  const needsReauth = tokens?.needsReauth === true;
   return {
     ...(previous && typeof previous === "object" ? previous : {}),
     ...(tokens && typeof tokens === "object" ? tokens : {}),
-    version: 2,
+    version: AUTH_TOKEN_SCHEMA_VERSION,
     lastAuthCheck: Number(tokens?.lastAuthCheck) || now,
-    needsReauth: tokens?.needsReauth === true,
+    needsReauth,
+    reauthReason: needsReauth ? tokens?.reauthReason || null : null,
     authRefreshAttempts: Number(tokens?.authRefreshAttempts) || 0,
     authRefreshLastAttemptAt: Number(tokens?.authRefreshLastAttemptAt) || 0,
   };
@@ -985,10 +989,16 @@ async function bgMutateFirebaseAuth(request = {}) {
     }
 
     if (operation === "migrate_tokens") {
-      if (currentTokens.version === 2) {
+      if (Number(currentTokens.version) >= AUTH_TOKEN_SCHEMA_VERSION) {
         return { success: true, applied: false, tokens: currentTokens };
       }
-      const nextTokens = normalizeStoredAuthTokens(currentTokens, currentTokens);
+      // Before schema v3 a run of transient refresh failures also set needsReauth, and nothing ever
+      // retried once it was set, so an old flag says nothing about the refresh token and kept sync
+      // off for good. Drop it: the next refresh flags the session again if Firebase rejects the token.
+      const nextTokens = normalizeStoredAuthTokens(
+        { ...currentTokens, needsReauth: false, authRefreshAttempts: 0, authRefreshLastAttemptAt: 0 },
+        currentTokens,
+      );
       await bgStorageSetRaw({ firebase_tokens: nextTokens });
       return { success: true, applied: true, tokens: nextTokens };
     }
@@ -1319,17 +1329,16 @@ function removeStreamConsumer(id) {
   }, IDLE_TEARDOWN_GRACE_MS);
 }
 
-// A permanent refresh failure (revoked or expired refresh token, disabled account) is handled ONE way:
-// flag the session for re-authentication and stop retrying, keeping local tokens and data. Two paths used
-// to sign the user out on the spot while the post-update check set needsReauth instead, so the same
-// failure either dropped the user onto the sign-in screen or showed the popup's "Reconnect to sync"
-// prompt, depending only on which code path noticed it first.
+// Firebase rejecting the refresh token (revoked, disabled account, ...) is handled ONE way and in ONE
+// place, refreshFirebaseToken: flag the session for re-authentication and stop retrying, keeping local
+// tokens and data. Callers used to decide for themselves, so the same rejection either signed the user
+// out or showed the "Reconnect to sync" prompt depending on which code path noticed it first.
 async function markSessionNeedsReauth(refreshToken, reason) {
-  console.warn(`[BG] Refresh token rejected (permanent: ${reason || "?"}) — session needs re-authentication`);
+  console.warn(`[BG] Refresh token rejected (${reason || "?"}) — session needs re-authentication`);
   try {
     const helper = self.AnimeTrackerAuthTokens;
     if (helper?.setNeedsReauth) {
-      await helper.setNeedsReauth(true, refreshToken ? { expectedRefreshToken: refreshToken } : {});
+      await helper.setNeedsReauth(true, { expectedRefreshToken: refreshToken || null, reason });
     }
   } catch (e) {
     console.warn("[BG] Could not flag session for re-authentication:", e?.message || e);
@@ -1372,12 +1381,29 @@ function _broadcastAuthRejected(status, body) {
   } catch {}
 }
 
+// Every token read waits for this, so a worker woken by a sync request never acts on a pre-v3 record
+// whose needsReauth flag has not been re-evaluated yet. A failed attempt is retried on the next call.
+let _authTokensMigration = null;
+function ensureAuthTokensMigrated() {
+  if (!_authTokensMigration) {
+    _authTokensMigration = Promise.resolve()
+      .then(() => self.AnimeTrackerAuthTokens?.migrateTokensIfNeeded?.())
+      .catch((e) => {
+        _authTokensMigration = null;
+        console.warn("[BG] Token migration skipped:", e?.message || e);
+      });
+  }
+  return _authTokensMigration;
+}
+
 async function getFirebaseToken() {
   try {
+    await ensureAuthTokensMigrated();
     const stored = await bgStorageGet(["firebase_tokens"]);
     const tokens = stored.firebase_tokens;
     if (!tokens?.idToken) return null;
 
+    // The refresh token was rejected: only a new sign-in helps, so use what is left of the ID token.
     if (tokens.needsReauth) {
       const stillValid = tokens.expiresAt && tokens.expiresAt > Date.now() + 30000;
       if (stillValid) return tokens.idToken;
@@ -1387,10 +1413,8 @@ async function getFirebaseToken() {
     if (tokens.expiresAt < Date.now() + 120000) {
       const result = await refreshFirebaseToken(tokens.refreshToken);
       if (!result || !result.tokens) {
-        if (result?.permanent) {
-          await markSessionNeedsReauth(tokens.refreshToken, result.error);
-          return null;
-        }
+        // refreshFirebaseToken has already flagged the session.
+        if (result?.permanent) return null;
 
         const latest = (await bgStorageGet(["firebase_tokens"])).firebase_tokens || null;
         if (!latest || latest.refreshToken !== tokens.refreshToken) {
@@ -1418,12 +1442,9 @@ async function getFirebaseToken() {
 
 const authState = { refreshInflight: null, refreshToken: null, signedOut: false };
 
-function _bgClassifyRefreshError(httpStatus, errorBody) {
-  const cl = self.AnimeTrackerAuthClassifier;
-  if (!cl) {
-    return false;
-  }
-  return cl.classify(httpStatus, errorBody).permanent;
+// The Firebase code that rejects the refresh token for good, or null when the failure is transient.
+function _bgRefreshRejectionCode(httpStatus, errorBody) {
+  return self.AnimeTrackerAuthClassifier?.classify(httpStatus, errorBody).matchedCode || null;
 }
 
 async function refreshFirebaseToken(refreshToken) {
@@ -1454,10 +1475,14 @@ async function refreshFirebaseToken(refreshToken) {
     }
     if (!response.ok) {
       const body = await response.text().catch(() => "");
-      const permanent = _bgClassifyRefreshError(response.status, body);
-      console.log(`[BG] Token refresh HTTP ${response.status} (${permanent ? "permanent" : "transient"}): ${body.slice(0, 200)}`);
-      if (!permanent) await _bgOnRefreshTransient(`HTTP ${response.status}`, refreshToken);
-      return { tokens: null, permanent, error: `HTTP ${response.status}` };
+      const rejection = _bgRefreshRejectionCode(response.status, body);
+      console.log(`[BG] Token refresh HTTP ${response.status} (${rejection ? "rejected" : "transient"}): ${body.slice(0, 200)}`);
+      if (rejection) {
+        await markSessionNeedsReauth(refreshToken, rejection);
+        return { tokens: null, permanent: true, error: rejection };
+      }
+      await _bgOnRefreshTransient(`HTTP ${response.status}`, refreshToken);
+      return { tokens: null, permanent: false, error: `HTTP ${response.status}` };
     }
     let data;
     try {
@@ -1472,10 +1497,14 @@ async function refreshFirebaseToken(refreshToken) {
     }
     if (data.error) {
       const msg = data.error?.message || "unknown";
-      const permanent = _bgClassifyRefreshError(400, msg);
-      console.warn(`[BG] Token refresh error (${permanent ? "permanent" : "transient"}): ${msg}`);
-      if (!permanent) await _bgOnRefreshTransient(msg, refreshToken);
-      return { tokens: null, permanent, error: msg };
+      const rejection = _bgRefreshRejectionCode(400, msg);
+      console.warn(`[BG] Token refresh error (${rejection ? "rejected" : "transient"}): ${msg}`);
+      if (rejection) {
+        await markSessionNeedsReauth(refreshToken, rejection);
+        return { tokens: null, permanent: true, error: msg };
+      }
+      await _bgOnRefreshTransient(msg, refreshToken);
+      return { tokens: null, permanent: false, error: msg };
     }
     if (!data.id_token || !data.refresh_token || !data.expires_in) {
       console.warn("[BG] Token refresh missing fields — treating as transient");
@@ -1543,41 +1572,25 @@ async function refreshFirebaseToken(refreshToken) {
 }
 
 const AUTH_REFRESH_RETRY_BG_ALARM = "auth-refresh-retry-bg";
-const AUTH_REFRESH_BACKOFF_MIN = [1, 5, 15, 60, 360];
-const MAX_AUTH_REFRESH_ATTEMPTS = AUTH_REFRESH_BACKOFF_MIN.length;
-const AUTH_OFFLINE_GRACE_MS = 7 * 24 * 60 * 60 * 1000;
+// The last step repeats until a refresh succeeds.
+const AUTH_REFRESH_BACKOFF_MIN = [1, 5, 15, 60];
 
+// A transient refresh failure (offline, timeout, 5xx, a phone that suspended the worker) never ends
+// the session: Firebase refresh tokens do not expire on their own. It used to flag the session for
+// re-authentication after five failures, or after a single one once a week had passed without a
+// successful request, which on a phone meant cloud sync switched off for good. Now the worker keeps
+// retrying on a capped backoff, and every sync that needs a token retries on demand as well.
 async function _bgOnRefreshTransient(reason, expectedRefreshToken = null) {
   const helper = self.AnimeTrackerAuthTokens;
   if (!helper) return;
   try {
     const updated = await helper.markAuthRefreshTransientFailure(expectedRefreshToken);
     if (!updated) return;
-    const attempts = Number(updated.authRefreshAttempts) || 0;
-    const lastOk = Number(updated.lastAuthCheck) || 0;
-    const offlineFor = lastOk ? Date.now() - lastOk : 0;
-    const exceededAttempts = attempts >= MAX_AUTH_REFRESH_ATTEMPTS;
-    const exceededGrace = lastOk > 0 && offlineFor > AUTH_OFFLINE_GRACE_MS;
-
-    if (exceededAttempts || exceededGrace) {
-      await helper.setNeedsReauth(true, { expectedRefreshToken });
-      console.warn(
-        `[BG] Auth: needsReauth=true (attempts=${attempts}, offlineFor=${Math.round(offlineFor / 86400000)}d, reason=${reason})`,
-      );
-
-      try {
-        chrome.alarms.clear(AUTH_REFRESH_RETRY_BG_ALARM).catch(() => {});
-      } catch {}
-      return;
-    }
-
-    const idx = Math.min(attempts - 1, AUTH_REFRESH_BACKOFF_MIN.length - 1);
-    const delayMin = AUTH_REFRESH_BACKOFF_MIN[idx];
+    const attempts = Math.max(1, Number(updated.authRefreshAttempts) || 0);
+    const delayMin = AUTH_REFRESH_BACKOFF_MIN[Math.min(attempts, AUTH_REFRESH_BACKOFF_MIN.length) - 1];
     try {
       chrome.alarms.create(AUTH_REFRESH_RETRY_BG_ALARM, { delayInMinutes: delayMin });
-      console.warn(
-        `[BG] Auth refresh retry scheduled in ${delayMin} min (attempt ${attempts}/${MAX_AUTH_REFRESH_ATTEMPTS}, reason: ${reason})`,
-      );
+      console.warn(`[BG] Auth refresh retry scheduled in ${delayMin} min (attempt ${attempts}, reason: ${reason})`);
     } catch (e) {
       console.warn("[BG] Could not arm auth-refresh-retry-bg alarm:", e?.message || e);
     }
@@ -1588,6 +1601,7 @@ async function _bgOnRefreshTransient(reason, expectedRefreshToken = null) {
 
 async function _bgAuthRefreshRetryTick() {
   try {
+    await ensureAuthTokensMigrated();
     const helper = self.AnimeTrackerAuthTokens;
     const tokens = helper ? await helper.readTokens() : null;
     if (!tokens || !tokens.refreshToken) {
@@ -1602,10 +1616,7 @@ async function _bgAuthRefreshRetryTick() {
       } catch {}
       return;
     }
-    const result = await refreshFirebaseToken(tokens.refreshToken);
-    if (result?.permanent) {
-      await markSessionNeedsReauth(tokens.refreshToken, result.error);
-    }
+    await refreshFirebaseToken(tokens.refreshToken);
   } catch (e) {
     console.warn("[BG] Auth retry tick failed:", e?.message || e);
   }
@@ -3703,7 +3714,7 @@ chrome.runtime.onInstalled.addListener((details) => {
       try {
         const helper = self.AnimeTrackerAuthTokens;
         if (!helper) return;
-        await helper.migrateTokensIfNeeded();
+        await ensureAuthTokensMigrated();
         const t = await helper.readTokens();
         if (!t || !t.refreshToken) {
           dlog("[BG] Post-update refresh: no session to validate");
@@ -3717,8 +3728,7 @@ chrome.runtime.onInstalled.addListener((details) => {
         if (result?.tokens) {
           console.log("[BG] Post-update silent refresh: ok");
         } else if (result?.permanent) {
-          await helper.setNeedsReauth(true);
-          console.log(`[BG] Post-update silent refresh: permanent (${result?.error || "?"}) — needsReauth set, tokens preserved`);
+          console.log(`[BG] Post-update silent refresh: rejected (${result?.error || "?"}) — reconnect required, tokens preserved`);
         } else {
           console.log(`[BG] Post-update silent refresh: transient (${result?.error || "?"}) — retry alarm armed`);
         }
@@ -3921,13 +3931,7 @@ ensureAiringScheduleAlarm();
   } catch {}
 })();
 
-(async () => {
-  try {
-    await self.AnimeTrackerAuthTokens?.migrateTokensIfNeeded?.();
-  } catch (e) {
-    console.warn("[BG] Token migration skipped:", e?.message || e);
-  }
-})();
+ensureAuthTokensMigrated();
 
 (async () => {
   try {
